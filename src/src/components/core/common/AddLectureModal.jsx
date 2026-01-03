@@ -12,6 +12,8 @@ const AddLectureModal = ({ isOpen, onClose, sectionId }) => {
   if (!isOpen) return null;
   const [videoPreview, setVideoPreview] = useState(false);
   const [timeDuration, setTimeDuration] = useState(0); // in seconds
+  const MAX_VIDEO_MB = 100;
+
   const {
     register,
     handleSubmit,
@@ -20,6 +22,11 @@ const AddLectureModal = ({ isOpen, onClose, sectionId }) => {
   } = useForm();
   const handleVideoPreview = async (file) => {
     if (!file) return;
+    // simple size check
+    if (file.size > MAX_VIDEO_MB * 1024 * 1024) {
+      toast.error(`Video must be under ${MAX_VIDEO_MB}MB`);
+      return;
+    }
     if (!file.type.startsWith("video/")) return;
     const duration = await getVideoDuration(file);
     setTimeDuration(duration);

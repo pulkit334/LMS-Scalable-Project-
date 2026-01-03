@@ -39,6 +39,7 @@ const {
   ShowCourses,
   course, // get course details
   getEnrolledCourses,
+  changestatus,
 } = require("../controllers/Course");
 
 //************for Courses -> section*************//
@@ -98,7 +99,7 @@ router.post("/auth/change-password", auth, changePassword);
 router.get("/courses", auth, isinstructor, ShowCourses);
 //Protected
 router.get("/enrolled-courses", auth, getEnrolledCourses);
-
+router.post("/publish-courses",auth,changestatus)
 // Protected
 
 router.get("/course/:courseId", auth, isstudent, course);
@@ -106,10 +107,9 @@ router.get("/course/:courseId", auth, isstudent, course);
 // ================= SECTION ROUTES =================
 
 // Protected
-router.post("/course/create",auth, isinstructor, createCourse);
+router.post("/course/create", auth, isinstructor, createCourse);
 router.put("/section/update", isinstructor, updateSection);
-router.delete("/section/delete/:sectionId",   auth,
-  deleteSection ,deleteSection);
+router.delete("/section/delete/:sectionId", auth, deleteSection, deleteSection);
 
 // GET SECTION
 router.get("/section/:sectionId", auth, section);
@@ -130,7 +130,7 @@ router.patch("/subsection/:subSectionId", auth, isinstructor, UpdateSubsection);
 router.post("/category/create", auth, Category);
 
 // Public (all categories)
-router.get("/category/all",auth, AllCategory);
+router.get("/category/all", auth, AllCategory);
 
 // ================= PROFILE ROUTES =================
 router.patch("/profile/update", auth, UpdateProfile);
@@ -138,7 +138,7 @@ router.delete("/profile/delete", auth, deleteAccount);
 router.get("/profile/me", auth, getAllUserDetiles);
 router.post("/profile/recovery", UndoAccount);
 router.patch("/profile/image-update", auth, UpdateProfilePhoto);
-router.get("/profile/recover-account/:token",   verifyAccountRecovery);
+router.get("/profile/recover-account/:token", verifyAccountRecovery);
 
 //=====================Payment Route=======================
 

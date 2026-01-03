@@ -8,6 +8,7 @@ import Asideinformation from "../../../utils/Asideinformation";
 import Confirmation from "../common/confirmmation";
 import AddLectureModal from "../common/AddLectureModal";
 import ViewLectureModal from "./ViewLectureModal";
+// import course from "../../../../../server/models/course";
 
 const CourseBuilder = ({
   sections = [],
@@ -36,6 +37,7 @@ const CourseBuilder = ({
         courseId,
       });
 
+   
       const updatedSections = response?.updatedCourse?.courseContent;
 
       if (!updatedSections) {

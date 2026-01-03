@@ -1,13 +1,33 @@
 import React from "react";
 import Asideinformation from "../../../utils/Asideinformation";
+import { CoursePublication } from "../../../services/auth";
+import toast from "react-hot-toast";
+const PublishCourse = ({ onBack, courseId }) => {
+  const [isPublic, setIsPublic] = React.useState(false);
 
-const PublishCourse = ({ onBack, onPublish }) => {
+  const onPublish = async () => {
+    if (!isPublic) {
+window.location.href = "/dashboard/my-coursesF"
+    }
+    try {
+      const Toastid = toast.loading("Publishing....");
+      const res = await CoursePublication(courseId, isPublic);
+      if (res.success) {
+        toast.success("Course published successfully", { id: Toastid });
+
+        setTimeout(() => {
+          window.location.href = "/dashboard/my-courses";
+        }, 2000);
+      }
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Publish failed");
+    }
+  };
+
   return (
     <section className="min-h-screen bg-[#020617] text-white px-4 sm:px-6 py-12">
       {/* ===== TITLE ===== */}
-      <h1 className="text-2xl font-semibold text-center mb-10">
-        Add Course
-      </h1>
+      <h1 className="text-2xl font-semibold text-center mb-10">Add Course</h1>
 
       {/* ===== STEPPER ===== */}
       <div className="mb-12 flex flex-col sm:flex-row justify-center items-center gap-6 text-sm">
@@ -23,13 +43,13 @@ const PublishCourse = ({ onBack, onPublish }) => {
         {/* ===== LEFT PANEL ===== */}
         <div className="lg:col-span-2">
           <div className="bg-[#0f172a] border border-slate-800 rounded-xl p-6 sm:p-8">
-            <h2 className="text-xl font-semibold mb-6">
-              Publish Settings
-            </h2>
+            <h2 className="text-xl font-semibold mb-6">Publish Settings</h2>
 
             <label className="flex items-start gap-3 text-slate-300">
               <input
                 type="checkbox"
+                checked={isPublic}
+                onChange={(e) => setIsPublic(e.target.checked)}
                 className="mt-1 h-4 w-4 accent-yellow-400"
               />
               <span>Make this course as public</span>
@@ -55,7 +75,7 @@ const PublishCourse = ({ onBack, onPublish }) => {
         </div>
 
         {/* ===== RIGHT PANEL ===== */}
-            {/* <div className="bg-[#0f172a] border border-slate-800 rounded-xl p-6 sm:p-8 h-fit">
+        {/* <div className="bg-[#0f172a] border border-slate-800 rounded-xl p-6 sm:p-8 h-fit">
             <h3 className="font-semibold mb-4 flex items-center gap-2">
                 ⚡ Course Upload Tips
             </h3>
@@ -70,8 +90,8 @@ const PublishCourse = ({ onBack, onPublish }) => {
                 <li>Send announcements to all enrolled students.</li>
             </ul>
             </div> */}
-            <Asideinformation/>
-        </div>
+        <Asideinformation />
+      </div>
     </section>
   );
 };
@@ -95,9 +115,7 @@ const StepperItem = ({ label, done, active }) => {
       >
         {done ? "✓" : "3"}
       </span>
-      <span className="text-xs sm:text-sm text-center">
-        {label}
-      </span>
+      <span className="text-xs sm:text-sm text-center">{label}</span>
     </div>
   );
 };

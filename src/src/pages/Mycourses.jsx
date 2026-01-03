@@ -10,6 +10,7 @@ const MyCoursesPage = () => {
   const { courses } = useSelector(
     (state) => state.instructorCourses
   );
+  console.log("The my course sdata os ",courses)
 
   useEffect(() => {
     dispatch(fetchInstructorCourses());

@@ -25,9 +25,10 @@ export const Course = {
 export const Course_Section = {
   createsection: "/section/create",
   deleteSection: "/section/delete/:sectionId",
-  GetInrtuctorCourse : "/courses"
+  GetInrtuctorCourse: "/courses",
+  PublicationCourse: "/publish-courses",
 };
-export const Subsection = { 
+export const Subsection = {
   CreateSubsection: "/subsection/create",
 };
 export const Enqiry = {
@@ -190,6 +191,7 @@ export const GetCategorires = async () => {
 
 export const createCourseSection = async (data) => {
   const response = await api.post(Course_Section.createsection, data);
+  console.log("The Time duration is", response);
   return response?.data;
 };
 export const deleteSection = async (sectionId) => {
@@ -200,10 +202,20 @@ export const deleteSection = async (sectionId) => {
 
 export const createSubsection = async (formData) => {
   const response = await api.post(Subsection.CreateSubsection, formData);
+
   return response;
 };
 
-export const GetInsturctorCourse = async ()=>{
-  const response  = await api.get(Course_Section.GetInrtuctorCourse);
+export const GetInsturctorCourse = async () => {
+  const response = await api.get(Course_Section.GetInrtuctorCourse);
+  console.log("The course is ", response);
   return response?.data;
-}
+};
+
+//public the course or private
+
+export const CoursePublication = async (courseId,isPublic) => {
+  const response = await  api.post(Course_Section.PublicationCourse,     { courseId, isPublic });
+  console.log("The data is COurse publciaiton ",response)
+  return response.data;
+};

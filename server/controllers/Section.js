@@ -17,7 +17,7 @@ exports.createSection = async (req, res) => {
       });
     }
 
-    const newSection = await Section.create({ sectionName });
+    const newSection = await Section.create({ sectionName,courseId });
 
     const updatedCourse = await Course.findByIdAndUpdate(
       courseId,

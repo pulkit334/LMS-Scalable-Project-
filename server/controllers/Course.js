@@ -93,7 +93,7 @@ exports.createCourse = async (req, res) => {
     );
 
     //update the category  schema homework
-
+    console.log("the data is ", response);
     res.status(201).json({
       success: true,
       message: "Course Created Succesfully",
@@ -114,7 +114,7 @@ exports.ShowCourses = async (req, res) => {
   try {
     const instrucorid = req.user.id;
     const AllCourses = await course
-      .find({Insturctor : instrucorid})
+      .find({ Insturctor: instrucorid })
       .populate("Insturctor") // ⬅MUST MATCH SCHEMA FIELD NAME
       .exec();
 
@@ -181,6 +181,55 @@ exports.getEnrolledCourses = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to fetch enrolled courses",
+    });
+  }
+};
+// for making the course publish  or saved as draft
+
+exports.changestatus = async (req, res) => {
+  try {
+    const { courseId, isPublic } = req.body;
+    console.log(courseId, isPublic);
+    const userId = req.user.id;
+    if (!courseId) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid Credentials",
+      });
+    }
+
+    const Course = await course.findById(courseId);
+
+    if (!Course) {
+      return res.status(404).json({
+        success: false,
+        message: "Course not found",
+      });
+    }
+    //  Instructor ownership check
+    if (Course.Insturctor.toString() !== userId) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not allowed to publish this course",
+      });
+    }
+    if (isPublic) {
+      Course.status = "PUBLISHED";
+    } else {
+      Course.status = "DRAFT";
+    }
+await Course.save();
+
+return res.status(200).json({
+  success: true,
+  message: "Successfully Published",
+});
+  } catch (error) {
+    console.log(error)
+    return res.status(500).json({
+      success: false,
+      message: "Error Pls Try Again ",
+      error,
     });
   }
 };

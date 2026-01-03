@@ -2,7 +2,6 @@ import { Edit2, Trash2 } from "lucide-react";
 import { COURSE_STATUS } from "../../../utils/constants";
 
 const MyCourses = ({ courses = [], onEdit, onDelete, onAdd }) => {
-  console.log("🚨 MyCoursdasdasesPage FILE LOADED");
   console.log("teh coourses are ", courses);
   return (
     <div className="w-full px-8 py-10 text-white">
@@ -46,11 +45,12 @@ const MyCourses = ({ courses = [], onEdit, onDelete, onAdd }) => {
 
                 <p className="text-sm text-slate-400 line-clamp-2">
                   {course.courseDescription}
+                  
                 </p>
 
                 <p className="text-xs text-slate-500">
-                  Created: {new Date(course.createdAt).toLocaleDateString()} |{" "}
-                  {new Date(course.createdAt).toLocaleTimeString()}
+                  Created: {new Date(course?.Insturctor?.createdAt).toLocaleDateString()} |{" "}
+                  {new Date(course?.Insturctor?.createdAt).toLocaleTimeString()}
                 </p>
 
                 {/* STATUS BADGE */}
