@@ -231,7 +231,7 @@ const CourseBuilder = ({
                             >
                               <div className="flex items-center gap-2 truncate">
                                 📹
-                                <span className="truncate max-w-[260px]">
+                                <span className="truncate max-w-65">
                                   {lecture.tittle}
                                 </span>
                               </div>
