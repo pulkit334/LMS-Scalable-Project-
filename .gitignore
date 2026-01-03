@@ -21,3 +21,4 @@ server/filepath/tmp-*
 /crone/*.json
 !/crone/package.json
 !/crone/package-lock.json
+/src/clonesrc
