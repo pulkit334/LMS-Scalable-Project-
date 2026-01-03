@@ -62,7 +62,7 @@ const ViewLectureModal = ({ lecture, onClose }) => {
               preload="metadata"
               className="
                 w-full
-                max-h-[420px]
+                max-h-105
                 rounded-md
                 bg-black
               "

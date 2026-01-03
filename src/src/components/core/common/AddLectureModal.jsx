@@ -1,6 +1,5 @@
-/* eslint-disable no-unreachable */
 /* eslint-disable react-hooks/rules-of-hooks */
-/* eslint-disable no-unused-vars */
+
 import { X, Upload } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { createSubsection } from "../../../services/auth";
@@ -18,7 +17,7 @@ const AddLectureModal = ({ isOpen, onClose, sectionId }) => {
     register,
     handleSubmit,
     reset,
-    formState: { errors, isSubmitSuccessful, isSubmitting },
+    formState: { errors,  isSubmitting },
   } = useForm();
   const handleVideoPreview = async (file) => {
     if (!file) return;
@@ -117,7 +116,7 @@ const AddLectureModal = ({ isOpen, onClose, sectionId }) => {
                     controls
                     className="
             w-full
-            max-h-[260px]
+            max-h-65
             aspect-video
             rounded-md
             object-contain
