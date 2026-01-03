@@ -14,6 +14,7 @@ src/src/data/
 server/filepath/
 server/filepath/tmp-*
 
-/crone/s1.json
-/crone/s2.json
-/crone/s3.json
+# ignore crone data files
+/crone/*.json
+!/crone/package.json
+!/crone/package-lock.json
