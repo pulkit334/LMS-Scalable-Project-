@@ -14,4 +14,6 @@ src/src/data/
 server/filepath/
 server/filepath/tmp-*
 
-    
+/crone/s1.json
+/crone/s2.json
+/crone/s3.json
