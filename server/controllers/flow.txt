@@ -1,0 +1,23 @@
+auth -> send otp
+      -> signup
+      -> login
+      -> change password
+
+reset -> send password token mail
+       -> reset password
+
+middleware ->
+      auth
+      isadmin
+      isinstructor
+
+create auto image 
+whne you add you name it make it a new random gernated file 
+__dicebar
+
+How it works Initial authentication: A client authenticates with a server, often using credentials or an identity provider.Token issuance: Upon successful authentication, the server issues a bearer token to the client.Subsequent requests: The client includes the token in the Authorization header of every subsequent request to a protected resource, formatted as Authorization: Bearer <token>.Server validation: The server receives the request, validates the token (checking for authenticity and expiration), and if valid, grants access to the resource. If the token is invalid, it will typically return a \(401\) Unauthorized response. 
+
+15-12-2025
+rating and reviw contorlller create 
+avg rating ->piplines 
+hw Course related Review

@@ -1,0 +1,170 @@
+payment.js
+const { instance } = require("../config/razerpay");
+const Course = require("../models/course");
+const User = require("../models/User");
+const crypto = require("crypto");
+const mailsender = require("../utils/mailpotp");
+const {
+  courseEnrollmentEmail,
+} = require("../mail template/courseEnrollmentEmail");
+const { default: mongoose } = require("mongoose");
+const { error } = require("console");
+
+//capture the payment and intitate the razer pay order
+// createion done
+exports.capturePayment = async (req, res) => {
+  //phele course le aoo and user ID
+  const { course_id } = req.body;
+  const userid = req.user.id;
+
+  //validation
+  if (!course_id) {
+    return res.status(400).json({
+      success: false,
+      message: "pls Provide Valid Course id",
+    });
+  }
+  let course;
+  try {
+    course = await Course.findById(course_id);
+    if (!course) {
+      return res.json({
+        success: false,
+        message: "Could Not Find The Course",
+      });
+    }
+
+    //can check wheter the user buy the same course alerdy
+    // yaha  user id mer id me hai and cours eke id
+    // object id me hia so convert it
+    const uid = new mongoose.Types.ObjectId(userid);
+    if (course.studentEnrolled.includes(uid)) {
+      return res.status(200).json({
+        success: false,
+        message: "Student is Alerday Enrolled",
+      });
+    }
+  } catch (error) {
+    {
+      console.error(error);
+      return res.status(500).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+  //user ne pay toh nahi kar rakka
+  //order create karo and
+
+  const amount = course.price;
+  const curreny = "INR";
+
+  const options = {
+    amount: amount * 100,
+    curreny,
+    receipt: Math.random(Date.now()).toString(),
+    notes: {
+      course_id: course_id,
+      userid,
+    },
+  };
+
+  try {
+    //intitate the payment using razer pay
+    //response
+    const paymentResponse = await instance.orders.course(options);
+    console.log(paymentResponse);
+    return res.status(200).json({
+      success: true,
+      courseName: course.courseName,
+      courseDescription: course.courseDescription,
+      thumbnail: course.thumbnail,
+      order_Id: paymentResponse.id,
+      currency: paymentResponse.currency,
+      amount: paymentResponse.amount,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(402).json({
+      success: false,
+      message: "Could Not intitate order",
+    });
+  }
+
+  //return
+};
+
+// fix it
+// ls - https://github.com/advisories/GHSA-rcmh-qjqh-p98v
+// No fix available
+// node_modules/nodemailer-otp/node_modules/nodemailer
+//   nodemailer-otp  *
+//   Depends on vulnerable versions of nodemailer
+//   node_modules/nodemailer-otp
+
+// 2 vulnerabilities (1 low, 1 moderate)
+
+//verify the signature of RazerPay and Server
+exports.verifySignature = async (req, res) => {
+  const webhookSecret = "12345678";
+  const signature = req.headers("x-razorpay-signature");
+
+  const shawsum = crypto.createHmac("sha256", webhookSecret);
+  shawsum.update(JSON.stringify(req.body));
+  const digest = shawsum.digest("hex");
+
+  if (
+    signature.length === digest.length &&
+    crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(digest))
+  ) {
+    console.log("Payment is Authorized");
+
+    const { course_id, userid } = req.body.payload.payment.entity.notes;
+    try {
+      //fullfill the aciton
+      //find th course and enroll the student in it
+      const enrolledCourse = await Course.findByIdAndUpdate(
+        { _id: course_id },
+        {
+          $push: { studentEnrolled: userid },
+        },
+        { new: true }
+      );
+      if (!enrolledCourse) {
+        return res.status(500).json({
+          success: false,
+          message: "Course Not Found",
+        });
+      }
+      
+      //find the student and add teh course ot thier list enrolled coursee me
+      const enrolledStudent = await User.findOneAndUpdate(
+        { _id: userid },
+        {
+          $push: { courses: course_id },
+        },
+        { new: true }
+      );
+
+      //mails send confirmation
+      const emailResonse = await mailsender(
+        enrolledStudent.email,
+        "Congratulation From Pulkit",
+        "Congratulatio;s,You are onboared into new CodeHelp Course"
+      );
+      console.log(emailResonse);
+      return res.status(200).json({
+        success: true,
+        message: "Signature Verified and Course added ",
+      });
+
+    } catch (error) {    console.log("Invalid Signature");
+    return res.status(500).json({
+        message : false,
+        message : error.message}
+  } else {
+retunr te res 
+invlid requres
+    })
+  }
+};
