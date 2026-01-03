@@ -9,3 +9,6 @@ secret.txt
 *.exe
 src/src/data/
 
+# ignore temp / uploaded files
+server/filepath/
+server/filepath/tmp-*
