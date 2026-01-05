@@ -51,7 +51,7 @@ window.location.href = "/dashboard/my-coursesF"
                 checked={isPublic}
                 onChange={(e) => setIsPublic(e.target.checked)}
                 className="mt-1 h-4 w-4 accent-yellow-400"
-              />
+              />z
               <span>Make this course as public</span>
             </label>
 

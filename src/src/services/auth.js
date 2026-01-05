@@ -12,7 +12,7 @@ export const AUTH = {
   checkCurrentPassword: "/auth/check-password",
   FORGOT_PASSWORD: "/auth/reset-password-token",
   RESET_PASSWORD: "/auth/reset-password",
-  Password_changer: "/auth/change-password",
+  Password_changer: "/au th/change-password",
   Delete_Account: "/profile/delete",
   Profile_Recovery: "/profile/recovery",
   EmailVerification: "/recover-account",
@@ -30,6 +30,7 @@ export const Course_Section = {
 };
 export const Subsection = {
   CreateSubsection: "/subsection/create",
+  UpdateSubsection: "/subsection/:subSectionId",
 };
 export const Enqiry = {
   Enquiry: "/aboutus/submit-form",
@@ -201,8 +202,9 @@ export const deleteSection = async (sectionId) => {
 };
 
 export const createSubsection = async (formData) => {
+  console.log("The Creation of Subsetion would be",formData)
   const response = await api.post(Subsection.CreateSubsection, formData);
-
+  console.log("The Creation of Subsetion would be", response)
   return response;
 };
 
@@ -214,8 +216,22 @@ export const GetInsturctorCourse = async () => {
 
 //public the course or private
 
-export const CoursePublication = async (courseId,isPublic) => {
-  const response = await  api.post(Course_Section.PublicationCourse,     { courseId, isPublic });
-  console.log("The data is COurse publciaiton ",response)
+export const CoursePublication = async (courseId, isPublic) => {
+  const response = await api.post(Course_Section.PublicationCourse, {
+    courseId,
+    isPublic,
+  });
+  console.log("The data is COurse publciaiton ", response);
   return response.data;
+};
+
+export const UpdateSubsection = async (subSectionId, formData) => {
+  console.log("Sending:", subSectionId, formData);
+
+  const response = await api.patch(
+    Subsection.UpdateSubsection.replace(":subSectionId", subSectionId),
+    formData
+  );
+console.log("Hi the data is ",response)
+  return response;
 };

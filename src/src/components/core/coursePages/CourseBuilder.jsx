@@ -1,4 +1,3 @@
-
 // export default CourseBuilder;
 /* eslint-disable no-unused-vars */
 import React, { useState } from "react";
@@ -23,6 +22,7 @@ const CourseBuilder = ({
   const [isLectureModalOpen, setIsLectureModalOpen] = useState(false);
   const [activeSectionId, setActiveSectionId] = useState(null);
   const [viewLecture, setViewLecture] = useState(null);
+  const [editingLecture, setEditingLecture] = useState(null);
 
   // ================= CREATE SECTION =================
   const handleCreateSection = async () => {
@@ -37,7 +37,6 @@ const CourseBuilder = ({
         courseId,
       });
 
-   
       const updatedSections = response?.updatedCourse?.courseContent;
 
       if (!updatedSections) {
@@ -77,23 +76,87 @@ const CourseBuilder = ({
       toast.error("Failed to delete section", { id: toastId });
     }
   };
-  const handleLectureAdded = (newLecture) => {
-    if (!newLecture) return;
+  // const handleLectureAdded = (payload) => {
+  //   // Always close modal
+  //   setIsLectureModalOpen(false);
+  //   setEditingLecture(null);
+
+  //   if (!payload || !payload.lecture) {
+  //     setActiveSectionId(null);
+  //     return;
+  //   }
+
+  //   const { isEdit, lecture } = payload;
+
+  //   //  CAPTURE BEFORE CLEARING
+  //   const sectionId = activeSectionId;
+
+  //   setSections((prevSections) =>
+  //     prevSections.map((section) => {
+  //       if (section._id !== sectionId) return section;
+
+  //       return {
+  //         ...section,
+  //         subsection: isEdit
+  //           ? section.subsection.map((sub) =>
+  //               sub._id === lecture._id ? lecture : sub
+  //             )
+  //           : [...(section.subsection || []), lecture],
+  //       };
+  //     })
+  //   );
+
+  //   // Clear AFTER update
+  //   setActiveSectionId(null);
+  // };
+
+
+const handleLectureAdded = (payload) => {
+  setIsLectureModalOpen(false);
+  setEditingLecture(null);
+
+  if (!payload) {
+    setActiveSectionId(null);
+    return;
+  }
+
+  //  UPDATE CASE: replace entire section
+  if (payload.updatedSection) {
+    const updatedSection = payload.updatedSection;
 
     setSections((prevSections) =>
       prevSections.map((section) =>
-        section._id === activeSectionId
+        section._id === updatedSection._id
           ? {
-              ...section,
-              subsection: [...(section.subsection || []), newLecture],
+              ...updatedSection,
+              subsection: [...updatedSection.subsection],
             }
           : section
       )
     );
 
-    setIsLectureModalOpen(false);
     setActiveSectionId(null);
-  };
+    return;
+  }
+
+  //  CREATE CASE: append lecture
+  if (payload.lecture && payload.sectionId) {
+    const lecture = payload.lecture;
+
+    setSections((prevSections) =>
+      prevSections.map((section) =>
+        section._id === payload.sectionId
+          ? {
+              ...section,
+              subsection: [...(section.subsection || []), lecture],
+            }
+          : section
+      )
+    );
+  }
+
+  setActiveSectionId(null);
+};
 
   return (
     <section className="min-h-screen bg-[#0b1220] text-white px-0 py-10">
@@ -198,8 +261,6 @@ const CourseBuilder = ({
                     + Add Lecture
                   </button>
                   {/* ===== LECTURES LIST ===== */}
-                  {/* ===== LECTURES LIST ===== */}
-                  {/* ===== LECTURES LIST ===== */}
                   {Array.isArray(section.subsection) &&
                     section.subsection.length > 0 && (
                       <div className="mt-3 space-y-2 pl-4 border-l border-slate-600/60">
@@ -213,22 +274,21 @@ const CourseBuilder = ({
                           )
                           .map((lecture) => (
                             <div
-                              onClick={() => {
-                   
-                                setViewLecture(lecture);
-                              }}
                               key={lecture._id}
+                              onClick={() => setViewLecture(lecture)} // VIEW ONLY
                               className="
-            flex items-center justify-between
-            text-sm
-            bg-[#020617]
-            px-3 py-2
-            rounded-md
-            border border-slate-700
-            hover:border-yellow-400/50
-            transition
-          "
+        flex items-center justify-between
+        text-sm
+        cursor-pointer
+        bg-[#020617]
+        px-3 py-2
+        rounded-md
+        border border-slate-700
+        hover:border-yellow-400/50
+        transition
+      "
                             >
+                              {/* LEFT */}
                               <div className="flex items-center gap-2 truncate">
                                 📹
                                 <span className="truncate max-w-65">
@@ -236,9 +296,30 @@ const CourseBuilder = ({
                                 </span>
                               </div>
 
-                              <span className="text-[11px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded-full">
-                                {lecture.timeduration}s
-                              </span>
+                              {/* RIGHT */}
+                              <div className="flex items-center gap-3 text-gray-400">
+                                {/* EDIT */}
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setEditingLecture(lecture); //  FIX
+                                    setActiveSectionId(section._id); //  FIX
+                                    setIsLectureModalOpen(true); //  OPEN EDIT MODAL
+                                  }}
+                                >
+                                  ✏️
+                                </button>
+
+                                {/* DELETE (unchanged) */}
+                                <button onClick={(e) => e.stopPropagation()}>
+                                  🗑️
+                                </button>
+
+                                {/* DURATION */}
+                                <span className="text-[11px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded-full">
+                                  {lecture.timeduration}s
+                                </span>
+                              </div>
                             </div>
                           ))}
                       </div>
@@ -275,6 +356,7 @@ const CourseBuilder = ({
           isOpen={isLectureModalOpen}
           sectionId={activeSectionId}
           onClose={handleLectureAdded}
+          lecture={editingLecture}
         />
 
         {confirmationModal && <Confirmation modalData={confirmationModal} />}

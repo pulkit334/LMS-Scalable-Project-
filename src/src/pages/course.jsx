@@ -1,13 +1,22 @@
 /* Course.jsx */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import CourseInformation from "../components/core/coursePages/course1";
 import CourseBuilder from "../components/core/coursePages/CourseBuilder";
 import PublishCourse from "../components/core/coursePages/PublishCourse";
+import { setHashedItem, getHashedItem } from "../utils/storageUtils";
 
 const Course = () => {
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(() => {
+    return getHashedItem("courseStep") || 1;
+  });
+
   const [courseId, setCourseId] = useState(null);
   const [sections, setSections] = useState([]);
+
+  // persist ONLY step
+  useEffect(() => {
+    setHashedItem("courseStep", step);
+  }, [step]);
 
   return (
     <>

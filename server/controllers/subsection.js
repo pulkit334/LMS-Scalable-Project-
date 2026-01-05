@@ -3,67 +3,6 @@ const Section = require("../models/section");
 const { uploadImageToCloudinary } = require("../utils/imageuploader");
 const course = require("../models/course");
 
-// Create Subsection
-// exports.createSubsection = async (req, res) => {
-//   try {
-//     console.log("The Data is ", req.body);
-//     // fetch the data
-//     const { sectionId,  timeDuration,tittle, description } = req.body;
-//     if (!req.files || Object.keys(req.files).length === 0) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "Video file is required",
-//       });
-//     }
-
-//     const video = req.files.videoFile;
-
-//     // validation
-//     if (!sectionId || !tittle || !timeDuration || !description || !video) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "All fields are required",
-//       });
-//     }
-
-//     // upload video to cloudinary
-//     const uploadDetails = await uploadImageToCloudinary(
-//       video,
-//       process.env.FolderName
-//     );
-
-//     // create subsection
-//     const subsection = await SubSection.create({
-//       tittle,
-//       timeduration: timeDuration,
-//       description,
-//       videoUrl: uploadDetails.secure_url,
-//     });
-
-//     // update the section with this subsection id
-
-//     const updatedSection = await Section.findByIdAndUpdate(
-//       sectionId,
-//       {
-//         $push: { subsection: subsection._id }, // FIXED
-//       },
-//       { new: true }
-//     ).populate("subsection"); //
-// //course should be ud
-//     return res.status(200).json({
-//       success: true,
-//       message: "Subsection created successfully",
-//       updatedSection,
-//       subsection
-//     });
-//   } catch (err) {
-//     return res.status(500).json({
-//       success: false,
-//       message: "Failed to create subsection",
-//       error: err.message,
-//     });
-//   }
-// };
 exports.createSubsection = async (req, res) => {
   try {
     console.log("The Data is ", req.body);
@@ -113,10 +52,7 @@ exports.createSubsection = async (req, res) => {
     /* ================= COURSE DURATION UPDATE ================= */
 
     const section = await Section.findById(sectionId);
-// 🔍 DEBUG LOGS (ADD THESE)
-console.log("SECTION ID:", sectionId)
-console.log("SECTION DOC:", section);
-console.log("SECTION COURSE ID:", section?.courseId);
+
     const courseDoc = await course.findById(section.courseId).populate({
       path: "courseContent",
       populate: { path: "subsection" },
@@ -138,7 +74,6 @@ console.log("SECTION COURSE ID:", section?.courseId);
     return res.status(200).json({
       success: true,
       message: "Subsection created successfully",
-      updatedSection,
       subsection,
     });
   } catch (err) {
@@ -186,6 +121,7 @@ exports.UpdateSubsection = async (req, res) => {
   try {
     const SubsectionId = req.params.subSectionId;
     const subsection = await SubSection.findById(SubsectionId);
+    console.log("The data is ",SubsectionId,subsection)
     if (!subsection) {
       return res.status(404).json({
         success: false,
@@ -203,14 +139,22 @@ exports.UpdateSubsection = async (req, res) => {
     subsection.tittle = tittle;
     subsection.description = description;
     await subsection.save();
+    //
+    const UpdatedData = await Section.findOne({
+      subsection : SubsectionId
+    }).populate("subsection");
+    console.log("The updation data is ",UpdatedData)
     return res.status(201).json({
       success: true,
       message: "Succesfully Updated The data",
+      UpdatedData,
     });
   } catch (error) {
     return res.status(400).json({
       success: true,
       message: error.message,
+    subsection
     });
   }
 };
+
