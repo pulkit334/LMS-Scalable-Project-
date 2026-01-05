@@ -6,13 +6,13 @@ const Contactus = () => {
 
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-b from-[#020617] to-[#000814] flex items-center justify-center px-6">
+    <div className="min-h-screen w-full bg-linear-to-b from-[#020617] to-[#000814] flex items-center justify-center px-6">
       
       {/* MAIN WRAPPER */}
       <div className="flex w-full max-w-6xl items-start mt-20 gap-12">
 
         {/* LEFT CARD */}
-        <div className="w-[420px] rounded-2xl bg-[#0b1220] p-10 text-gray-300 shadow-xl">
+        <div className="w-105 rounded-2xl bg-[#0b1220] p-10 text-gray-300 shadow-xl">
           <div className="space-y-10">
 
             {/* Chat */}

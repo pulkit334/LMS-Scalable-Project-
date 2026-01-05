@@ -40,7 +40,7 @@ const About = () => {
             />
           </div>
 
-          <div className="h-[260px] w-[360px] overflow-hidden bg-white shadow-lg">
+          <div className="h-65 w-90 overflow-hidden bg-white shadow-lg">
             <img
               src="/Images/aboutus3.webp"
               alt=""
