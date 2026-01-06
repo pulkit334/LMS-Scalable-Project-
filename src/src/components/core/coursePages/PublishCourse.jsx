@@ -1,35 +1,52 @@
+/* eslint-disable react-hooks/immutability */
 import React from "react";
+import { useDispatch, useSelector } from "react-redux";
 import Asideinformation from "../../../utils/Asideinformation";
 import { CoursePublication } from "../../../services/auth";
 import toast from "react-hot-toast";
-const PublishCourse = ({ onBack, courseId }) => {
-  const [isPublic, setIsPublic] = React.useState(false);
+import { setIsPublic, setStep, resetCourse } from "../../../Slices/courseSlice";
 
-  const onPublish = async () => {
-    if (!isPublic) {
-window.location.href = "/dashboard/my-coursesF"
-    }
-    try {
-      const Toastid = toast.loading("Publishing....");
-      const res = await CoursePublication(courseId, isPublic);
-      if (res.success) {
-        toast.success("Course published successfully", { id: Toastid });
+const PublishCourse = ({ onBack }) => {
+  const dispatch = useDispatch();
+  let toastId;
 
-        setTimeout(() => {
-          window.location.href = "/dashboard/my-courses";
-        }, 2000);
-      }
-    } catch (err) {
-      toast.error(err?.response?.data?.message || "Publish failed");
+  //  GET EVERYTHING FROM REDUX
+  const { courseId, isPublic } = useSelector((state) => state.course);
+const onPublish = async () => {
+//blocking the user if not make published
+  if (!isPublic) {
+    toast.error("Please mark the course as public before publishing");
+    return;
+  }
+
+  try {
+    toastId = toast.loading("Publishing....");
+
+    const res = await CoursePublication(courseId, isPublic);
+
+    if (res.success) {
+      toast.success("Course published successfully", { id: toastId });
+
+      //  CLEAN STATE AFTER SUCCESS
+      dispatch(resetCourse());
+
+      setTimeout(() => {
+        window.location.href = "/dashboard/my-courses";
+      }, 1500);
     }
-  };
+  } catch (err) {
+    console.log("The error is", err);
+    toast.error("Course publish failed", { id: toastId });
+  }
+};
 
   return (
     <section className="min-h-screen bg-[#020617] text-white px-4 sm:px-6 py-12">
-      {/* ===== TITLE ===== */}
-      <h1 className="text-2xl font-semibold text-center mb-10">Add Course</h1>
+      <h1 className="text-2xl font-semibold text-center mb-10">
+        Add Course
+      </h1>
 
-      {/* ===== STEPPER ===== */}
+      {/* STEPPER */}
       <div className="mb-12 flex flex-col sm:flex-row justify-center items-center gap-6 text-sm">
         <StepperItem label="Course Information" done />
         <div className="hidden sm:block h-px w-14 border-t border-dashed border-yellow-400" />
@@ -38,27 +55,31 @@ window.location.href = "/dashboard/my-coursesF"
         <StepperItem label="Publish" active />
       </div>
 
-      {/* ===== MAIN GRID ===== */}
       <div className="mx-auto max-w-6xl grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* ===== LEFT PANEL ===== */}
         <div className="lg:col-span-2">
           <div className="bg-[#0f172a] border border-slate-800 rounded-xl p-6 sm:p-8">
-            <h2 className="text-xl font-semibold mb-6">Publish Settings</h2>
+            <h2 className="text-xl font-semibold mb-6">
+              Publish Settings
+            </h2>
 
             <label className="flex items-start gap-3 text-slate-300">
               <input
                 type="checkbox"
                 checked={isPublic}
-                onChange={(e) => setIsPublic(e.target.checked)}
+                onChange={(e) =>
+                  dispatch(setIsPublic(e.target.checked))
+                }
                 className="mt-1 h-4 w-4 accent-yellow-400"
-              />z
+              />
               <span>Make this course as public</span>
             </label>
 
-            {/* ACTION BUTTONS */}
             <div className="mt-10 flex flex-col sm:flex-row gap-4">
               <button
-                onClick={onBack}
+                onClick={() => {
+                  onBack?.();
+                  dispatch(setStep(2));
+                }}
                 className="bg-slate-600 px-6 py-2 rounded-md w-full sm:w-auto"
               >
                 ← Back
@@ -74,22 +95,6 @@ window.location.href = "/dashboard/my-coursesF"
           </div>
         </div>
 
-        {/* ===== RIGHT PANEL ===== */}
-        {/* <div className="bg-[#0f172a] border border-slate-800 rounded-xl p-6 sm:p-8 h-fit">
-            <h3 className="font-semibold mb-4 flex items-center gap-2">
-                ⚡ Course Upload Tips
-            </h3>
-
-            <ul className="text-sm text-slate-300 space-y-3 list-disc pl-5">
-                <li>Set the Course Price option or make it free.</li>
-                <li>Standard size for the course thumbnail is 1024×576.</li>
-                <li>Video section controls the course overview video.</li>
-                <li>Course Builder is where you create & organize a course.</li>
-                <li>Add Topics to create lessons, quizzes, and assignments.</li>
-                <li>Additional Data shows on the course single page.</li>
-                <li>Send announcements to all enrolled students.</li>
-            </ul>
-            </div> */}
         <Asideinformation />
       </div>
     </section>
@@ -97,6 +102,7 @@ window.location.href = "/dashboard/my-coursesF"
 };
 
 export default PublishCourse;
+
 
 /* ===== STEPPER ITEM ===== */
 const StepperItem = ({ label, done, active }) => {

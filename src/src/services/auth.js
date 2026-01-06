@@ -21,12 +21,14 @@ export const AUTH = {
 export const Course = {
   CreateCourse: "/course/create",
   categories: "/category/all",
+  GetFUllCourseDetails: "/getFullCourseDetails/:courseId",
 };
 export const Course_Section = {
   createsection: "/section/create",
   deleteSection: "/section/delete/:sectionId",
   GetInrtuctorCourse: "/courses",
   PublicationCourse: "/publish-courses",
+  UpdateCourse: "/course/update/:courseId",
 };
 export const Subsection = {
   CreateSubsection: "/subsection/create",
@@ -202,9 +204,9 @@ export const deleteSection = async (sectionId) => {
 };
 
 export const createSubsection = async (formData) => {
-  console.log("The Creation of Subsetion would be",formData)
+  console.log("The Creation of Subsetion would be", formData);
   const response = await api.post(Subsection.CreateSubsection, formData);
-  console.log("The Creation of Subsetion would be", response)
+  console.log("The Creation of Subsetion would be", response);
   return response;
 };
 
@@ -232,6 +234,23 @@ export const UpdateSubsection = async (subSectionId, formData) => {
     Subsection.UpdateSubsection.replace(":subSectionId", subSectionId),
     formData
   );
-console.log("Hi the data is ",response)
+  console.log("Hi the data is ", response);
   return response;
+};
+
+export const getFullCourseDetails = async (courseId) => {
+  console.log("The GetFull Course API data is", courseId);
+  const res = await api.get(
+    Course.GetFUllCourseDetails.replace(":courseId", courseId)
+  );
+  console.log("The Fullcourse edit data is", res);
+
+  return res.data;
+};
+
+export const UpdateUser = async (courseId,formData) => {
+
+  const res = await api.patch(Course_Section.UpdateCourse.replace(":courseId",courseId), formData);
+  console.log("The Data is", res);
+  return res?.data;
 };

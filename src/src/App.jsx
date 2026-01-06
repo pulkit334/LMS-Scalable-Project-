@@ -1,4 +1,3 @@
-
 // export default App;
 import React, { useEffect } from "react";
 import { Route, Routes } from "react-router-dom";
@@ -30,6 +29,9 @@ import EmailVerification from "./pages/EmailVerification";
 import Mycourses from "./pages/Mycourses";
 import fetchCategories from "./services/ThunkApi/categoryThunk";
 import Course from "./pages/course";
+import { hydrateAuth } from "./appInit";
+import OpenRoute from "./utils/openRoutes";
+import EditCourse from "./components/core/Dashboard/editcourse";
 function App() {
   const dispatch = useDispatch();
   const token = useSelector((state) => state.auth.token);
@@ -46,6 +48,9 @@ function App() {
       dispatch(fetchCategories());
     }
   });
+  useEffect(() => {
+    hydrateAuth(dispatch);
+  }, [dispatch]);
   return (
     <div className="w-screen min-h-screen flex flex-col font-inter">
       <Routes>
@@ -53,7 +58,15 @@ function App() {
         <Route element={<MainLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/signup" element={<Signup />} />
-          <Route path="/login" element={<Login />} />
+          <Route
+            path="/login"
+            element={
+              <OpenRoute>
+                {" "}
+                <Login />
+              </OpenRoute>
+            }
+          />
           <Route path="/verify-otp" element={<VerifyOtp />} />
           <Route path="/account-deactivated" element={<AccountDeactivated />} />
           <Route
@@ -89,6 +102,10 @@ function App() {
             {user?.accountType !== ACCOUNT_TYPE.STUDENT && (
               <Route path="cart" element={<StudentOnly />} />
             )}
+            <Route
+              path="edit-course/:courseId"
+              element={<EditCourse />}
+            />
             {user?.accountType !== ACCOUNT_TYPE.STUDENT && (
               <>
                 {" "}

@@ -1,6 +1,7 @@
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../../../../Slices/authslice";
 import { Link } from "react-router-dom";
+import { persistor } from "../../../../store/store";
 export const ProfileMenu = () => {
   const user = useSelector((state) => state?.profile?.user);
   const dispatch = useDispatch();
@@ -42,6 +43,8 @@ export const ProfileMenu = () => {
       <button
         onClick={() => {
           localStorage.removeItem("token");
+          persistor.purge();
+
           dispatch(logout());
         }}
         className="w-full px-6 py-3 text-left text-red-600 hover:bg-red-50"

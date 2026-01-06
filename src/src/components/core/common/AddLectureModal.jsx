@@ -54,6 +54,11 @@ const AddLectureModal = ({ isOpen, onClose, sectionId, lecture = null }) => {
     setVideoPreview(URL.createObjectURL(file));
   };
 
+  /* -------------------- SAFE CLOSE -------------------- */
+  const handleModalClose = () => {
+    onClose(null); // ✅ IMPORTANT
+  };
+
   /* -------------------- SAVE -------------------- */
   const handleSave = async (data) => {
     let toastId;
@@ -70,15 +75,15 @@ const AddLectureModal = ({ isOpen, onClose, sectionId, lecture = null }) => {
           formData.append(key, value);
         }
       });
+
       toastId = isEdit
         ? toast.loading("Updating")
         : toast.loading("Creating Subsection");
+
       const response = isEdit
         ? await UpdateSubsection(subSectionId, formData)
         : await createSubsection(formData);
-      {
-        `The data is ${response}`;
-      }
+
       onClose({
         isEdit,
         sectionId,
@@ -97,7 +102,7 @@ const AddLectureModal = ({ isOpen, onClose, sectionId, lecture = null }) => {
   return (
     <div
       className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center"
-      onClick={onClose}
+      onClick={handleModalClose} // ✅ FIX
     >
       <div
         className="
@@ -117,7 +122,7 @@ const AddLectureModal = ({ isOpen, onClose, sectionId, lecture = null }) => {
           <h2 className="text-lg font-semibold text-white">
             {isEdit ? "Edit Lecture" : "Adding Lecture"}
           </h2>
-          <button onClick={onClose}>
+          <button onClick={handleModalClose}> {/* ✅ FIX */}
             <X className="text-slate-400 hover:text-white" />
           </button>
         </div>
@@ -132,17 +137,7 @@ const AddLectureModal = ({ isOpen, onClose, sectionId, lecture = null }) => {
                 {!isEdit && <span className="text-yellow-400">*</span>}
               </label>
 
-              <label
-                className="
-                  flex flex-col items-center justify-center
-                  border border-dashed border-slate-600
-                  rounded-lg p-6
-                  cursor-pointer
-                  hover:border-yellow-400
-                  transition
-                  bg-[#020617]
-                "
-              >
+              <label className="flex flex-col items-center justify-center border border-dashed border-slate-600 rounded-lg p-6 cursor-pointer bg-[#020617]">
                 {videoPreview ? (
                   <video
                     src={videoPreview}

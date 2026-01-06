@@ -1,5 +1,5 @@
 import { useSelector } from "react-redux";
-import { ProfileMenu } from "./ProfileBar_compo/ProfilePopup";
+import { ProfileMenu } from "./ProfileBar_modal/ProfilePopup";
 import { useEffect, useRef, useState } from "react";
 export const ProfileDropDown = () => {
   const user = useSelector((state) => state.profile.user);

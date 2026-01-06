@@ -40,6 +40,8 @@ const {
   course, // get course details
   getEnrolledCourses,
   changestatus,
+  getFullCourseDetails,
+  updateCourse
 } = require("../controllers/Course");
 
 //************for Courses -> section*************//
@@ -99,10 +101,14 @@ router.post("/auth/change-password", auth, changePassword);
 router.get("/courses", auth, isinstructor, ShowCourses);
 //Protected
 router.get("/enrolled-courses", auth, getEnrolledCourses);
-router.post("/publish-courses",auth,changestatus)
+router.post("/publish-courses", auth, changestatus);
 // Protected
-
+router.patch("/course/update/:courseId",auth,isinstructor,updateCourse)
 router.get("/course/:courseId", auth, isstudent, course);
+router.get(
+  "/getFullCourseDetails/:courseId", auth, isinstructor, 
+  getFullCourseDetails
+);
 
 // ================= SECTION ROUTES =================
 

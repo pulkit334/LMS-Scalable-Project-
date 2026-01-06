@@ -218,18 +218,154 @@ exports.changestatus = async (req, res) => {
     } else {
       Course.status = "DRAFT";
     }
-await Course.save();
+    await Course.save();
 
-return res.status(200).json({
-  success: true,
-  message: "Successfully Published",
-});
+    return res.status(200).json({
+      success: true,
+      message: "Successfully Published",
+    });
   } catch (error) {
-    console.log(error)
+    console.log(error);
     return res.status(500).json({
       success: false,
       message: "Error Pls Try Again ",
       error,
+    });
+  }
+};
+
+//updation Purpose APi's
+
+exports.getFullCourseDetails = async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    const userId = req.user.id;
+
+    const courseDetails = await course
+      .findById(courseId)
+      .populate({
+        path: "Insturctor", //  spelling preserved
+        populate: { path: "additionalDetails" },
+      })
+      .populate("category")
+      .populate({
+        path: "courseContent",
+        populate: { path: "subsection" },
+      });
+
+    if (!courseDetails) {
+      return res.status(404).json({
+        success: false,
+        message: "Course not found",
+      });
+    }
+
+    //  AUTH CHECK
+    if (courseDetails.Insturctor._id.toString() !== userId) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to edit this course",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      courseDetails,
+    });
+  } catch (error) {
+    console.error("GET FULL COURSE DETAILS ERROR:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch course details",
+    });
+  }
+};
+exports.updateCourse = async (req, res) => {
+  try {
+    const { courseId } = req.params;
+
+    // 1️ Build update object safely (FIELD WHITELIST)
+    const {
+      courseName,
+      courseDescription,
+      whatyouwilllearn,
+      price,
+      category,
+      tag,
+      benifits,
+      requirements,
+      status,
+    } = req.body;
+
+    const updatePayload = {
+      ...(courseName && { courseName }),
+      ...(courseDescription && { courseDescription }),
+      ...(whatyouwilllearn && { whatyouwilllearn }),
+      ...(price && { price }),
+      ...(category && { category }),
+      ...(tag && { tag }),
+      ...(benifits && { benifits }),
+      ...(requirements && { requirement: requirements }),
+      ...(status && { status }),
+    };
+
+    // 2️ Handle thumbnail update (ONLY if file exists)
+    if (req.files?.thumbnailImage) {
+      // Fetch ONLY image fields (lean, fast)
+      const courseImage = await course
+        .findById(courseId)
+        .select("image")
+        .lean();
+
+      if (!courseImage) {
+        return res.status(404).json({
+          success: false,
+          message: "Course not found",
+        });
+      }
+
+      const publicId =
+        courseImage.image?.publicId || `courses/${courseId}/thumbnail`;
+console.log("The public Id is ",courseImage)
+      const uploaded = await uploadImageToCloudinary(
+        req.files.thumbnailImage,
+        process.env.FolderName,
+        {
+          public_id: publicId,
+          overwrite: true,
+          invalidate: true,
+        }
+      );
+
+      updatePayload.image = {
+        url: uploaded.secure_url,
+        publicId: uploaded.public_id,
+      };
+    }
+    // 3️ Single atomic DB update (FAST)
+    const updatedCourse = await course.findByIdAndUpdate(
+      courseId,
+      { $set: updatePayload },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedCourse) {
+      return res.status(404).json({
+        success: false,
+        message: "Course not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Course updated successfully",
+      course: updatedCourse,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Course update failed",
+      error: error.message,
     });
   }
 };

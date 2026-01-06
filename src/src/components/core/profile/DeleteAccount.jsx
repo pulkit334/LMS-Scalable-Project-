@@ -5,6 +5,7 @@ import Confirmation from "../common/confirmmation";
 import toast from "react-hot-toast";
 import { useDispatch } from "react-redux";
 import { logout } from "../../../Slices/authslice";
+import { persistor } from "../../../store/store";
 const DeleteAccount = () => {
   const [confirmationModal, setConfirmationModal] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -61,6 +62,8 @@ const DeleteAccount = () => {
                     try {
                       await deleteAccount();
                       dispatch(logout());
+                      persistor.purge();
+
                       toast.success("Account deletion request submitted", {
                         id: toastId,
                       });
