@@ -32,6 +32,7 @@ import Course from "./pages/course";
 import { hydrateAuth } from "./appInit";
 import OpenRoute from "./utils/openRoutes";
 import EditCourse from "./components/core/Dashboard/editcourse";
+import Catalog from "./pages/catalog"
 function App() {
   const dispatch = useDispatch();
   const token = useSelector((state) => state.auth.token);
@@ -58,6 +59,7 @@ function App() {
         <Route element={<MainLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/catalog/:catalogName" element={<Catalog />} />
           <Route
             path="/login"
             element={

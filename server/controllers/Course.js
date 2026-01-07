@@ -2,7 +2,8 @@ const course = require("../models/course");
 const Category = require("../models/category");
 const User = require("../models/User");
 const { uploadImageToCloudinary } = require("../utils/imageuploader");
-
+const Section = require("../models/section");
+const SubSection = require("../models/subsection");
 exports.createCourse = async (req, res) => {
   try {
     //fetch all the data
@@ -326,7 +327,7 @@ exports.updateCourse = async (req, res) => {
 
       const publicId =
         courseImage.image?.publicId || `courses/${courseId}/thumbnail`;
-console.log("The public Id is ",courseImage)
+      console.log("The public Id is ", courseImage);
       const uploaded = await uploadImageToCloudinary(
         req.files.thumbnailImage,
         process.env.FolderName,
@@ -366,6 +367,85 @@ console.log("The public Id is ",courseImage)
       success: false,
       message: "Course update failed",
       error: error.message,
+    });
+  }
+};
+
+exports.deleteCourse = async (req, res) => {
+  try {
+    // 1️ Extract IDs
+    const  courseId  = req.params.courseId;
+    const userId = req.user.id;
+
+    // 2️ Find course
+      console.log('the Course before result is',courseId)
+    const Course = await course.findById(courseId);
+    console.log('the Course result is this ',Course)
+    if (!Course) {
+      return res.status(404).json({
+        success: false,
+        message: "Course not found",
+      });
+    }
+
+    // 3️ Authorization check (VERY IMPORTANT FIX)
+    if (Course.Insturctor.toString() !== userId) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to delete this course",
+      });
+    }
+
+    // 4️ Find all sections of the course (only subSection field)
+    const sections = await Section.find(
+      { _id: { $in: Course.courseContent } },
+      { subSection: 1 }
+    ).lean();
+
+    // 5️ Collect all subsection IDs
+    const subSectionIds = sections.flatMap(
+      (sec) => sec.subSection
+    );
+
+    // 6️ Delete all subsections
+    if (subSectionIds.length > 0) {
+      await SubSection.deleteMany({
+        _id: { $in: subSectionIds },
+      });
+    }
+
+    // 7️ Delete all sections
+    await Section.deleteMany({
+      _id: { $in: Course.courseContent },
+    });
+
+    // 8️ Remove course from ALL enrolled users
+    await User.updateMany(
+      { courses: courseId },
+      { $pull: { courses: courseId } }
+    );
+
+    // 9️ OPTIONAL: remove course from category (safe guard)
+    if (Course.category) {
+      await Category.findByIdAndUpdate(
+        Course.category,
+        { $pull: { courses: courseId } }
+      );
+    }
+
+    //  Finally delete the course itself
+    await course.findByIdAndDelete(courseId);
+
+    // 111 Response
+    return res.status(200).json({
+      success: true,
+      message: "Course deleted successfully",
+    });
+  } catch (error) {
+    console.error("Delete course error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to delete course",
     });
   }
 };
