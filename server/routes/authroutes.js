@@ -61,7 +61,11 @@ const {
 } = require("../controllers/subsection");
 
 //************ Category Api's********************/
-const { Category, AllCategory } = require("../controllers/category");
+const {
+  Category,
+  AllCategory,
+  CategoryPageDetails,
+} = require("../controllers/category");
 
 //************ Profile Api's *********************/
 const {
@@ -113,8 +117,7 @@ router.get(
   getFullCourseDetails
 );
 // routes/course.js
-router.delete("/course/:courseId",auth,isinstructor, deleteCourse);
-
+router.delete("/course/:courseId", auth, isinstructor, deleteCourse);
 
 // ================= SECTION ROUTES =================
 
@@ -143,6 +146,7 @@ router.post("/category/create", auth, Category);
 
 // Public (all categories)
 router.get("/category/all", auth, AllCategory);
+router.post("/course/getCategoryPageDetails", auth, CategoryPageDetails);
 
 // ================= PROFILE ROUTES =================
 router.patch("/profile/update", auth, UpdateProfile);

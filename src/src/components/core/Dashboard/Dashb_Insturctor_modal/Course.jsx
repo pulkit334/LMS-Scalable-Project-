@@ -1,11 +1,19 @@
-import React from 'react'
-import { useDispatch } from 'react-redux';
+import React from "react";
+import { useNavigate } from "react-router-dom";
 import { Edit2, Trash2 } from "lucide-react";
-import Confirmation from '../../common/confirmmation';
-const Course = ({courses,COURSE_STATUS,isProcessing,setConfirmationOpen, setCourseToDelete , confirmationOpen,handleConfirmDelete}) => {
-    const navigate = useDispatch();
+import Confirmation from "../../common/confirmmation";
+const Course = ({
+  courses,
+  COURSE_STATUS,
+  isProcessing,
+  setConfirmationOpen,
+  setCourseToDelete,
+  confirmationOpen,
+  handleConfirmDelete,
+}) => {
+  const navigate = useNavigate();
   return (
-        <div className="min-h-screen bg-[#020617] text-white px-8 py-10"> 
+    <div className="min-h-screen bg-[#020617] text-white px-8 py-10">
       {/* HEADER */}
       <div className="flex items-center justify-between mb-10">
         <h1 className="text-3xl font-semibold">My Courses</h1>
@@ -18,16 +26,15 @@ const Course = ({courses,COURSE_STATUS,isProcessing,setConfirmationOpen, setCour
         </button>
       </div>
       {/* TABLE */}
-    
-        <div className="rounded-xl border border-slate-800 bg-[#020617]/80 backdrop-blur">
-          <div className="grid grid-cols-[3fr_1fr_1fr_1fr] px-6 py-4 text-sm text-slate-400 border-b border-slate-800">
-            <span>COURSE</span>
-            <span>DURATION</span>
-            <span>PRICE</span>
-            <span>ACTIONS</span>
-          </div>
-        
-        
+
+      <div className="rounded-xl border border-slate-800 bg-[#020617]/80 backdrop-blur">
+        <div className="grid grid-cols-[3fr_1fr_1fr_1fr] px-6 py-4 text-sm text-slate-400 border-b border-slate-800">
+          <span>COURSE</span>
+          <span>DURATION</span>
+          <span>PRICE</span>
+          <span>ACTIONS</span>
+        </div>
+
         <div className="divide-y divide-slate-800">
           {courses.length > 0 &&
             courses.map((course) => {
@@ -128,7 +135,7 @@ const Course = ({courses,COURSE_STATUS,isProcessing,setConfirmationOpen, setCour
         />
       )}
     </div>
-  )
-}
+  );
+};
 
-export default Course
+export default Course;

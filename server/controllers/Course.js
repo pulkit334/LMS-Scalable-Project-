@@ -26,6 +26,10 @@ exports.createCourse = async (req, res) => {
         message: "Thumbnail image is required",
       });
     }
+    console.log(
+      "The categoory is dsbhsdhbjcbzxkbzclbjzxlbjzxbjlbjlzlbvzlbkln",
+      category
+    );
 
     const thumbnail = req.files.thumbnailImage;
 
@@ -93,7 +97,13 @@ exports.createCourse = async (req, res) => {
       { new: true }
     );
 
-    //update the category  schema homework
+    //update the category  schema
+    await Category.findByIdAndUpdate(
+      category,
+      { $push: { course: newCourse._id } },
+      { new: true }
+    );
+
     console.log("the data is ", response);
     res.status(201).json({
       success: true,
@@ -374,13 +384,13 @@ exports.updateCourse = async (req, res) => {
 exports.deleteCourse = async (req, res) => {
   try {
     // 1️ Extract IDs
-    const  courseId  = req.params.courseId;
+    const courseId = req.params.courseId;
     const userId = req.user.id;
 
     // 2️ Find course
-      console.log('the Course before result is',courseId)
+    console.log("the Course before result is", courseId);
     const Course = await course.findById(courseId);
-    console.log('the Course result is this ',Course)
+    console.log("the Course result is this ", Course);
     if (!Course) {
       return res.status(404).json({
         success: false,
@@ -403,9 +413,7 @@ exports.deleteCourse = async (req, res) => {
     ).lean();
 
     // 5️ Collect all subsection IDs
-    const subSectionIds = sections.flatMap(
-      (sec) => sec.subSection
-    );
+    const subSectionIds = sections.flatMap((sec) => sec.subSection);
 
     // 6️ Delete all subsections
     if (subSectionIds.length > 0) {
@@ -427,10 +435,9 @@ exports.deleteCourse = async (req, res) => {
 
     // 9️ OPTIONAL: remove course from category (safe guard)
     if (Course.category) {
-      await Category.findByIdAndUpdate(
-        Course.category,
-        { $pull: { courses: courseId } }
-      );
+      await Category.findByIdAndUpdate(Course.category, {
+        $pull: { courses: courseId },
+      });
     }
 
     //  Finally delete the course itself
