@@ -83,7 +83,9 @@ const AddLectureModal = ({ isOpen, onClose, sectionId, lecture = null }) => {
       const response = isEdit
         ? await UpdateSubsection(subSectionId, formData)
         : await createSubsection(formData);
-
+      if (response?.data?.success) {
+        toast.success("Updated successfully", { id: toastId });
+      }
       onClose({
         isEdit,
         sectionId,
@@ -122,7 +124,9 @@ const AddLectureModal = ({ isOpen, onClose, sectionId, lecture = null }) => {
           <h2 className="text-lg font-semibold text-white">
             {isEdit ? "Edit Lecture" : "Adding Lecture"}
           </h2>
-          <button onClick={handleModalClose}> {/* ✅ FIX */}
+          <button onClick={handleModalClose}>
+            {" "}
+            {/* ✅ FIX */}
             <X className="text-slate-400 hover:text-white" />
           </button>
         </div>

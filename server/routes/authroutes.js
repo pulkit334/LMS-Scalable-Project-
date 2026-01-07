@@ -41,7 +41,8 @@ const {
   getEnrolledCourses,
   changestatus,
   getFullCourseDetails,
-  updateCourse
+  updateCourse,
+  deleteCourse,
 } = require("../controllers/Course");
 
 //************for Courses -> section*************//
@@ -60,7 +61,11 @@ const {
 } = require("../controllers/subsection");
 
 //************ Category Api's********************/
-const { Category, AllCategory } = require("../controllers/category");
+const {
+  Category,
+  AllCategory,
+  CategoryPageDetails,
+} = require("../controllers/category");
 
 //************ Profile Api's *********************/
 const {
@@ -103,12 +108,16 @@ router.get("/courses", auth, isinstructor, ShowCourses);
 router.get("/enrolled-courses", auth, getEnrolledCourses);
 router.post("/publish-courses", auth, changestatus);
 // Protected
-router.patch("/course/update/:courseId",auth,isinstructor,updateCourse)
+router.patch("/course/update/:courseId", auth, isinstructor, updateCourse);
 router.get("/course/:courseId", auth, isstudent, course);
 router.get(
-  "/getFullCourseDetails/:courseId", auth, isinstructor, 
+  "/getFullCourseDetails/:courseId",
+  auth,
+  isinstructor,
   getFullCourseDetails
 );
+// routes/course.js
+router.delete("/course/:courseId", auth, isinstructor, deleteCourse);
 
 // ================= SECTION ROUTES =================
 
@@ -137,6 +146,7 @@ router.post("/category/create", auth, Category);
 
 // Public (all categories)
 router.get("/category/all", auth, AllCategory);
+router.post("/course/getCategoryPageDetails", auth, CategoryPageDetails);
 
 // ================= PROFILE ROUTES =================
 router.patch("/profile/update", auth, UpdateProfile);

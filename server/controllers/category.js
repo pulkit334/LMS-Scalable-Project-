@@ -1,6 +1,6 @@
 const category = require("../models/category");
-const { populate } = require("../models/course");
 
+const Course = require("../models/course");
 //create Category ka handle functtion expo
 // hw create catergory
 exports.Category = async (req, res) => {
@@ -35,7 +35,7 @@ exports.Category = async (req, res) => {
 exports.AllCategory = async (req, res) => {
   try {
     const AllCategory = await category
-      .find({}, { name: true, description: true,})
+      .find({}, { name: true, description: true })
       .populate({
         path: "course",
         populate: {
@@ -56,43 +56,97 @@ exports.AllCategory = async (req, res) => {
   }
 };
 
-exports.CategoryPageDatails = async (req, res) => {
+exports.CategoryPageDetails = async (req, res) => {
   try {
-    //get category id
     const { categoryId } = req.body;
-    //get courses for specify cateogryid
-    const selectedCategory = await category
-      .findById(categoryId)
-      .populate("course")
-      .exec();
-    //validate the id
+
+    // selected category
+    const selectedCategory = await category.findById(categoryId).populate({
+      path: "course",
+      match: { status: "PUBLISHED" },
+      populate: "ratingAndReviews",
+    });
+
     if (!selectedCategory) {
       return res.status(404).json({
         success: false,
-        message: "Data Not Found...",
+        message: "Category not found",
       });
     }
-    //get course for diffrent categories
-    const diffrentCategories = await category
-      .findById({
+
+    // different categories
+    const differentCategories = await category
+      .find({
         _id: { $ne: categoryId },
       })
-      .populate("course")
-      .exec();
-    //get top selling courses
-    //hw
+      .populate({
+        path: "course",
+        match: { status: "PUBLISHED" },
+        populate: "ratingAndReviews",
+      });
 
-    //list and return
+    // top selling courses
+    let mostSellingCourses = [];
+
+    try {
+      mostSellingCourses = await Course.aggregate([
+        { $match: { status: "PUBLISHED" } },
+        {
+          $addFields: {
+            totalStudents: {
+              $size: { $ifNull: ["$studentEnrolled", []] },
+            },
+          },
+        },
+        { $sort: { totalStudents: -1 } },
+        {
+          $lookup: {
+            from: "ratingandreviews",
+            localField: "_id",
+            foreignField: "Course",
+            as: "ratingAndReviews",
+          },
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "Insturctor",
+            foreignField: "_id",
+            as: "Insturctor",
+          },
+        },
+        {
+          $unwind: {
+            path: "$Insturctor",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+      ]);
+    } catch (err) {
+      console.error("Most selling aggregation failed:", err.message);
+    }
+    // const courses = await Course.find({ status: "PUBLISHED" })
+    //   .populate("ratingAndReviews")
+    //   .lean();
+
+    // const mostSellingCourses = courses
+    //   .map(course => ({
+    //     ...course,
+    //     totalStudents: course.studentEnrolled?.length || 0,
+    //   }))
+    //   .sort((a, b) => b.totalStudents - a.totalStudents);
+
     return res.status(200).json({
       success: true,
-      data: {
-        selectedCategory,
-        diffrentCategories,
-      },
+      selectedCategory,
+      differentCategories,
+      mostSellingCourses,
+      name: selectedCategory.name,
+      description: selectedCategory.description,
     });
   } catch (error) {
     return res.status(500).json({
-      success: true,
+      success: false,
       message: error.message,
     });
   }

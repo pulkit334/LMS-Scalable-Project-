@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { api } from "./apiconnnector";
 import { toast } from "react-hot-toast";
 import { setloading, clearSinupData, setToken } from "../Slices/authslice";
@@ -22,6 +23,7 @@ export const Course = {
   CreateCourse: "/course/create",
   categories: "/category/all",
   GetFUllCourseDetails: "/getFullCourseDetails/:courseId",
+  DeleteCourse: "/course/:courseId",
 };
 export const Course_Section = {
   createsection: "/section/create",
@@ -248,9 +250,22 @@ export const getFullCourseDetails = async (courseId) => {
   return res.data;
 };
 
-export const UpdateUser = async (courseId,formData) => {
-
-  const res = await api.patch(Course_Section.UpdateCourse.replace(":courseId",courseId), formData);
+export const UpdateUser = async (courseId, formData) => {
+  const res = await api.patch(
+    Course_Section.UpdateCourse.replace(":courseId", courseId),
+    formData
+  );
   console.log("The Data is", res);
   return res?.data;
+};
+
+export const CourseDelete = async (courseId) => {
+  console.log("Deleting course API hit:", courseId);
+
+  const response = await api.delete(
+    Course.DeleteCourse.replace(":courseId", courseId)
+  );
+
+  console.log("Delete course response:", response?.data);
+  return response?.data;
 };
