@@ -4,6 +4,8 @@ const User = require("../models/User");
 const { uploadImageToCloudinary } = require("../utils/imageuploader");
 const Section = require("../models/section");
 const SubSection = require("../models/subsection");
+const RatingAndReview = require("../models/RatingAndReview");
+const { default: mongoose } = require("mongoose");
 exports.createCourse = async (req, res) => {
   try {
     //fetch all the data
@@ -143,41 +145,42 @@ exports.ShowCourses = async (req, res) => {
   }
 };
 
-exports.course = async (req, res) => {
-  try {
-    const { courseId } = req.params;
-    console.log(courseId);
-    if (!courseId) {
-      return res.status(400).json({
-        success: false,
-        message: "CourseId is required",
-      });
-    }
+// exports.course = async (req, res) => {
+//   try {
+//     const { courseId } = req.params;
+// console.log("THe data is ",courseId)
+//     if (!courseId) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "CourseId is required",
+//       });
+//     }
 
-    const data = await course
-      .findById(courseId)
-      .populate({
-        path: "courseContent",
-        populate: { path: "SubSection" },
-      })
-      .populate("category")
-      .populate("ratingAndReviews");
+//     const data = await course
+//       .findById(courseId)
+//       .populate({
+//         path: "courseContent",
+//         populate: { path: "SubSection" },
+//       })
+//       .populate("category")
+//       .populate("ratingAndReviews");
 
-    return res.status(200).json({
-      success: true,
-      message: "Fetched...",
-      data,
-    });
-  } catch (err) {
-    res.status(500).json({
-      success: false,
-      message: "Failed to Fetch the User",
-      err: err.message,
-    });
-  }
-};
+//     return res.status(200).json({
+//       success: true,
+//       message: "Fetched...",
+//       data,
+//     });
+//   } catch (err) {
+//     res.status(500).json({
+//       success: false,
+//       message: "Failed to Fetch the User",
+//       err: err.message,
+//     });
+//   }
+// };
 
 //for the profile section only
+
 exports.getEnrolledCourses = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -453,6 +456,148 @@ exports.deleteCourse = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to delete course",
+    });
+  }
+};
+
+//Get Page Data -> Header
+exports.getCourse = async (req, res) => {
+  try {
+    const { courseId } = req.params;
+
+    if (!courseId) {
+      return res.status(400).json({
+        success: false,
+        message: "courseId is required",
+      });
+    }
+
+    console.log("courseId:", courseId);
+
+    const data = await course
+      .findById(courseId)
+      .select(
+        "courseName courseDescription price thumbnail category Insturctor totalDuration status studentEnrolled whatyouwilllearn"
+      )
+      .populate("category", "name")
+      .populate("Insturctor", "firstName lastName email");
+
+    console.log("course data:", data);
+
+    if (!data) {
+      return res.status(404).json({
+        success: false,
+        message: "Course not found",
+      });
+    }
+
+    //  THIS WAS MISSING
+    return res.status(200).json({
+      success: true,
+      data,
+    });
+  } catch (err) {
+    console.error("GET COURSE ERROR:", err);
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+//Get the Course  Content
+exports.getCourseContent = async (req, res) => {
+
+  try {
+    const { courseId } = req.params;
+    const content = await course
+      .findById(courseId)
+      .select("courseContent")
+      .populate({
+        path: "courseContent",
+        populate: {
+          path: "subsection", // must match Section schema ref
+          select: "tittle timeduration description videoUrl",
+        },
+      });
+
+    return res.status(200).json({
+      success: true,
+      data: content?.courseContent || [],
+    });
+  } catch (err) {
+    console.error("COURSE CONTENT ERROR:", err);
+    return res.status(500).json({
+      success: false,
+      message: err,
+    });
+  }
+};
+
+//Get the Reviews (Pagination )
+exports.getPaymentCourseReviews = async (req, res) => {
+  try {
+    const { courseId } = req.params;
+
+    let limit = Number(req.query.limit) || 10;
+    if (limit > 40) limit = 20;
+
+    const after = req.query.after;
+
+    // -----------------------
+    // 1️Base query
+    // -----------------------
+    const query = { Course: courseId };
+    if (after) {
+      query._id = { $lt: after };
+    }
+
+    // -----------------------
+    // 2 Fetch paginated reviews
+    // -----------------------
+    const reviews = await RatingAndReview.find(query)
+      .sort({ _id: -1 })
+      .limit(limit);
+
+    const nextCursor =
+      reviews.length > 0 ? reviews[reviews.length - 1]._id : null;
+
+    // -----------------------
+    // 3 Get rating stats (AVG + COUNT)
+    // -----------------------
+    const ratingStats = await RatingAndReview.aggregate([
+      { $match: { Course: new mongoose.Types.ObjectId(courseId) } },
+      {
+        $group: {
+          _id: null,
+          avgRating: { $avg: "$rating" },
+          totalRatings: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const stats = ratingStats[0] || {
+      avgRating: 0,
+      totalRatings: 0,
+    };
+
+    // -----------------------
+    // 4 Send response
+    // -----------------------
+    return res.status(200).json({
+      success: true,
+      data: reviews,
+      nextCursor,
+      ratingStats: {
+        avgRating: Number(stats.avgRating?.toFixed(1)) || 0,
+        totalRatings: stats.totalRatings,
+      },
+    });
+  } catch (err) {
+    console.error("COURSE REVIEW ERROR:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch reviews",
     });
   }
 };

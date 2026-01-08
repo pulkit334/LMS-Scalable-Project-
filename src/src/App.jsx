@@ -33,6 +33,7 @@ import { hydrateAuth } from "./appInit";
 import OpenRoute from "./utils/openRoutes";
 import EditCourse from "./components/core/Dashboard/editcourse";
 import Catalog from "./pages/catalog"
+import Coursebuy from "./components/core/Student/courseBuy";
 function App() {
   const dispatch = useDispatch();
   const token = useSelector((state) => state.auth.token);
@@ -75,6 +76,7 @@ function App() {
             path="/support/reactivate-account"
             element={<Authrecovery />}
           />
+          <Route path="/courses/:Course"  element = {<Coursebuy/>}/>
           <Route
             path="/recover-account/:token"
             element={<EmailVerification />}
