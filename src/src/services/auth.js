@@ -24,6 +24,7 @@ export const Course = {
   categories: "/category/all",
   GetFUllCourseDetails: "/getFullCourseDetails/:courseId",
   DeleteCourse: "/course/:courseId",
+  GetBuyCourse: "/course/:courseId",
 };
 export const Course_Section = {
   createsection: "/section/create",
@@ -269,3 +270,4 @@ export const CourseDelete = async (courseId) => {
   console.log("Delete course response:", response?.data);
   return response?.data;
 };
+

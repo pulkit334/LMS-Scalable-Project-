@@ -36,13 +36,15 @@ router.get(
 //***************for courses****************//
 const {
   createCourse,
-  ShowCourses,
-  course, // get course details
+  ShowCourses, // get course details
   getEnrolledCourses,
   changestatus,
   getFullCourseDetails,
   updateCourse,
   deleteCourse,
+  getCourse,
+  getPaymentCourseReviews,
+  getCourseContent,
 } = require("../controllers/Course");
 
 //************for Courses -> section*************//
@@ -109,7 +111,12 @@ router.get("/enrolled-courses", auth, getEnrolledCourses);
 router.post("/publish-courses", auth, changestatus);
 // Protected
 router.patch("/course/update/:courseId", auth, isinstructor, updateCourse);
-router.get("/course/:courseId", auth, isstudent, course);
+
+//Payment Course Loader
+router.get("/course/:courseId", auth, isstudent, getCourse);
+router.get(("/course/:courseId/content"),auth,isstudent,getCourseContent)
+router.get("/course/:courseId/reviews",auth,getPaymentCourseReviews);
+
 router.get(
   "/getFullCourseDetails/:courseId",
   auth,

@@ -12,27 +12,30 @@ const CourseSlider = ({ Courses }) => {
       {Courses?.length > 0 ? (
         <Swiper
           modules={[FreeMode, Pagination, Autoplay]}
-          freeMode={true}
+          freeMode
           pagination={{ clickable: true }}
-          spaceBetween={20}
-          loop={Courses.length > 1}
-          slidesPerView={1}
+          spaceBetween={24}
+          loop={Courses.length > 3}
           autoplay={{
-            delay: 2500,
+            delay: 2000,
             disableOnInteraction: false,
+            pauseOnMouseEnter: true,
           }}
           breakpoints={{
-            1024: {slidesPerView:3}
+            0: { slidesPerView: 1 },
+            640: { slidesPerView: 2 },
+            1024: { slidesPerView: 3 },
           }}
+          className="pb-10"
         >
           {Courses.map((course) => (
             <SwiperSlide key={course._id}>
-              <Course_Card course={course} heihgt="h-[260px]" />
+              <Course_Card course={course} heihgt="h-[220px]" />
             </SwiperSlide>
           ))}
         </Swiper>
       ) : (
-        <p>No Course Found</p>
+        <p className="text-center text-[#AFB2BF]">No Course Found</p>
       )}
     </>
   );

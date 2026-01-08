@@ -8,22 +8,30 @@ const Course_Card = ({ course, heihgt }) => {
   const [avgReviewCount, SetAvgReviewCount] = useState(0);
 
   useEffect(() => {
-    const count = GetAvgRating(course?.RatingAndReviews);
+    const count = GetAvgRating(course?.ratingAndReviews);
     SetAvgReviewCount(count);
   }, [course]);
-
-  console.log("The course data in the Course Card Will Be", course);
-
   return (
     <Link to={`/courses/${course?._id}`}>
-      <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden cursor-pointer">
-        
+      <div
+        className="
+          bg-[#161D29]
+          rounded-xl
+          border border-[#2C333F]
+          overflow-hidden
+          cursor-pointer
+          transition-all duration-300
+          hover:-translate-y-1
+          hover:border-[#3A3F4B]
+          hover:shadow-[0_12px_40px_rgba(0,0,0,0.7)]
+        "
+      >
         {/* Thumbnail */}
         <div className="overflow-hidden">
           <img
             src={course?.thumbnail}
             alt="course"
-            className={`${heihgt} w-full object-cover hover:scale-105 transition-transform duration-300`}
+            className={`${heihgt} w-full object-cover transition-transform duration-300 hover:scale-105`}
           />
         </div>
 
@@ -31,30 +39,29 @@ const Course_Card = ({ course, heihgt }) => {
         <div className="p-4 flex flex-col gap-2">
           
           {/* Course Name */}
-          <p className="text-lg font-semibold text-gray-800 line-clamp-2">
+          <p className="text-[15px] font-semibold leading-snug text-[#F1F2FF] line-clamp-2">
             {course?.courseName}
           </p>
 
           {/* Instructor */}
-          <p className="text-sm text-gray-500">
+          <p className="text-xs text-[#AFB2BF]">
             {course?.Insturctor?.firstName} {course?.Insturctor?.lastName}
           </p>
 
           {/* Ratings */}
           <div className="flex items-center gap-2 text-sm">
-            <span className="font-medium text-yellow-500">
+            <span className="font-semibold text-yellow-400">
               {avgReviewCount || 0}
             </span>
-            <span className="text-gray-400">
-              ({course?.RatingAndReviews?.length} Ratings)
+            <span className="text-[#6E727F] text-xs"> 
+              ({course?.ratingAndReviews?.length} Ratings)
             </span>
           </div>
 
           {/* Price */}
-          <p className="text-lg font-bold text-gray-900 mt-1">
+          <p className="text-[17px] font-bold text-[#F1F2FF] mt-1">
             ₹{course?.price}
           </p>
-
         </div>
       </div>
     </Link>
