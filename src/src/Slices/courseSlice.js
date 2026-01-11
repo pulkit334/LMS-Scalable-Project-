@@ -7,8 +7,9 @@ const initialState = {
   sections: [],
   viewLecture: null,
   isPublic: false,
-   course: null,        // ADD
+  course: null, // ADD
   isEdit: false,
+  isPaymentLoading: false,
 };
 
 const courseSlice = createSlice({
@@ -18,7 +19,11 @@ const courseSlice = createSlice({
     setStep: (state, action) => {
       state.step = action.payload;
     },
-     setCourse: (state, action) => {
+    setPaymentLoading: (state, action) => {
+      state.isPaymentLoading = action.payload;
+    },
+
+    setCourse: (state, action) => {
       state.course = action.payload;
       state.sections = action.payload?.courseContent || [];
     },
@@ -50,7 +55,8 @@ export const {
   setViewLecture,
   setIsPublic,
   setCourse,
-  setEditCourse
+  setEditCourse,
+  setPaymentLoading
 } = courseSlice.actions;
 
 export default courseSlice.reducer;

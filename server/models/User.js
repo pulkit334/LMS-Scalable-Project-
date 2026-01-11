@@ -1,7 +1,5 @@
-const { boolean, date, bool } = require("joi");
+
 const mongoose = require("mongoose");
-const { type } = require("os");
-const { data } = require("react-router-dom");
 
 const userSchema = new mongoose.Schema(
   {

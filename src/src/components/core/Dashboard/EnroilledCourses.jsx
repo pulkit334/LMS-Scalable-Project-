@@ -103,8 +103,11 @@ import React, { useEffect, useState } from "react";
 import { UserEnrolledCourses } from "../../../services/operations/Profileapi";
 import ProgressBar from "@ramonak/react-progress-bar";
 import { MoreVertical, Check, Trash2 } from "lucide-react";
+import { useLocation } from "react-router-dom";
+import { useEnrollment } from "../../../context/enrollement";
 
 const EnrolledCourses = () => {
+  const { setEnrolledCourseIds } = useEnrollment();
   const [enrolledCourses, setEnrolledCourses] = useState(null);
   const [activeTab, setActiveTab] = useState("all");
   const [openMenu, setOpenMenu] = useState(null);
@@ -112,16 +115,20 @@ const EnrolledCourses = () => {
   const getEnrolledCourse = async () => {
     try {
       const response = await UserEnrolledCourses();
+      console.log("the course of reposns ei dis ",response)
       setEnrolledCourses(response);
+
+          const ids = response.map(course => course._id);
+    setEnrolledCourseIds(ids);
     } catch (error) {
       console.log("Error fetching enrolled courses", error);
       setEnrolledCourses([]);
     }
   };
-
+const location = useLocation();
   useEffect(() => {
     getEnrolledCourse();
-  }, []);
+  }, [location.pathname]);
 
   if (enrolledCourses === null) {
     return <div className="text-white">Loading...</div>;

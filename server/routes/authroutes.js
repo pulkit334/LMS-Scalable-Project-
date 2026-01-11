@@ -90,7 +90,12 @@ const {
 const { submitContactForm } = require("../controllers/contactform");
 
 //*************** Basic payment Gateways Attached ***************
-const { capturePayment, verifySignature } = require("../controllers/payment");
+const {
+  CapturePayment,
+  enrolledStudent,
+  VerifyPayment,
+  sendPaymentSuccessEmail
+} = require("../controllers/payment");
 
 // ================= PUBLIC AUTH ROUTES =================
 router.post("/auth/send-otp", sendOtp);
@@ -114,8 +119,8 @@ router.patch("/course/update/:courseId", auth, isinstructor, updateCourse);
 
 //Payment Course Loader
 router.get("/course/:courseId", auth, isstudent, getCourse);
-router.get(("/course/:courseId/content"),auth,isstudent,getCourseContent)
-router.get("/course/:courseId/reviews",auth,getPaymentCourseReviews);
+router.get("/course/:courseId/content", auth, isstudent, getCourseContent);
+router.get("/course/:courseId/reviews", auth, getPaymentCourseReviews);
 
 router.get(
   "/getFullCourseDetails/:courseId",
@@ -165,10 +170,11 @@ router.get("/profile/recover-account/:token", verifyAccountRecovery);
 
 //=====================Payment Route=======================
 
-router.post("/capturePayment", auth, capturePayment);
+router.post("/payment/capturePayment", auth, isstudent, CapturePayment);
 
-router.post("/verifySignature", auth, verifySignature);
+router.post("/payment/verifySignature", auth, isstudent, VerifyPayment);
 
+router.post("/send-payment-email",auth,isstudent,sendPaymentSuccessEmail)
 //=====================Rating Route ==================
 router.post("/courses/:courseId/review", auth, createRating);
 router.get("/courses/:courseId/avg-rating", auth, getAverageRating);

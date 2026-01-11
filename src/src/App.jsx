@@ -61,6 +61,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/catalog/:catalogName" element={<Catalog />} />
+          {/* <Route path="/catalog/:catalogName" element={<COurseDetails />} /> */}
           <Route
             path="/login"
             element={

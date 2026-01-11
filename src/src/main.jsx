@@ -7,14 +7,16 @@ import App from "./App";
 import store, { persistor } from "./store/store";
 import "./index.css";
 import { Toaster } from "react-hot-toast";
-
+import { EnrollmentProvider } from "./context/EnrollmentCourseContext";
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <Provider store={store}>
       <BrowserRouter>
         <PersistGate loading={null} persistor={persistor}>
           <Toaster position="top-center" reverseOrder={false} />
-          <App />
+          <EnrollmentProvider>
+            <App />
+          </EnrollmentProvider>
         </PersistGate>
       </BrowserRouter>
     </Provider>

@@ -1,4 +1,4 @@
-exports.paymentSuccessEmail = (name, amount, orderId, paymentId) => {
+exports.PaymentSuccessEmail = (name, amount, orderId, paymentId) => {
   return `<!DOCTYPE html>
     <html>
     
@@ -70,20 +70,61 @@ exports.paymentSuccessEmail = (name, amount, orderId, paymentId) => {
     
     </head>
     
-    <body>
-        <div class="container">
-        <img class="logo" src="https://th.bing.com/th/id/OIP.mKDOZ7B7so-J56hve37mrwAAAA?rs=1&pid=ImgDetMain" width:50px height:50px alt="IET Logo">
-            <div class="message">Course Payment Confirmation</div>
-            <div class="body">
-                <p>Dear ${name},</p>
-                <p>We have received a payment of <span class='highlight'>₹${amount}</span></p>.
-                <p>Your Payment ID is <b>${paymentId}</b></p>
-                <p>Your Order ID is <b>${orderId}</b></p>
-            </div>
-            <div class="support">If you have any questions or need assistance, please feel free to reach out to us at 
-            <a href="mailto:info@ietagradummy.com">info@ietagradummy.com</a>. We are here to help!</div>
-        </div>
-    </body>
+<body style="margin:0; padding:0; background:#f4f4f4;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4; padding:20px;">
+    <tr>
+      <td align="center">
+
+        <!-- CARD -->
+        <table width="600" cellpadding="0" cellspacing="0"
+          style="background:#ffffff; padding:24px; border-radius:8px; font-family:Arial, sans-serif;">
+
+          <tr>
+            <td align="center" style="font-size:22px; font-weight:bold; padding-bottom:16px;">
+              Course Payment Confirmation
+            </td>
+          </tr>
+
+          <tr>
+            <td style="font-size:16px; padding-bottom:12px;">
+              Dear <b>${name}</b>,
+            </td>
+          </tr>
+
+          <tr>
+            <td style="font-size:16px; padding-bottom:12px;">
+              We have received a payment of
+              <b style="font-size:18px;">₹${amount}</b>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="font-size:14px; padding-bottom:8px;">
+              Payment ID: <b>${paymentId}</b>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="font-size:14px; padding-bottom:16px;">
+              Order ID: <b>${orderId}</b>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="font-size:13px; color:#777;">
+              If you need help, contact us at
+              <a href="mailto:info@ietagradummy.com">info@ietagradummy.com</a>
+            </td>
+          </tr>
+
+        </table>
+        <!-- CARD END -->
+
+      </td>
+    </tr>
+  </table>
+</body>
+
     
-    </html>`
-}
+    </html>`;
+};

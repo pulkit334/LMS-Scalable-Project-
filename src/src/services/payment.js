@@ -6,6 +6,7 @@ export const CoursePayment = {
   getPaymentCourseReviews: "/course/:courseId/reviews",
 };
 
+
 export const GetPayCourse = async (Course) => {
   const response = await api.get(
     CoursePayment.GetBuyCourse.replace(":courseId", Course)
@@ -29,3 +30,11 @@ export const GetpaymentCourseData = async (Course) => {
   console.log("the data of Course Payment api ",response);
   return response;
 };
+
+
+//raxer Pay Api 
+export const studentEndPoints = {
+  COURSE_PAYMENT_API : "/payment/capturePayment",
+  COURE_VERIFY_API : "/payment/verifySignature",
+  Payment_email_APi : "/send-payment-email"
+}
