@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Enqiry, submitEnquiry } from "../../../services/auth"; 
-import countrycode from "../../../data/countrycode.json";
+import countrycode from "../../../pages/data/countrycode.json";
 
 export const ContactUsForm = () => {
   const [loading, setloading] = useState(false);

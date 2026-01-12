@@ -3,7 +3,7 @@ import { Link, useLocation, matchPath } from "react-router-dom";
 import { ProfileDropDown } from "../Auth_frontend/ProfileDropDown";
 import { FiSearch, FiShoppingCart } from "react-icons/fi";
 import { FaAngleDown } from "react-icons/fa";
-import { NavbarLinks } from "../../../data/navbar-links"; // adjust path if needed
+import { NavbarLinks } from "../../../pages/data/navbar-links"; // adjust path if needed
 import { useSelector } from "react-redux";
 import { api } from "../../../services/apiconnnector";
 import { categories } from "../../../services/auth";

@@ -6,6 +6,7 @@ const Section = require("../models/section");
 const SubSection = require("../models/subsection");
 const RatingAndReview = require("../models/RatingAndReview");
 const { default: mongoose } = require("mongoose");
+const CourseProgress = require("../models/courseporgress")
 exports.createCourse = async (req, res) => {
   try {
     //fetch all the data
@@ -254,14 +255,23 @@ exports.getFullCourseDetails = async (req, res) => {
   try {
     const { courseId } = req.params;
     const userId = req.user.id;
+    const userRole = req.user.accountType; // STUDENT | INSTRUCTOR | ADMIN
+
+    if (!courseId) {
+      return res.status(400).json({
+        success: false,
+        message: "Course ID is required",
+      });
+    }
 
     const courseDetails = await course
       .findById(courseId)
       .populate({
-        path: "Insturctor", //  spelling preserved
+        path: "Insturctor",
         populate: { path: "additionalDetails" },
       })
       .populate("category")
+      .populate("ratingAndReviews")
       .populate({
         path: "courseContent",
         populate: { path: "subsection" },
@@ -274,16 +284,61 @@ exports.getFullCourseDetails = async (req, res) => {
       });
     }
 
-    //  AUTH CHECK
-    if (courseDetails.Insturctor._id.toString() !== userId) {
-      return res.status(403).json({
-        success: false,
-        message: "Not authorized to edit this course",
+    /* =========================
+       INSTRUCTOR → EDIT MODE
+    ========================== */
+    if (userRole === "INSTRUCTOR") {
+      if (courseDetails.Insturctor._id.toString() !== userId) {
+        return res.status(403).json({
+          success: false,
+          message: "Not authorized to edit this course",
+        });
+      }
+
+      // Instructor gets FULL editable data
+      return res.status(200).json({
+        success: true,
+        mode: "EDIT",
+        courseDetails,
       });
     }
 
+    /* =========================
+       STUDENT → VIEW MODE
+    ========================== */
+    if (userRole === "STUDENT") {
+      // Optional: check enrollment
+      const isEnrolled = courseDetails.studentEnrolled?.includes(userId);
+
+      if (!isEnrolled) {
+        return res.status(403).json({
+          success: false,
+          message: "You are not enrolled in this course",
+        });
+      }
+
+      // Calculate duration ONLY for students
+      let totalDurationInSeconds = 0;
+      courseDetails.courseContent.forEach((section) => {
+        section.subsection.forEach((sub) => {
+          totalDurationInSeconds += Number(sub.timeDuration || 0);
+        });
+      });
+
+      return res.status(200).json({
+        success: true,
+        mode: "VIEW",
+        courseDetails,
+        totalDuration: convertSecondsToDuration(totalDurationInSeconds),
+      });
+    }
+
+    /* =========================
+       ADMIN / FALLBACK
+    ========================== */
     return res.status(200).json({
       success: true,
+      mode: "ADMIN",
       courseDetails,
     });
   } catch (error) {
@@ -294,6 +349,7 @@ exports.getFullCourseDetails = async (req, res) => {
     });
   }
 };
+
 exports.updateCourse = async (req, res) => {
   try {
     const { courseId } = req.params;

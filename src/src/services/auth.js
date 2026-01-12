@@ -13,7 +13,7 @@ export const AUTH = {
   checkCurrentPassword: "/auth/check-password",
   FORGOT_PASSWORD: "/auth/reset-password-token",
   RESET_PASSWORD: "/auth/reset-password",
-  Password_changer: "/au th/change-password",
+  Password_changer: "/auth/change-password",
   Delete_Account: "/profile/delete",
   Profile_Recovery: "/profile/recovery",
   EmailVerification: "/recover-account",
@@ -242,7 +242,7 @@ export const UpdateSubsection = async (subSectionId, formData) => {
 };
 
 export const getFullCourseDetails = async (courseId) => {
-  console.log("The GetFull Course API data is", courseId);
+console.log("The courseID is ",courseId)
   const res = await api.get(
     Course.GetFUllCourseDetails.replace(":courseId", courseId)
   );

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { BuyCourse } from "../../../../services/operations/studentPageAPi";
 import toast from "react-hot-toast";
 import { useEnrollment } from "../../../../context/enrollement";
+import { addToCart } from "../../../../Slices/cartSlice";
 
 const BuyCard = ({ course }) => {
   const { enrolledCourseIds } = useEnrollment();
@@ -14,15 +15,19 @@ const BuyCard = ({ course }) => {
   const isAlreadyEnrolled = enrolledCourseIds.some(
     (id) => String(id) === String(courseId)
   );
-const HandleBuyCourse = () => {
-  if (isAlreadyEnrolled) {
-    toast.error("Already enrolled in the course");
-    return;
-  }
+  const HandleBuyCourse = () => {
+    if (isAlreadyEnrolled) {
+      toast.error("Already enrolled in the course");
+      return;
+    }
 
-  BuyCourse(token, [courseId], user, Navigate, dispatch);
-};
+    BuyCourse(token, [courseId], user, Navigate, dispatch);
+  };
+  const addTocartHanlder = () => {
+    console.log(course);
 
+    dispatch(addToCart(course)); 
+  };
   return (
     <div className="sticky top-20 w-95 bg-[#020617] rounded-lg shadow-2xl overflow-hidden">
       {/* IMAGE */}
@@ -33,7 +38,10 @@ const HandleBuyCourse = () => {
         <h2 className="text-[28px] font-bold mb-3">₹ {course.price}</h2>
 
         {/* BUTTONS */}
-        <button className="w-full bg-yellow-400 hover:bg-yellow-300 text-black py-2.5 rounded font-semibold mb-2">
+        <button
+          onClick={addTocartHanlder}
+          className="w-full bg-yellow-400 hover:bg-yellow-300 text-black py-2.5 rounded font-semibold mb-2"
+        >
           Add to Cart
         </button>
 

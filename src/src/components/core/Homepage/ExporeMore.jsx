@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { HomePageExplore } from "../../../data/homepage-explore";
+import { HomePageExplore } from "../../../pages/data/homepage-explore";
 import HighLightText from "./highlightext";
 import CourseCardC from "./CourseCardC";
 const tabsname = [

@@ -85,7 +85,7 @@ export async function BuyCourse(
         console.log("the Handller Response is", response);
         // SendPaymentSuccessEmail(response, orderResponse?.data?.amount, token);
         //verify the payment
-        VerifyPayment({ ...response, courses }, token, Navigate, disptach);
+        VerifyPayment({ ...response, courses }, token,  disptach,Navigate);
       },
     };
     console.log("OPTIONS:", options);
@@ -124,7 +124,7 @@ async function SendPaymentSuccessEmail(response, amount, token) {
   }
 }
 
-async function VerifyPayment(bodyData, token, Navigate, disptach) {
+async function VerifyPayment(bodyData, token,   disptach,Navigate) {
   const toastId = toast.loading("verifying Payment...");
   disptach(setPaymentLoading(true));
   try {
@@ -138,10 +138,11 @@ async function VerifyPayment(bodyData, token, Navigate, disptach) {
       throw new Error(response?.data?.message);
     }
     toast.success("Payment Successfully");
+    disptach(resetCart());
     window.location.href = "/dashboard/enrolled-courses";
 
     // window.location.href = "/dashboard/enrolled-courses"
-    disptach(resetCart());
+    
   } catch (error) {
     toast.error("COuld Not Verify Payment");
   }

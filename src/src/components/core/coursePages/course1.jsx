@@ -95,22 +95,24 @@ const CourseInformation = () => {
       if (!response?.success) {
         throw new Error("No response from server");
       }
-     console.log("The response is", response);
+      console.log(
+        "The responsdczxcxzxczczzxzczxczxczxczxxzxzczxxzczxxcxe is",
+        response
+      );
 
-  if (response?.course?._id) {
-    // ONLY CHANGE (Redux instead of prop)
-    dispatch(setCourseId(response.course._id));
-    dispatch(setStep(2));
+      if (response?.courseId) {
+        // ONLY CHANGE (Redux instead of prop)
+        dispatch(setCourseId(response.courseId));
+        dispatch(setStep(2));
 
-    if (!isEdit)
-      toast.success("Successfully created course 🎉", { id: toastId });
-    else
-      toast.success("Successfully Updated 🎉", { id: toastId });
+        if (!isEdit)
+          toast.success("Successfully created course 🎉", { id: toastId });
+        else toast.success("Successfully Updated 🎉", { id: toastId });
 
-    setloading(false);
-  }
+        setloading(false);
+      }
 
-  return response;
+      return response;
     } catch (err) {
       setloading(false);
       toast.error("Error occurred. Try again.", { id: toastId });

@@ -32,8 +32,11 @@ import Course from "./pages/course";
 import { hydrateAuth } from "./appInit";
 import OpenRoute from "./utils/openRoutes";
 import EditCourse from "./components/core/Dashboard/editcourse";
-import Catalog from "./pages/catalog"
+import Catalog from "./pages/catalog";
 import Coursebuy from "./components/core/Student/courseBuy";
+import ViewDetails from "./components/core/ViewCourse/VedioDEtails";
+import ViewCourses from "./pages/ViewCourses";
+
 function App() {
   const dispatch = useDispatch();
   const token = useSelector((state) => state.auth.token);
@@ -57,7 +60,7 @@ function App() {
     <div className="w-screen min-h-screen flex flex-col font-inter">
       <Routes>
         {/* Public layout */}
-        <Route element={<MainLayout />}>
+        <Route element={<MainLayout/>}>
           <Route path="/" element={<Home />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/catalog/:catalogName" element={<Catalog />} />
@@ -77,7 +80,7 @@ function App() {
             path="/support/reactivate-account"
             element={<Authrecovery />}
           />
-          <Route path="/courses/:Course"  element = {<Coursebuy/>}/>
+          <Route path="/courses/:Course" element={<Coursebuy />} />
           <Route
             path="/recover-account/:token"
             element={<EmailVerification />}
@@ -102,30 +105,54 @@ function App() {
             }
           >
             <Route path="my-profile" element={<MyProfile />} />
-
             <Route path="settings" element={<EditProfile />} />
+
             {user?.accountType !== ACCOUNT_TYPE.STUDENT && (
               <Route path="cart" element={<StudentOnly />} />
             )}
-            <Route
-              path="edit-course/:courseId"
-              element={<EditCourse />}
-            />
+
+            <Route path="edit-course/:courseId" element={<EditCourse />} />
+
             {user?.accountType !== ACCOUNT_TYPE.STUDENT && (
               <>
-                {" "}
                 <Route path="my-courses" element={<Mycourses />} />
                 <Route path="add-course" element={<Course />} />
               </>
             )}
+
             {user?.accountType === ACCOUNT_TYPE.STUDENT && (
               <>
                 <Route path="enrolled-courses" element={<EnrolledCourses />} />
                 <Route path="cart" element={<Cart />} />
               </>
             )}
+
           </Route>
+
+          {/* Course  */}
+              <Route
+          element={
+            <PrivateRoute>
+              <ViewCourses />
+            </PrivateRoute>
+          }
+        >
+          {user?.accountType === ACCOUNT_TYPE.STUDENT && (
+            <>
+              <Route
+                path="view-course/:courseId/section/:sectionId"
+                element={<ViewDetails />}
+              />
+
+              <Route
+                path="view-course/:courseId/section/:sectionId/sub-section/:subSectionId"
+                element={<ViewDetails />}
+              />
+            </>
+          )}
         </Route>
+        </Route>
+    
       </Routes>
     </div>
   );

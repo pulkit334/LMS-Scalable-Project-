@@ -125,7 +125,6 @@ router.get("/course/:courseId/reviews", auth, getPaymentCourseReviews);
 router.get(
   "/getFullCourseDetails/:courseId",
   auth,
-  isinstructor,
   getFullCourseDetails
 );
 // routes/course.js

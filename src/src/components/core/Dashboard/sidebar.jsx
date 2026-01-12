@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { sidebarLinks } from "../../../data/dashboard-links";
+import { sidebarLinks } from "../../../pages/data/dashboard-links";
 import { logout } from "../../../Slices/authslice";
 import { useSelector, useDispatch } from "react-redux";
 import SidebarLink from "./SidebarLink";
