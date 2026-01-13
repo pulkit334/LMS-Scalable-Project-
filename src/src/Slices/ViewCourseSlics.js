@@ -26,12 +26,14 @@ const viewCourseSlice = createSlice({
     setCompletedLectures: (state, action) => {
       state.completedLectures = action.payload;
     },
-
     updateCompletedLectures: (state, action) => {
-      state.completedLectures = [
-        ...state.completedLectures,
-        action.payload,
-      ];
+      if (!Array.isArray(state.completedLectures)) {
+        state.completedLectures = [];
+      }
+
+      if (!state.completedLectures.includes(action.payload)) {
+        state.completedLectures.push(action.payload);
+      }
     },
   },
 });

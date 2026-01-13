@@ -18,10 +18,10 @@ const VedioDEtailsSIdebar = ({ setReviewModal }) => {
   const { sectionId, subSectionId } = useParams();
 
   const {
-    courseSectionData,
-    courseEntireData,
-    totalNoOfLectures,
-    completedLectures,
+    courseSectionData = [],
+    courseEntireData = {},
+    totalNoOfLectures = 0,
+    completedLectures = [],
   } = useSelector((state) => state.viewCourse || {});
 
   useEffect(() => {
@@ -62,7 +62,11 @@ const VedioDEtailsSIdebar = ({ setReviewModal }) => {
             ← Back
           </button>
 
-          <IconButton text="Add Review" onClick={() => setReviewModal(true)} />
+          <IconButton
+            coustomeclasses="bg-yellow-400 px-3 py -7 p-1 text-black rounded-md cursor-pointer"
+            text="Add Review"
+            onClick={() => setReviewModal(true)}
+          />
         </div>
 
         <div className="mt-4 space-y-1">
@@ -98,11 +102,11 @@ const VedioDEtailsSIdebar = ({ setReviewModal }) => {
                 }
               `}
               >
-                <span className="font-medium text-slate-100 line-clamp-1">
+                <span className="font-medium cursor-pointer text-slate-100 line-clamp-1">
                   {section.sectionName}
                 </span>
 
-                <span className="text-slate-400 transition-transform duration-200">
+                <span className="text-slate-400 cursor-pointer transition-transform duration-200">
                   {isOpen ? (
                     <ChevronDown size={18} />
                   ) : (
@@ -137,7 +141,7 @@ const VedioDEtailsSIdebar = ({ setReviewModal }) => {
                       >
                         <input
                           type="checkbox"
-                          checked={isCompleted}
+                          checked={isCompleted || false}
                           readOnly
                           onClick={(e) => e.stopPropagation()}
                           className="accent-emerald-500"
@@ -145,7 +149,7 @@ const VedioDEtailsSIdebar = ({ setReviewModal }) => {
 
                         <span className="line-clamp-1 flex-1">
                           {topic.tittle}
-                        </span> 
+                        </span>
 
                         {isActive && (
                           <span className="text-xs font-medium opacity-80">

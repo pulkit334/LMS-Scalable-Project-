@@ -1,23 +1,38 @@
-import React, { useState } from "react";
-import { useSelector } from "react-redux";
-import { useParams } from "react-router-dom";
+/* eslint-disable no-unused-vars */
+import React, { useEffect, useRef, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate, useParams } from "react-router-dom";
+import { CompleteLectureMarker } from "../../../services/auth";
+import { updateCompletedLectures } from "../../../Slices/ViewCourseSlics";
 
-const VedioDEtails = () => {
-  const { courseSectionData } = useSelector((state) => state.viewCourse);
-  const { subSectionId } = useParams();
-  const [vedioActive, setVedioActive] = useState(false);
+const VedioDetails = () => {
+  const { courseId, sectionId, subSectionId } = useParams();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const playerRef = useRef(null);
 
-  let selectedSubSection = null;
+  const { courseSectionData, completedLectures = [] } = useSelector(
+    (state) => state.viewCourse
+  );
 
-  courseSectionData?.forEach((section) => {
-    section?.subsection?.forEach((s) => {
-      if (s._id === subSectionId) {
-        selectedSubSection = s;
-      }
+  console.log("the courseSeciton is ", completedLectures);
+  const { token } = useSelector((state) => state.auth);
+  const [videoActive, setVideoActive] = useState(false);
+  const [videoEnded, setVideoEnded] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  /* ===============================
+     FIND CURRENT VIDEO
+     =============================== */
+  let currentSub = null;
+
+  courseSectionData?.forEach((sec) => {
+    sec?.subsection?.forEach((sub) => {
+      if (sub._id === subSectionId) currentSub = sub;
     });
   });
 
-  if (!selectedSubSection) {
+  if (!currentSub) {
     return (
       <div className="min-h-screen flex items-center justify-center text-white">
         Video not found
@@ -25,43 +40,167 @@ const VedioDEtails = () => {
     );
   }
 
+  /* ===============================
+     FIND INDEXES
+     =============================== */
+  const sectionIndex = courseSectionData.findIndex(
+    (sec) => sec._id === sectionId
+  );
+
+  const subIndex = courseSectionData?.[sectionIndex]?.subsection.findIndex(
+    (sub) => sub._id === subSectionId
+  );
+
+  let nextLecture = null;
+  let nextSectionId = null;
+
+  // same section
+  if (subIndex + 1 < courseSectionData?.[sectionIndex]?.subsection.length) {
+    nextLecture = courseSectionData[sectionIndex].subsection[subIndex + 1];
+    nextSectionId = sectionId;
+  }
+  // next section
+  else if (sectionIndex + 1 < courseSectionData.length) {
+    nextLecture = courseSectionData[sectionIndex + 1].subsection[0];
+    nextSectionId = courseSectionData[sectionIndex + 1]._id;
+  }
+
+  /* ===============================
+     SAVE → GO NEXT
+     =============================== */
+  const handleNext = async () => {
+    if (!nextLecture) return;
+
+    try {
+      setSaving(true);
+
+      if (!completedLectures.includes(subSectionId)) {
+        const res = await CompleteLectureMarker(courseId, subSectionId, token);
+
+        if (res?.success) {
+          dispatch(updateCompletedLectures(subSectionId));
+        }
+      }
+
+      navigate(
+        `/view-course/${courseId}/section/${nextSectionId}/sub-section/${nextLecture._id}`
+      );
+
+      setVideoActive(false);
+      setVideoEnded(false);
+    } catch (err) {
+      console.log("Completion error", err);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  /* ===============================
+     REWATCH (useRef)
+     =============================== */
+  const handleRewatch = () => {
+    playerRef.current.currentTime = 0;
+    playerRef.current.play();
+    setVideoEnded(false);
+  };
+
+  // ====================================
+  const handleVideoEnd = async () => {
+    setVideoEnded(true);
+
+    if (
+      isLastLecture(courseSectionData, sectionId, subSectionId) &&
+      !completedLectures.includes(subSectionId)
+    ) {
+      try {
+        const res = await CompleteLectureMarker(courseId, subSectionId, token);
+
+        if (res?.success) {
+          dispatch(updateCompletedLectures(subSectionId));
+        }
+      } catch (err) {
+        console.log("Auto completion failed", err);
+      }
+    }
+  };
+
+  // /==============================
+
+  // ====== Last Lecture Handler Function
+  const isLastLecture = () => {
+    //lets me lecture 3 pe hu next leture kese test
+    if (subIndex + 1 > courseSectionData?.[sectionIndex]?.subsection.length) {
+      return false;
+    }
+    if (sectionIndex + 1 < courseSectionData.length) return false;
+    return true;
+  };
   return (
-    /*  PAGE BACKGROUND GRADIENT */
     <div className="min-h-screen w-full overflow-x-hidden bg-gradient-to-r from-[#020617] via-[#161D29] to-[#020617] p-6">
-      
-      {/* VIDEO CONTAINER */}
       <div className="relative w-full max-w-5xl mx-auto bg-black rounded-lg overflow-hidden aspect-video flex items-center justify-center">
-        
-        {!vedioActive && (
+        {!videoActive && (
           <button
-            onClick={() => setVedioActive(true)}
+            onClick={() => setVideoActive(true)}
             className="absolute z-10 border border-white rounded-full px-6 py-6 text-white text-2xl bg-black/60 backdrop-blur-sm hover:scale-105 transition"
           >
             ▶
           </button>
         )}
 
-        {vedioActive && (
+        {videoActive && (
           <video
-            src={selectedSubSection.videoUrl}
-            controls
+            ref={playerRef}
+            src={currentSub.videoUrl}
             autoPlay
+            controls
+            onEnded={handleVideoEnd}
             className="w-full h-full object-cover"
           />
         )}
+
+        {/* ===== COMPLETION OVERLAY (same UI) ===== */}
+        {videoEnded && (
+          <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center gap-4">
+            <div className="flex gap-4">
+              <button
+                onClick={handleRewatch}
+                className="bg-yellow-400 text-black px-6 py-2 rounded-md font-semibold"
+              >
+                Rewatch
+              </button>
+
+              {nextLecture && (
+                <button
+                  disabled={saving}
+                  onClick={handleNext}
+                  className="bg-yellow-400 text-black px-6 py-2 rounded-md font-semibold"
+                >
+                  Mark as Completed
+                </button>
+              )}
+            </div>
+
+            {nextLecture && (
+              <button
+                onClick={handleNext}
+                className="bg-indigo-600 text-white px-8 py-3 rounded-md font-semibold"
+              >
+                Next →
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
-      {/*  TITLE & DESCRIPTION */}
+      {/* TITLE & DESCRIPTION (UNCHANGED) */}
       <div className="max-w-5xl mx-auto mt-6">
         <h1 className="text-xl font-semibold text-white">
-          {selectedSubSection.tittle}
+          {currentSub.tittle}
         </h1>
-        <p className="text-slate-400 mt-1">
-          {selectedSubSection.description}
-        </p>
+        <p className="text-slate-400 mt-1">{currentSub.description}</p>
       </div>
     </div>
   );
 };
 
-export default VedioDEtails;
+export default VedioDetails;

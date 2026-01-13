@@ -5,8 +5,7 @@ const Course = require("../models/course");
 exports.createRating = async (req, res) => {
   try {
     //get user id
-    const userid = req.user.id;
-    console.log(userid);
+    const userid = req.user.id; 
     const { rating, review } = req.body;
     const { courseId } = req.params;
 
@@ -15,23 +14,27 @@ exports.createRating = async (req, res) => {
       _id: courseId,
       studentEnrolled: { $elemMatch: { $eq: userid } },
     });
+
     if (!courseDetails) {
       return res.status(404).json({
-        success: true,
+        success: false,
         message: "Student is Not Enrolled in Course",
       });
     }
+
     //only allow once for review
     const AleradyReviwed = await RatingAndReviews.findOne({
       user: userid,
       Course: courseId,
     });
+
     if (AleradyReviwed) {
       return res.status(403).json({
         success: false,
-        message: "Course is Alerday Reviwed by The user",
+        message: "Course is Alerady Reviewed By the User",
       });
     }
+
     //create teh rating reveiw
     const ratingDb = await RatingAndReviews.create({
       rating: rating,
@@ -39,6 +42,7 @@ exports.createRating = async (req, res) => {
       Course: courseId,
       user: userid,
     });
+
     //update the course id with course
     // const update detiled//
     await Course.findByIdAndUpdate(
@@ -50,18 +54,21 @@ exports.createRating = async (req, res) => {
       },
       { new: true }
     );
+
     //return the response
-    return res.status(200).json({
+    return res.status(201).json({
       success: true,
       message: "Rating Done....",
     });
+
   } catch (error) {
-    return res.status(403).json({
-      success: true,
+    return res.status(500).json({
+      success: false,
       message: error.message,
     });
   }
 };
+
 
 //avg rating]
 exports.getAverageRating = async (req, res) => {

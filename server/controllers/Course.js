@@ -6,7 +6,8 @@ const Section = require("../models/section");
 const SubSection = require("../models/subsection");
 const RatingAndReview = require("../models/RatingAndReview");
 const { default: mongoose } = require("mongoose");
-const CourseProgress = require("../models/courseporgress")
+const CourseProgress = require("../models/courseporgress");
+
 exports.createCourse = async (req, res) => {
   try {
     //fetch all the data
@@ -146,41 +147,6 @@ exports.ShowCourses = async (req, res) => {
   }
 };
 
-// exports.course = async (req, res) => {
-//   try {
-//     const { courseId } = req.params;
-// console.log("THe data is ",courseId)
-//     if (!courseId) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "CourseId is required",
-//       });
-//     }
-
-//     const data = await course
-//       .findById(courseId)
-//       .populate({
-//         path: "courseContent",
-//         populate: { path: "SubSection" },
-//       })
-//       .populate("category")
-//       .populate("ratingAndReviews");
-
-//     return res.status(200).json({
-//       success: true,
-//       message: "Fetched...",
-//       data,
-//     });
-//   } catch (err) {
-//     res.status(500).json({
-//       success: false,
-//       message: "Failed to Fetch the User",
-//       err: err.message,
-//     });
-//   }
-// };
-
-//for the profile section only
 
 exports.getEnrolledCourses = async (req, res) => {
   try {
@@ -654,6 +620,81 @@ exports.getPaymentCourseReviews = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to fetch reviews",
+    });
+  }
+};
+
+//Progress Api
+
+
+exports.markLectureComplete = async (req, res) => {
+  try {
+    const userId = req.user.id; // from auth middleware
+    const { courseId, subSectionId } = req.body;
+
+    // 1️ Validation
+    if (!courseId || !subSectionId) {
+      return res.status(400).json({
+        success: false,
+        message: "courseId and subSectionId are required",
+      });
+    }
+
+    // 2️ Check subsection exists
+    const subSectionExists = await SubSection.findById(subSectionId);
+    if (!subSectionExists) {
+      return res.status(404).json({
+        success: false,
+        message: "Subsection not found",
+      });
+    }
+
+    // 3️ Find course progress
+    let courseProgress = await CourseProgress.findOne({
+      userId,
+      courseId,
+    });
+
+    // 4️ If progress does not exist → create
+    if (!courseProgress) {
+      courseProgress = await CourseProgress.create({
+        userId,
+        courseId,
+        completedVideos: [subSectionId],
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: "Lecture marked as complete",
+        data: courseProgress,
+      });
+    }
+
+    // 5️ Prevent duplicate completion
+    if (courseProgress.completedVideos.includes(subSectionId)) {
+      return res.status(200).json({
+        success: true,
+        message: "Lecture already completed",
+        data: courseProgress,
+      });
+    }
+
+    // 6️ Add subsection to completedVideos
+    courseProgress.completedVideos.push(subSectionId);
+    await courseProgress.save();
+
+    // 7️ Return response
+    return res.status(200).json({
+      success: true,
+      message: "Lecture marked as complete",
+      data: courseProgress,
+    });
+
+  } catch (error) {
+    console.error("markLectureComplete error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
     });
   }
 };

@@ -25,6 +25,7 @@ export const Course = {
   GetFUllCourseDetails: "/getFullCourseDetails/:courseId",
   DeleteCourse: "/course/:courseId",
   GetBuyCourse: "/course/:courseId",
+  CourseLectureProgressMarker: "/course/updateCourseProgress",
 };
 export const Course_Section = {
   createsection: "/section/create",
@@ -242,7 +243,7 @@ export const UpdateSubsection = async (subSectionId, formData) => {
 };
 
 export const getFullCourseDetails = async (courseId) => {
-console.log("The courseID is ",courseId)
+  console.log("The courseID is ", courseId);
   const res = await api.get(
     Course.GetFUllCourseDetails.replace(":courseId", courseId)
   );
@@ -271,3 +272,10 @@ export const CourseDelete = async (courseId) => {
   return response?.data;
 };
 
+export const CompleteLectureMarker = async (courseId, subSectionId,token) => {
+  const response = await api.post(Course.CourseLectureProgressMarker, {
+    courseId,
+    subSectionId,
+  },token);
+  return response?.data;
+};

@@ -20,8 +20,8 @@ import "./config/passport.js";
 const app = express();
 
 // ---------- BODY PARSERS ----------
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({limit : "100mb"}));
+app.use(express.urlencoded({ limit : "100mb" ,extended: true }));
 
 // ---------- PASSPORT ----------
 app.use(passport.initialize());

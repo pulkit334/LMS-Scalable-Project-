@@ -45,6 +45,7 @@ const {
   getCourse,
   getPaymentCourseReviews,
   getCourseContent,
+  markLectureComplete,
 } = require("../controllers/Course");
 
 //************for Courses -> section*************//
@@ -94,7 +95,7 @@ const {
   CapturePayment,
   enrolledStudent,
   VerifyPayment,
-  sendPaymentSuccessEmail
+  sendPaymentSuccessEmail,
 } = require("../controllers/payment");
 
 // ================= PUBLIC AUTH ROUTES =================
@@ -122,13 +123,17 @@ router.get("/course/:courseId", auth, isstudent, getCourse);
 router.get("/course/:courseId/content", auth, isstudent, getCourseContent);
 router.get("/course/:courseId/reviews", auth, getPaymentCourseReviews);
 
-router.get(
-  "/getFullCourseDetails/:courseId",
-  auth,
-  getFullCourseDetails
-);
+router.get("/getFullCourseDetails/:courseId", auth, getFullCourseDetails);
 // routes/course.js
 router.delete("/course/:courseId", auth, isinstructor, deleteCourse);
+
+//COurse progress
+router.post(
+  "/course/updateCourseProgress",
+  auth,
+  isstudent,
+  markLectureComplete
+);
 
 // ================= SECTION ROUTES =================
 
@@ -173,7 +178,7 @@ router.post("/payment/capturePayment", auth, isstudent, CapturePayment);
 
 router.post("/payment/verifySignature", auth, isstudent, VerifyPayment);
 
-router.post("/send-payment-email",auth,isstudent,sendPaymentSuccessEmail)
+router.post("/send-payment-email", auth, isstudent, sendPaymentSuccessEmail);
 //=====================Rating Route ==================
 router.post("/courses/:courseId/review", auth, createRating);
 router.get("/courses/:courseId/avg-rating", auth, getAverageRating);
@@ -182,5 +187,8 @@ router.get("/courses/:courseId/coursereview", getCourseReviews);
 
 //================Helper Function ======////
 router.post("/aboutus/submit-form", submitContactForm);
+
+//============Rating Api's==================//
+router.post("/courses/:courseId/ratings", auth, isstudent, createRating);
 
 module.exports = router;

@@ -13,7 +13,7 @@ api.interceptors.response.use(
     const status = error?.response?.status;
     const code = error?.response?.data?.code;
     if (status === 403 && code === "ACCOUNT_DELETED REQUEST IS SUBMITTED") {
-      localStorage.clear();
+      localStorage.clear(); 
       sessionStorage.clear();
       window.location.replace("/account-deactivated");
     }
@@ -23,7 +23,7 @@ api.interceptors.response.use(
     if (status == 500 && code === "INTERNAL_SERVER_ERROR") {
       throw new Error("Something went wrong. Please try again later."); 
     }
-    return Promise.reject(error.message);
+    return Promise.reject(error);
   }
 );
 
