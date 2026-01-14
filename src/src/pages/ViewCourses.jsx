@@ -62,10 +62,10 @@ useEffect(() => {
 return (
   <div className="flex h-screen bg-[#161D29] text-white">
     
-    {/* LEFT SIDEBAR */}
+    {/* Left Side Bar  */}
     <VedioDEtailsSIdebar setReviewModal={setReviewModal} />
 
-    {/* VIDEO COLUMN (FIXED WIDTH) */}
+    {/* My vedio Column */}
     <div className="w-full">
       <Outlet />
     </div>

@@ -6,6 +6,7 @@ export const fetchEnrolledCourses = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await UserEnrolledCourses();
+      console.log("the repsonse Of Enrolled Couress are",response)
       return response;
     } catch (error) {
       return rejectWithValue(error.message);
@@ -24,25 +25,21 @@ const enrollmentSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
-      // pending
       .addCase(fetchEnrolledCourses.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      // fulfilled
       .addCase(fetchEnrolledCourses.fulfilled, (state, action) => {
-        state.loading = false; // 🔥 FIX
+        state.loading = false; 
         state.enrolledCourses = action.payload;
         state.enrolledCourseIds = action.payload.map(
           (course) => course._id
         );
       })
-
-      // rejected
       .addCase(fetchEnrolledCourses.rejected, (state, action) => {
-        state.loading = false; //  FIX
+        state.loading = false; 
         state.enrolledCourses = [];
-        state.error = action.payload; //  FIX
+        state.error = action.payload;
       });
   },
 });

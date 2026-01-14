@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
 import { CompleteLectureMarker } from "../../../services/auth";
 import { updateCompletedLectures } from "../../../Slices/ViewCourseSlics";
+import { fetchEnrolledCourses } from "../../../Slices/EnroilledCourseSlice";
 
 const VedioDetails = () => {
   const { courseId, sectionId, subSectionId } = useParams();
@@ -40,9 +41,6 @@ const VedioDetails = () => {
     );
   }
 
-  /* ===============================
-     FIND INDEXES
-     =============================== */
   const sectionIndex = courseSectionData.findIndex(
     (sec) => sec._id === sectionId
   );
@@ -65,9 +63,6 @@ const VedioDetails = () => {
     nextSectionId = courseSectionData[sectionIndex + 1]._id;
   }
 
-  /* ===============================
-     SAVE → GO NEXT
-     =============================== */
   const handleNext = async () => {
     if (!nextLecture) return;
 
@@ -79,6 +74,7 @@ const VedioDetails = () => {
 
         if (res?.success) {
           dispatch(updateCompletedLectures(subSectionId));
+          dispatch(fetchEnrolledCourses());
         }
       }
 
@@ -95,9 +91,9 @@ const VedioDetails = () => {
     }
   };
 
-  /* ===============================
-     REWATCH (useRef)
-     =============================== */
+  /* ====
+     Rewatch (useRef)
+     =======*/
   const handleRewatch = () => {
     playerRef.current.currentTime = 0;
     playerRef.current.play();
@@ -105,38 +101,38 @@ const VedioDetails = () => {
   };
 
   // ====================================
-  const handleVideoEnd = async () => {
-    setVideoEnded(true);
+const handleVideoEnd = async () => {
+  setVideoEnded(true);
 
-    if (
-      isLastLecture(courseSectionData, sectionId, subSectionId) &&
-      !completedLectures.includes(subSectionId)
-    ) {
-      try {
-        const res = await CompleteLectureMarker(courseId, subSectionId, token);
+  //  Mark EVERY lecture as completed
+  if (!completedLectures.includes(subSectionId)) {
+    try {
+      const res = await CompleteLectureMarker(courseId, subSectionId, token);
 
-        if (res?.success) {
-          dispatch(updateCompletedLectures(subSectionId));
-        }
-      } catch (err) {
-        console.log("Auto completion failed", err);
+      if (res?.success) {
+        dispatch(updateCompletedLectures(subSectionId));
+
+        // Updated the Dashboard
+        dispatch(fetchEnrolledCourses());
       }
+    } catch (err) {
+      console.log("Auto completion failed", err);
     }
-  };
+  }
+};
 
-  // /==============================
-
-  // ====== Last Lecture Handler Function
+// last lecture handler Function
   const isLastLecture = () => {
-    //lets me lecture 3 pe hu next leture kese test
-    if (subIndex + 1 > courseSectionData?.[sectionIndex]?.subsection.length) {
-      return false;
-    }
-    if (sectionIndex + 1 < courseSectionData.length) return false;
-    return true;
+    const isLastSub =
+      subIndex === courseSectionData[sectionIndex].subsection.length - 1;
+
+    const isLastSection = sectionIndex === courseSectionData.length - 1;
+
+    return isLastSub && isLastSection;
   };
+
   return (
-    <div className="min-h-screen w-full overflow-x-hidden bg-gradient-to-r from-[#020617] via-[#161D29] to-[#020617] p-6">
+    <div className="min-h-screen w-full overflow-x-hidden bg-linear-to-r from-[#020617] via-[#161D29] to-[#020617] p-6">
       <div className="relative w-full max-w-5xl mx-auto bg-black rounded-lg overflow-hidden aspect-video flex items-center justify-center">
         {!videoActive && (
           <button

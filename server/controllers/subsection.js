@@ -121,7 +121,7 @@ exports.UpdateSubsection = async (req, res) => {
   try {
     const SubsectionId = req.params.subSectionId;
     const subsection = await SubSection.findById(SubsectionId);
-    console.log("The data is ",SubsectionId,subsection)
+
     if (!subsection) {
       return res.status(404).json({
         success: false,

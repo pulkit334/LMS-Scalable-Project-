@@ -28,4 +28,5 @@ const CourseProgressSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+CourseProgressSchema.index({userId : 1,courseId : 1},{unique : true})
 module.exports = mongoose.model("CourseProgress", CourseProgressSchema);

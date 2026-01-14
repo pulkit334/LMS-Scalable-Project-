@@ -97,6 +97,7 @@ const {
   VerifyPayment,
   sendPaymentSuccessEmail,
 } = require("../controllers/payment");
+const nocache = require("../middlewares/nocache");
 
 // ================= PUBLIC AUTH ROUTES =================
 router.post("/auth/send-otp", sendOtp);
@@ -113,7 +114,7 @@ router.post("/auth/change-password", auth, changePassword);
 // Public
 router.get("/courses", auth, isinstructor, ShowCourses);
 //Protected
-router.get("/enrolled-courses", auth, getEnrolledCourses);
+router.get("/enrolled-courses", auth,nocache, getEnrolledCourses);
 router.post("/publish-courses", auth, changestatus);
 // Protected
 router.patch("/course/update/:courseId", auth, isinstructor, updateCourse);

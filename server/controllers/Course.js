@@ -3,10 +3,14 @@ const Category = require("../models/category");
 const User = require("../models/User");
 const { uploadImageToCloudinary } = require("../utils/imageuploader");
 const Section = require("../models/section");
-const SubSection = require("../models/subsection");
+const Subsection = require("../models/subsection");
 const RatingAndReview = require("../models/RatingAndReview");
 const { default: mongoose } = require("mongoose");
 const CourseProgress = require("../models/courseporgress");
+const {
+  courseProgress,
+  courseLengthCalculate,
+} = require("../utils/CourseProgress");
 
 exports.createCourse = async (req, res) => {
   try {
@@ -146,25 +150,61 @@ exports.ShowCourses = async (req, res) => {
     });
   }
 };
-
-
 exports.getEnrolledCourses = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    const user = await User.findById(userId).populate("courses");
+    const user = await User.findById(userId).populate({
+      path: "courses",
+      populate: {
+        path: "courseContent",
+        populate: {
+          path: "subsection",
+        },
+      },
+    });
+
+    //  FETCH PROGRESS DIRECTLY (KEY FIX)
+    const progressDocs = await CourseProgress.find({ userId });
+
+    const ProgressMap = new Map();
+    progressDocs.forEach((p) => {
+      ProgressMap.set(
+        p.courseId.toString(),
+        p.completedVideos.length
+      );
+    });
+
+    const UpdatedProgress = user.courses.map((course) => {
+      const totalLecture = courseLengthCalculate(course);
+      const completedLecture =
+        ProgressMap.get(course._id.toString()) || 0;
+
+      const coursePercentage =
+        totalLecture === 0
+          ? 0
+          : Math.round((completedLecture / totalLecture) * 100);
+
+      return {
+        ...course.toObject(),
+        coursePercentage,
+      };
+    });
 
     return res.status(200).json({
       success: true,
-      courses: user.courses,
+      courses: UpdatedProgress,
     });
   } catch (error) {
+    console.error(error);
     return res.status(500).json({
       success: false,
       message: "Failed to fetch enrolled courses",
     });
   }
 };
+
+
 // for making the course publish  or saved as draft
 
 exports.changestatus = async (req, res) => {
@@ -250,9 +290,7 @@ exports.getFullCourseDetails = async (req, res) => {
       });
     }
 
-    /* =========================
-       INSTRUCTOR → EDIT MODE
-    ========================== */
+    //  INSTRUCTOr
     if (userRole === "INSTRUCTOR") {
       if (courseDetails.Insturctor._id.toString() !== userId) {
         return res.status(403).json({
@@ -269,9 +307,7 @@ exports.getFullCourseDetails = async (req, res) => {
       });
     }
 
-    /* =========================
-       STUDENT → VIEW MODE
-    ========================== */
+    //  STUDENT → VIEW MODE
     if (userRole === "STUDENT") {
       // Optional: check enrollment
       const isEnrolled = courseDetails.studentEnrolled?.includes(userId);
@@ -299,9 +335,6 @@ exports.getFullCourseDetails = async (req, res) => {
       });
     }
 
-    /* =========================
-       ADMIN / FALLBACK
-    ========================== */
     return res.status(200).json({
       success: true,
       mode: "ADMIN",
@@ -442,7 +475,7 @@ exports.deleteCourse = async (req, res) => {
 
     // 6️ Delete all subsections
     if (subSectionIds.length > 0) {
-      await SubSection.deleteMany({
+      await Subsection.deleteMany({
         _id: { $in: subSectionIds },
       });
     }
@@ -529,7 +562,6 @@ exports.getCourse = async (req, res) => {
 
 //Get the Course  Content
 exports.getCourseContent = async (req, res) => {
-
   try {
     const { courseId } = req.params;
     const content = await course
@@ -626,7 +658,6 @@ exports.getPaymentCourseReviews = async (req, res) => {
 
 //Progress Api
 
-
 exports.markLectureComplete = async (req, res) => {
   try {
     const userId = req.user.id; // from auth middleware
@@ -641,7 +672,7 @@ exports.markLectureComplete = async (req, res) => {
     }
 
     // 2️ Check subsection exists
-    const subSectionExists = await SubSection.findById(subSectionId);
+    const subSectionExists = await Subsection.findById(subSectionId);
     if (!subSectionExists) {
       return res.status(404).json({
         success: false,
@@ -662,7 +693,10 @@ exports.markLectureComplete = async (req, res) => {
         courseId,
         completedVideos: [subSectionId],
       });
-
+      //push the courseporess to user id
+      await User.findByIdAndUpdate(userId, {
+        $addToSet: { courseProgress: courseProgress._id },
+      });
       return res.status(200).json({
         success: true,
         message: "Lecture marked as complete",
@@ -672,8 +706,8 @@ exports.markLectureComplete = async (req, res) => {
 
     // 5️ Prevent duplicate completion
     if (courseProgress.completedVideos.includes(subSectionId)) {
-      return res.status(200).json({
-        success: true,
+      return res.status(409).json({
+        success: false,
         message: "Lecture already completed",
         data: courseProgress,
       });
@@ -682,6 +716,9 @@ exports.markLectureComplete = async (req, res) => {
     // 6️ Add subsection to completedVideos
     courseProgress.completedVideos.push(subSectionId);
     await courseProgress.save();
+    await User.findByIdAndUpdate(userId, {
+      $addToSet: { courseProgress: courseProgress._id },
+    });
 
     // 7️ Return response
     return res.status(200).json({
@@ -689,7 +726,6 @@ exports.markLectureComplete = async (req, res) => {
       message: "Lecture marked as complete",
       data: courseProgress,
     });
-
   } catch (error) {
     console.error("markLectureComplete error:", error);
     return res.status(500).json({

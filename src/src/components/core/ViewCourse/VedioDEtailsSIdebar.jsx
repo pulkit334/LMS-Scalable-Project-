@@ -27,16 +27,17 @@ const VedioDEtailsSIdebar = ({ setReviewModal }) => {
   useEffect(() => {
     const setActiveFlags = () => {
       if (!courseSectionData?.length) return;
-
+      //First Check Whether the CourseSecctionData  Have the subsection id
       const currentSectionIndex = courseSectionData.findIndex(
         (section) => section._id === sectionId
       );
+      // if No Then Return the
       if (currentSectionIndex === -1) return;
-
+      // if Section-> then check the sectionindex Have the Matching subsection or not if
       const currentSubSectionIndex = courseSectionData[
         currentSectionIndex
       ]?.subsection?.findIndex((sub) => sub._id === subSectionId);
-
+      // If Not Then return this
       if (currentSubSectionIndex === -1) return;
 
       setActiveStatus(courseSectionData[currentSectionIndex]._id);
@@ -51,7 +52,7 @@ const VedioDEtailsSIdebar = ({ setReviewModal }) => {
   }, [courseSectionData, location.pathname]);
   console.log("the Course Entire Data is", courseSectionData);
   return (
-    <div className="w-[380px] h-screen bg-[#020617] border-r border-slate-800 flex flex-col text-white">
+    <div className="w-95 h-screen bg-[#020617] border-r border-slate-800 flex flex-col text-white">
       {/* HEADER */}
       <div className="p-5 border-b border-slate-800 bg-[#020617] sticky top-0 z-10">
         <div className="flex items-center justify-between">
@@ -86,7 +87,7 @@ const VedioDEtailsSIdebar = ({ setReviewModal }) => {
         </div>
       </div>
 
-      {/* SECTIONS */}
+      {/* Sections Where i list all the Sections*/}
       <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
         {courseSectionData?.map((section) => {
           const isOpen = activeStatus === section._id;
@@ -115,7 +116,7 @@ const VedioDEtailsSIdebar = ({ setReviewModal }) => {
                 </span>
               </button>
 
-              {/* SUBSECTIONS */}
+              {/* Subsections */}
               {isOpen && (
                 <div className="bg-[#020617]">
                   {section.subsection?.map((topic) => {
