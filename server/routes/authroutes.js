@@ -85,6 +85,7 @@ const {
   getAverageRating,
   getCourseReviews,
   getAllRatingReviews,
+  sliderReview,
 } = require("../controllers/rating_review");
 
 //****************Form Contact Helper *********** */
@@ -183,8 +184,8 @@ router.post("/send-payment-email", auth, isstudent, sendPaymentSuccessEmail);
 //=====================Rating Route ==================
 router.post("/courses/:courseId/review", auth, createRating);
 router.get("/courses/:courseId/avg-rating", auth, getAverageRating);
-router.get("/courses/:courseId/reviews", getAllRatingReviews);
-router.get("/courses/:courseId/coursereview", getCourseReviews);
+router.get("/courses/reviews", sliderReview);
+router.get("/my-lecture/:courseId/coursereview", getCourseReviews);
 
 //================Helper Function ======////
 router.post("/aboutus/submit-form", submitContactForm);

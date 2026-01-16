@@ -1,4 +1,3 @@
-
 require("dotenv").config();
 
 const mailsender = async (email, title, body) => {
@@ -9,7 +8,7 @@ const mailsender = async (email, title, body) => {
       secure: true,
       auth: {
         user: process.env.MAIL_USER,
-        pass: process.env.MAIL_PASS,  
+        pass: process.env.MAIL_PASS,
       },
     });
 
@@ -20,11 +19,8 @@ const mailsender = async (email, title, body) => {
       html: body,
     });
 
-    console.log("Email Sent:", info.messageId);
     return info;
-  } catch (err) {
-    console.log("Mail Error:", err);
-  }
+  } catch (err) {}
 };
 
 module.exports = mailsender;

@@ -12,7 +12,6 @@ const Instructor = () => {
           <img
             src="/Images/Instructor.png"
             alt="Instructor"
-            // className="relative  w-full max-w-md shadow-2xl"
           />
         </div>
 

@@ -2,9 +2,11 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { CreateRating } from "../../../services/operations/Rating";
 import toast from "react-hot-toast";
+import { useParams } from "react-router-dom";
+import { fetchCourseReviews } from "../../../Slices/RatingSlice";
 
 // Minimalist Star Icon
 const StarIcon = ({ filled, onClick, className = "" }) => (
@@ -27,8 +29,10 @@ const CourseReviewModal = ({ setReviewModal }) => {
   const { user } = useSelector((state) => state.profile);
   const { token } = useSelector((state) => state.auth);
   const { courseEntireData } = useSelector((state) => state.viewCourse);
-
   const [currentRating, setCurrentRating] = useState(0);
+
+  const disptach = useDispatch();
+  const { courseId } = useParams();
 
   const {
     handleSubmit,
@@ -58,6 +62,8 @@ const CourseReviewModal = ({ setReviewModal }) => {
 
       toast.success("Review submitted successfully");
 
+      disptach(fetchCourseReviews(courseId));
+     
       reset();
       setCurrentRating(0);
       setReviewModal(false);
@@ -167,8 +173,7 @@ const CourseReviewModal = ({ setReviewModal }) => {
                 disabled={isSubmitting || currentRating === 0}
                 className="rounded-lg bg-blue-600 px-6 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
               >
-         {!isSubmitting ? "Submit review" : "Submitting"}
-
+                {!isSubmitting ? "Submit review" : "Submitting"}
               </button>
             </div>
           </form>
@@ -179,9 +184,3 @@ const CourseReviewModal = ({ setReviewModal }) => {
 };
 
 export default CourseReviewModal;
-
-
-
-
-
-

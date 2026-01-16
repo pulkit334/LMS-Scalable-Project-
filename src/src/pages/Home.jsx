@@ -9,6 +9,7 @@ import LearningLanguage from "../components/core/Homepage/LearningLanguage";
 import Instructor from "../components/core/Instructor";
 import ExporeMore from "../components/core/Homepage/ExporeMore";
 import Footer from "../components/core/Homepage/footer";
+import ReviewSLider from "../components/core/common/ReviewSLider";
 const Home = () => {
   return (
     <div className="min-h-screen bg-[#0b1220] text-white">
@@ -209,12 +210,12 @@ const Home = () => {
       </div>
 
       {/* section3  */}
-      <div className="w-full mx-auto max-w-maxContent flex-col items-center justify-between gap-8 first-letter: bg-black text-white">
+      <div className="w-full mx-auto max-w-maxContent flex-col items-center justify-between gap-8 first-letter:  bg-linear-to-r from-[#020617] via-[#020b1f] to-[#020617] text-white">
         <Instructor />
-        {/* //Male the Auto slide here */}
-        {/* <h2 className="text-center text-4xl font-semibold mt-10">
-          Review From other Learners
-        </h2> */}
+        <div className="text-[#fff]">
+          <h1 className="flex justify-center items-center font-semibold text-3xl">Reviews from other learners</h1>
+        </div>
+        <ReviewSLider />
       </div>
       <footer>
         <Footer />

@@ -1,11 +1,12 @@
 const { default: mongoose } = require("mongoose");
 const RatingAndReviews = require("../models/RatingAndReview");
 const Course = require("../models/course");
+const RatingAndReview = require("../models/RatingAndReview");
 //creatae rating
 exports.createRating = async (req, res) => {
   try {
     //get user id
-    const userid = req.user.id; 
+    const userid = req.user.id;
     const { rating, review } = req.body;
     const { courseId } = req.params;
 
@@ -60,7 +61,6 @@ exports.createRating = async (req, res) => {
       success: true,
       message: "Rating Done....",
     });
-
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -68,7 +68,6 @@ exports.createRating = async (req, res) => {
     });
   }
 };
-
 
 //avg rating]
 exports.getAverageRating = async (req, res) => {
@@ -117,7 +116,7 @@ exports.getAllRatingReviews = async (req, res) => {
     const AllData = await RatingAndReviews.find({})
       .populate({
         path: "user",
-        select: "firstName lastName raing image email",
+        select: "firstName lastName rating review image email",
       })
       .populate("Course")
       .sort({ rating: -1 })
@@ -141,31 +140,54 @@ exports.getAllRatingReviews = async (req, res) => {
     });
   }
 };
-
 // Get Course Related Reveiw
-exports.getCourseReviews = async (req,res) => {
-  //first get the course id parmas
-  try {
-    const { courseId} = req.params;
-    const dataValidation = await Course.findOne({  courseId})
-      .populate("ratingAndReview")
-      .exec();
 
-    if (!dataValidation) {
+exports.getCourseReviews = async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    const reviews = await RatingAndReview.findById({Course : courseId})
+      .populate("user", "firstName lastName image")
+      .sort({ createdAt: -1 })
+      .limit(50);
+
+    if (!reviews || reviews.length === 0) {
       return res.status(404).json({
         success: false,
-        message: "No Reviews Found",
+        message: "No reviews found for this course",
       });
     }
-    //nikal so and validate it
+
     return res.status(200).json({
       success: true,
-      data: dataValidation,
+      data: reviews,
     });
   } catch (error) {
-    return res.status(403).json({
-      success: true,
+    return res.status(500).json({
+      success: false,
       message: error.message,
+    });
+  }
+};
+
+exports.sliderReview = async (req, res) => {
+  try {
+    const limit = 10;
+    const response = await RatingAndReview.find({})
+      .populate("Course", "thumbnail courseName")
+      .populate("user", "firstName lastName")
+      .sort({ rating: -1, createdAt: -1 })
+      .limit(limit)
+      .exec();
+    return res.status(200).json({
+      success: true,
+      message: "General homepage reviews fetched",
+      data: response,
+    });
+  } catch (error) {
+    console.log("the server side Cotroller Error is", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed Try Again",
     });
   }
 };
