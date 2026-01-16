@@ -12,6 +12,10 @@ html, body, #root {
 
 
 }
+body {
+  background: #020617;
+}
+
 .auth-input {
   @apply bg-[#0f172a] text-white text-sm rounded-md px-4 py-2.5 outline-none border border-[#1e293b] focus:border-cyan-400 transition;
 }

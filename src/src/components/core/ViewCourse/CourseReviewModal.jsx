@@ -1,9 +1,10 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 /* eslint-disable no-unused-vars */
 /* eslint-disable react-hooks/set-state-in-effect */
 import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
-import { CreateRating } from "../../../services/operations/Rating";
+import { CreateRating, UpdationApi } from "../../../services/operations/Rating";
 import toast from "react-hot-toast";
 import { useParams } from "react-router-dom";
 import { fetchCourseReviews } from "../../../Slices/RatingSlice";
@@ -25,12 +26,17 @@ const StarIcon = ({ filled, onClick, className = "" }) => (
   </svg>
 );
 
-const CourseReviewModal = ({ setReviewModal }) => {
+const CourseReviewModal = ({
+  setReviewModal,
+  isEdit = false,
+  defaultData = null,
+}) => {
   const { user } = useSelector((state) => state.profile);
   const { token } = useSelector((state) => state.auth);
   const { courseEntireData } = useSelector((state) => state.viewCourse);
   const [currentRating, setCurrentRating] = useState(0);
-
+  let UpdationResponse;
+  
   const disptach = useDispatch();
   const { courseId } = useParams();
 
@@ -46,27 +52,54 @@ const CourseReviewModal = ({ setReviewModal }) => {
       courseExperince: "",
     },
   });
-
+  useEffect(() => {
+    if (isEdit && defaultData) {
+      setCurrentRating(defaultData.courseRating || 0);
+      setValue("courseRating", defaultData.courseRating || 0);
+      setValue("courseExperince", defaultData.courseExperince || "");
+    } else {
+      setCurrentRating(0);
+      setValue("courseRating", 0);
+      setValue("courseExperince", "");
+    }
+  }, [isEdit, defaultData, setValue]);
   const onSubmit = async (data) => {
+    let toastid;
     try {
-      const response = await CreateRating(
-        {
-          courseId: courseEntireData?._id,
-          data: {
-            rating: currentRating,
-            review: data.courseExperince,
-          },
-        },
-        token
-      );
+      toastid = isEdit
+        ? toast.loading("Updating....")
+        : toast.loading("Submitting....");
 
-      toast.success("Review submitted successfully");
+      if (!isEdit) {
+        const response = await CreateRating(
+          {
+            courseId: courseEntireData?._id,
+            data: {
+              rating: currentRating,
+              review: data.courseExperince,
+            },
+          },
+          token
+        );
+      } else {
+        UpdationResponse = await UpdationApi(
+          {
+            reviewId: defaultData?.reviewId,
+            data: {
+              rating: currentRating,
+              review: data.courseExperince,
+            },
+          },
+          token
+        );
+      }
+
+      if (UpdationResponse?.success) {
+        toast.success(`${UpdationResponse?.message}`, { id: toastid });
+      } else toast.success("Review submitted successfully", { id: toastid });
 
       disptach(fetchCourseReviews(courseId));
-     
-      reset();
-      setCurrentRating(0);
-      setReviewModal(false);
+      
     } catch (error) {
       if (error?.response?.status === 403) {
         toast.error(error.response.data.message);
@@ -90,7 +123,7 @@ const CourseReviewModal = ({ setReviewModal }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-      <div className="w-full max-w-[500px] rounded-xl border border-slate-700 bg-slate-900 shadow-2xl">
+      <div className="w-full max-w-125 rounded-xl border border-slate-700 bg-slate-900 shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-700 px-6 py-4">
           <h2 className="text-lg font-semibold text-slate-100">
@@ -173,7 +206,9 @@ const CourseReviewModal = ({ setReviewModal }) => {
                 disabled={isSubmitting || currentRating === 0}
                 className="rounded-lg bg-blue-600 px-6 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
               >
-                {!isSubmitting ? "Submit review" : "Submitting"}
+                <h2 className="text-lg font-semibold text-slate-100">
+                  {isEdit ? "Update Review" : "Write a Review"}
+                </h2>
               </button>
             </div>
           </form>

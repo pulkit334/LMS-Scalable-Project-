@@ -13,7 +13,7 @@ exports.sendOtp = async (req, res) => {
     console.log("BODY:", req.body);
     console.log("COOKIES:", req.cookies);
     console.log("HEADERS AUTH:", req.headers.authorization);
-    //fetch the email from Req Body
+    //fetch the email from Req Body 
     const { email } = req.body;
     //Check If User alerady exist or Not
     const checkUserpresent = await User.findOne({ email });

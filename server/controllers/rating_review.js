@@ -2,6 +2,7 @@ const { default: mongoose } = require("mongoose");
 const RatingAndReviews = require("../models/RatingAndReview");
 const Course = require("../models/course");
 const RatingAndReview = require("../models/RatingAndReview");
+const User = require("../models/User");
 //creatae rating
 exports.createRating = async (req, res) => {
   try {
@@ -145,23 +146,25 @@ exports.getAllRatingReviews = async (req, res) => {
 exports.getCourseReviews = async (req, res) => {
   try {
     const { courseId } = req.params;
-    const reviews = await RatingAndReview.findById({Course : courseId})
+    console.log(courseId);
+    const reviews = await RatingAndReview.find({ Course: courseId })
       .populate("user", "firstName lastName image")
-      .sort({ createdAt: -1 })
-      .limit(50);
+      .sort({ createdAt: -1 });
 
+    console.log("the Review is", reviews);
     if (!reviews || reviews.length === 0) {
       return res.status(404).json({
         success: false,
         message: "No reviews found for this course",
       });
     }
-
+    console.log("the data is ", reviews);
     return res.status(200).json({
       success: true,
       data: reviews,
     });
   } catch (error) {
+    console.log("the Error is", error);
     return res.status(500).json({
       success: false,
       message: error.message,
@@ -185,6 +188,44 @@ exports.sliderReview = async (req, res) => {
     });
   } catch (error) {
     console.log("the server side Cotroller Error is", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed Try Again",
+    });
+  }
+};
+exports.updateRating = async (req, res) => {
+  try {
+    //course Id;
+    //user Id
+    const { reviewId } = req.params;
+    const user = req.user.id;
+    const { rating, review } = req.body;
+    const ValidData = await RatingAndReviews.findById(reviewId);
+    if (!ValidData) {
+      return res.status(404).json({
+        success: false,
+        message: "Resource Not Found",
+      });
+    }
+    //validation of the user
+    if (ValidData.user.toString() !== user) {
+      return res.json(403).json({
+        success: false,
+        message: "Unothorizted Access",
+      });
+    }
+
+    if (rating !== undefined) ValidData.rating = rating;
+    if (review !== undefined) ValidData.review = review;
+
+    await ValidData.save();
+    return res.status(200).json({
+      success: true,
+      message: "Updated successfully",
+    });
+  } catch (error) {
+    console.log(error)
     return res.status(500).json({
       success: false,
       message: "Failed Try Again",

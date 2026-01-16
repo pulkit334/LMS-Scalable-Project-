@@ -1,42 +1,4 @@
-// import React, { useEffect } from "react";
-// import { useParams } from "react-router-dom";
-// import toast from "react-hot-toast";
-// import {
-//   GetPayCourse,
-//   GetCourseContent,
-//   GetpaymentCourseData,
-// } from "../../../services/payment";
 
-// const CourseBuy = () => {
-//   const { Course } = useParams();
-//   console.log("the Courseid is ");
-//   useEffect(() => {
-//     const loadPaymentCourse = async () => {
-//       const toastId = toast.loading("Loading...");
-
-//       try {
-//         const CourseHeaderData = await GetPayCourse(Course);
-//         console.log("The response is ", CourseHeaderData );
-
-//         const contentRes = await GetCourseContent(Course);
-//         console.log("Course content:", contentRes);
-
-//         // 3️ Course reviews (first batch)
-//         const reviewsRes = await GetpaymentCourseData(Course);
-//         console.log("Course reviews:", reviewsRes);
-//       } catch (error) {
-//         console.error("Payment error:", error);
-//         toast.error("Failed. Try again.", { id: toastId });
-//       }
-//     };
-
-//     loadPaymentCourse();
-//   }, [Course]);
-
-//   return <></>;
-// };
-
-// export default CourseBuy;
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import {

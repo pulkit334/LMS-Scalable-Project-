@@ -88,7 +88,7 @@ const VedioDEtailsSIdebar = ({ setReviewModal }) => {
       </div>
 
       {/* Sections Where i list all the Sections*/}
-      <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
+      <div className="flex-1  overflow-y-auto scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
         {courseSectionData?.map((section) => {
           const isOpen = activeStatus === section._id;
 
@@ -97,9 +97,11 @@ const VedioDEtailsSIdebar = ({ setReviewModal }) => {
               {/* SECTION HEADER */}
               <button
                 onClick={() => setActiveStatus(isOpen ? "" : section._id)}
-                className={`w-full flex items-center justify-between px-5 py-4 text-left transition
+                className={`w-full max-h-50 flex items-center justify-between px-5 py-4 text-left transition
                 ${
-                  isOpen ? "bg-[#1E293B]" : "bg-[#020617] hover:bg-[#1E293B]/60"
+                  isOpen
+                    ? "bg-[#1E293B] "
+                    : "bg-[#020617] hover:bg-[#1E293B]/60 "
                 }
               `}
               >
@@ -118,7 +120,7 @@ const VedioDEtailsSIdebar = ({ setReviewModal }) => {
 
               {/* Subsections */}
               {isOpen && (
-                <div className="bg-[#020617]">
+                <div className="bg-[#020617] ">
                   {section.subsection?.map((topic) => {
                     const isActive = vedioBarActive === topic._id;
                     const isCompleted = completedLectures?.includes(topic._id);

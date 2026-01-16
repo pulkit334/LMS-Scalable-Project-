@@ -5,7 +5,7 @@ import Section from "./Section";
 const CourseContent = ({ sections = [] }) => {
   const [showAll, setShowAll] = useState(false);
 
-  const LIMIT = 2;
+  const LIMIT = 10;
 
   const visibleSections = showAll
     ? sections

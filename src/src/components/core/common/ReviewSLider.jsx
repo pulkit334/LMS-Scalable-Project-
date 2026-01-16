@@ -8,10 +8,14 @@ import Result from "../../../utils/Spinnre";
 import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
+// import { useParams } from "react-router-dom";
 
 const ReviewSlider = () => {
   const dispatch = useDispatch();
-  const { loading, reviews } = useSelector((state) => state.RatingSlice);
+  const { loading, reviews = [] } = useSelector(
+    (state) => state.ratingSlice || {}
+  );
+ 
   const [lgreview, setlgreview] = useState(false);
   useEffect(() => {
     if (reviews.length === 0) {

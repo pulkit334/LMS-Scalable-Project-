@@ -5,6 +5,7 @@ const Rating = {
   CreateRating: "/courses/:courseId/ratings",
   GetALLRatings: "/courses/reviews",
   MyLectureReview: "/my-lecture/:courseId/coursereview",
+  UpdationApi : "/update-review/:reviewId"
 };
 
 export const CreateRating = async ({ courseId, data }) => {
@@ -30,5 +31,12 @@ export const MyLectureReview = async (courseId) => {
   const response = await api.get(
     Rating.MyLectureReview.replace(":courseId", courseId)
   );
-  return response?.data;
+  // console.log("the repsonse of myLecture is")
+  return response?.data?.data;
 };
+//updation api
+export const UpdationApi = async ({reviewId,data})=>{
+  const response = await  api.patch(Rating.UpdationApi.replace(":reviewId",reviewId),data);
+console.log("hehehehehehehehe",response?.data )
+  return response?.data;
+}

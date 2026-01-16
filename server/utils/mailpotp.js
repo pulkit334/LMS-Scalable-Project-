@@ -1,26 +1,31 @@
+const nodemailer = require("nodemailer");
 require("dotenv").config();
 
 const mailsender = async (email, title, body) => {
   try {
     let transporter = nodemailer.createTransport({
-      host: process.env.MAIL_HOST,
+      host: "smtp.gmail.com",
       port: 587,
-      secure: true,
+      secure: false, //  must be false for 587
       auth: {
         user: process.env.MAIL_USER,
-        pass: process.env.MAIL_PASS,
+        pass: process.env.MAIL_PASS, //  App Password
       },
     });
 
-    let info = await transporter.sendMail({
+    const info = await transporter.sendMail({
       from: `"StudyNotion" <${process.env.MAIL_USER}>`,
       to: email,
       subject: title,
       html: body,
     });
 
+    console.log("Email sent:", info.messageId);
     return info;
-  } catch (err) {}
+  } catch (err) {
+    console.log("Mail sending error:", err.message);
+    throw err;
+  }
 };
 
 module.exports = mailsender;

@@ -86,6 +86,7 @@ const {
   getCourseReviews,
   getAllRatingReviews,
   sliderReview,
+  updateRating,
 } = require("../controllers/rating_review");
 
 //****************Form Contact Helper *********** */
@@ -115,7 +116,7 @@ router.post("/auth/change-password", auth, changePassword);
 // Public
 router.get("/courses", auth, isinstructor, ShowCourses);
 //Protected
-router.get("/enrolled-courses", auth,nocache, getEnrolledCourses);
+router.get("/enrolled-courses", auth, nocache, getEnrolledCourses);
 router.post("/publish-courses", auth, changestatus);
 // Protected
 router.patch("/course/update/:courseId", auth, isinstructor, updateCourse);
@@ -184,6 +185,8 @@ router.post("/send-payment-email", auth, isstudent, sendPaymentSuccessEmail);
 //=====================Rating Route ==================
 router.post("/courses/:courseId/review", auth, createRating);
 router.get("/courses/:courseId/avg-rating", auth, getAverageRating);
+router.patch("/update-review/:reviewId", auth, updateRating);
+
 router.get("/courses/reviews", sliderReview);
 router.get("/my-lecture/:courseId/coursereview", getCourseReviews);
 

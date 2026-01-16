@@ -15,7 +15,7 @@ const rootReducers = combineReducers({
   course: CourseReducer,
   enrollment: EnrolledReducer,
   viewCourse: CourseReducerSlice,
-  RatingSlice: RatingReducesSlice,
+  ratingSlice: RatingReducesSlice,
 });
 
 export default rootReducers;

@@ -1,38 +1,60 @@
 /* eslint-disable no-unused-vars */
 import React, { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { CompleteLectureMarker } from "../../../services/auth";
 import { updateCompletedLectures } from "../../../Slices/ViewCourseSlics";
 import { fetchEnrolledCourses } from "../../../Slices/EnroilledCourseSlice";
-
+import {
+  fetchCourseReviews,
+  fetchHomeReviews,
+} from "../../../Slices/RatingSlice";
+import { Edit } from "lucide-react";
+import CourseReviewModal from "./CourseReviewModal";
 const VedioDetails = () => {
+  const [reviewModal, setReviewModal] = useState({
+    open: false,
+    isEdit: false,
+    defaultData: null,
+  });
+
   const { courseId, sectionId, subSectionId } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const playerRef = useRef(null);
+  const location = useLocation();
+  useEffect(() => {
+    dispatch(fetchHomeReviews());
+  }, [location.pathname, dispatch]);
+  const { reviewsByCourse, courseLoadingById } = useSelector(
+    (state) => state.ratingSlice
+  );
 
   const { courseSectionData, completedLectures = [] } = useSelector(
     (state) => state.viewCourse
   );
+  useEffect(() => {
+    if (courseId) {
+      dispatch(fetchCourseReviews(courseId));
+    }
+  }, [courseId, dispatch]);
 
-  console.log("the courseSeciton is ", completedLectures);
   const { token } = useSelector((state) => state.auth);
   const [videoActive, setVideoActive] = useState(false);
   const [videoEnded, setVideoEnded] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  /* ===============================
-     FIND CURRENT VIDEO
-     =============================== */
+  //  FIND CURRENT VIDEO
   let currentSub = null;
 
+  const courseReviews = reviewsByCourse?.[courseId] ?? [];
+  const courseLoading = courseLoadingById?.[courseId] ?? false;
   courseSectionData?.forEach((sec) => {
     sec?.subsection?.forEach((sub) => {
       if (sub._id === subSectionId) currentSub = sub;
     });
   });
-
+  // console.log("the Main Data of the course is",reviewsByCourse)
   if (!currentSub) {
     return (
       <div className="min-h-screen flex items-center justify-center text-white">
@@ -101,27 +123,27 @@ const VedioDetails = () => {
   };
 
   // ====================================
-const handleVideoEnd = async () => {
-  setVideoEnded(true);
+  const handleVideoEnd = async () => {
+    setVideoEnded(true);
 
-  //  Mark EVERY lecture as completed
-  if (!completedLectures.includes(subSectionId)) {
-    try {
-      const res = await CompleteLectureMarker(courseId, subSectionId, token);
+    //  Mark EVERY lecture as completed
+    if (!completedLectures.includes(subSectionId)) {
+      try {
+        const res = await CompleteLectureMarker(courseId, subSectionId, token);
 
-      if (res?.success) {
-        dispatch(updateCompletedLectures(subSectionId));
+        if (res?.success) {
+          dispatch(updateCompletedLectures(subSectionId));
 
-        // Updated the Dashboard
-        dispatch(fetchEnrolledCourses());
+          // Updated the Dashboard
+          dispatch(fetchEnrolledCourses());
+        }
+      } catch (err) {
+        console.log("Auto completion failed", err);
       }
-    } catch (err) {
-      console.log("Auto completion failed", err);
     }
-  }
-};
+  };
 
-// last lecture handler Function
+  // last lecture handler Function
   const isLastLecture = () => {
     const isLastSub =
       subIndex === courseSectionData[sectionIndex].subsection.length - 1;
@@ -194,6 +216,69 @@ const handleVideoEnd = async () => {
           {currentSub.tittle}
         </h1>
         <p className="text-slate-400 mt-1">{currentSub.description}</p>
+      </div>
+
+      {/* ===== Course Reviews List ===== */}
+      <div className="max-w-5xl mx-auto mt-10">
+        <h2 className="text-lg font-semibold text-white mb-4">
+          Course Reviews ({courseReviews.length})
+        </h2>
+
+        {courseReviews.length === 0 ? (
+          <p className="text-slate-400">No reviews found for this course.</p>
+        ) : (
+          <>
+            <div className="flex flex-col gap-4">
+              {courseReviews.map((rev) => (
+                <div
+                  key={rev._id}
+                  className="bg-[#161D29] border border-slate-700 rounded-lg p-4 flex justify-between items-start"
+                >
+                  {/* LEFT CONTENT */}
+                  <div>
+                    <p className="text-white font-semibold">
+                      {rev?.user?.firstName} {rev?.user?.lastName}
+                    </p>
+
+                    <p className="text-slate-400 text-sm">
+                      ⭐ {rev?.rating} / 5 • {rev?.Course?.courseName}
+                    </p>
+
+                    <p className="text-slate-200 mt-2">{rev?.review}</p>
+                  </div>
+
+                  {/* RIGHT EDIT BUTTON */}
+                  <button
+                    onClick={() =>
+                      setReviewModal({
+                        open: true,
+                        isEdit: true,
+                        defaultData: {
+                          reviewId: rev._id,
+                          courseRating: rev?.rating,
+                          courseExperince: rev.review,
+                        },
+                      })
+                    }
+                    className="text-slate-400 hover:text-white transition"
+                  >
+                    <Edit size={18} />
+                  </button>
+                
+                </div>
+              ))} 
+               {reviewModal.open && (
+                    <CourseReviewModal
+                      setReviewModal={(val) =>
+                        setReviewModal((prev) => ({ ...prev, open: val }))
+                      }
+                      isEdit={reviewModal.isEdit}
+                      defaultData={reviewModal.defaultData}
+                    />
+                  )}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

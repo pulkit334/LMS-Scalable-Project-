@@ -4,7 +4,6 @@ import { Route, Routes } from "react-router-dom";
 import Home from "./pages/Home";
 import { Login } from "./components/core/Auth_frontend/Login";
 import MainLayout from "./pages/MainLayout";
-import P1 from "./components/core/Auth_frontend/Profile/p1";
 import { useDispatch, useSelector } from "react-redux";
 import Signup from "./components/core/Auth_frontend/sinup";
 import { restoreUser } from "./utils/restore";
@@ -60,7 +59,7 @@ function App() {
     <div className="w-screen min-h-screen flex flex-col font-inter">
       <Routes>
         {/* Public layout */}
-        <Route element={<MainLayout/>}>
+        <Route element={<MainLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/catalog/:catalogName" element={<Catalog />} />
@@ -126,33 +125,31 @@ function App() {
                 <Route path="cart" element={<Cart />} />
               </>
             )}
-
           </Route>
 
           {/* Course  */}
-              <Route
-          element={
-            <PrivateRoute>
-              <ViewCourses />
-            </PrivateRoute>
-          }
-        >
-          {user?.accountType === ACCOUNT_TYPE.STUDENT && (
-            <>
-              <Route
-                path="view-course/:courseId/section/:sectionId"
-                element={<ViewDetails />}
-              />
+          <Route
+            element={
+              <PrivateRoute>
+                <ViewCourses />
+              </PrivateRoute>
+            }
+          >
+            {user?.accountType === ACCOUNT_TYPE.STUDENT && (
+              <>
+                <Route
+                  path="view-course/:courseId/section/:sectionId"
+                  element={<ViewDetails />}
+                />
 
-              <Route
-                path="view-course/:courseId/section/:sectionId/sub-section/:subSectionId"
-                element={<ViewDetails />}
-              />
-            </>
-          )}
+                <Route
+                  path="view-course/:courseId/section/:sectionId/sub-section/:subSectionId"
+                  element={<ViewDetails />}
+                />
+              </>
+            )}
+          </Route>
         </Route>
-        </Route>
-    
       </Routes>
     </div>
   );
