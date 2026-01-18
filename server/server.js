@@ -9,7 +9,7 @@ import cookieParser from "cookie-parser";
 import { xss } from "express-xss-sanitizer";
 import fileUpload from "express-fileupload";
 import passport from "passport";
-
+// import requestIp from "request-ip"
 // ---- LOCAL IMPORTS ----
 import "./schedular/cronejob.js";
 import authRoutes from "./routes/authroutes.js";
@@ -29,7 +29,7 @@ app.use(passport.initialize());
 // ---------- SECURITY ----------
 app.use(helmet());
 app.use(xss());
-
+// app.use(requestIp.mw())
 // ---------- COOKIES ----------
 app.use(cookieParser());
 

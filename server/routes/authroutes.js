@@ -17,7 +17,7 @@ router.get(
   "/auth/google",
   passport.authenticate("google", {
     scope: ["profile", "email"],
-  })
+  }),
 );
 // Google callback
 router.get(
@@ -27,12 +27,20 @@ router.get(
     const token = jwt.sign(
       { id: req.user._id, email: req.user.email },
       process.env.JWT_SECRET,
-      { expiresIn: "7d" }
+      { expiresIn: "7d" },
     );
 
     res.redirect(`http://localhost:5173/google-auth?token=${token}`);
-  }
+  },
 );
+//==============Refresh Token =====================//
+const { refresh } = require("../controllers/Refreshcontroller");
+
+
+router.post("/refresh",refresh)
+
+
+
 //***************for courses****************//
 const {
   createCourse,
@@ -78,6 +86,7 @@ const {
   UpdateProfilePhoto,
   deleteAccount,
   verifyAccountRecovery,
+  InstructorDashboard,
 } = require("../controllers/Profile");
 //***********************Rating and Reviews ***********//
 const {
@@ -135,7 +144,7 @@ router.post(
   "/course/updateCourseProgress",
   auth,
   isstudent,
-  markLectureComplete
+  markLectureComplete,
 );
 
 // ================= SECTION ROUTES =================
@@ -174,7 +183,7 @@ router.get("/profile/me", auth, getAllUserDetiles);
 router.post("/profile/recovery", UndoAccount);
 router.patch("/profile/image-update", auth, UpdateProfilePhoto);
 router.get("/profile/recover-account/:token", verifyAccountRecovery);
-
+router.get("/instructor/course", auth, isinstructor, InstructorDashboard);
 //=====================Payment Route=======================
 
 router.post("/payment/capturePayment", auth, isstudent, CapturePayment);

@@ -5,37 +5,6 @@ const User = require("../models/User");
 const TWO_HOURS = 2 * 60 * 60 * 1000;
 const mailsender = require("../utils/mailpotp");
 
-// const deletion = async () => {
-//   try {
-//     const time = new Date(Date.now() - TWO_HOURS);
-
-//     const users = await User.find({
-//       isdeleted: true,
-//       deleteRequestedAt: { $lte: time },
-//     });
-
-//     for (const user of users) {
-//       await course.updateMany(
-//         { _id: { $in: user.courses } },
-//         { $pull: { studentEnrolled: user._id } }
-//       );
-
-//       await Profile.findByIdAndDelete(user.additionalDetails);
-
-//       await User.findByIdAndDelete(user._id);
-
-//       await mailsender(
-//         user.email,
-//         "Account Deleted - StudyNotion",
-//         "Your Is Deleted Successfully"
-//       );
-//     }
-//   } catch (err) {
-//     throw new Error("Failed to Delet The user ");
-//   }
-// };
-
-// run every 5 minutes (industry standard)
 
 const deletion = async () => {
   try {

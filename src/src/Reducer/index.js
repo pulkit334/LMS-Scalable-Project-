@@ -7,6 +7,7 @@ import CourseReducer from "../Slices/courseSlice";
 import EnrolledReducer from "../Slices/EnroilledCourseSlice";
 import CourseReducerSlice from "../Slices/ViewCourseSlics";
 import RatingReducesSlice from "../Slices/RatingSlice";
+import InstructorSlice from "../services/operations/insturctor";
 const rootReducers = combineReducers({
   auth: authReducer,
   profile: profileReducer, //
@@ -16,6 +17,7 @@ const rootReducers = combineReducers({
   enrollment: EnrolledReducer,
   viewCourse: CourseReducerSlice,
   ratingSlice: RatingReducesSlice,
+  instructor: InstructorSlice,
 });
 
 export default rootReducers;

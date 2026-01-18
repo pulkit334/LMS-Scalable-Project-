@@ -1,11 +1,22 @@
 import { useDispatch, useSelector } from "react-redux";
-import { logout } from "../../../../Slices/authslice";
 import { Link } from "react-router-dom";
 import { persistor } from "../../../../store/store";
+import { logout } from "../../../../Slices/authslice";
+import { useEffect } from "react";
+import { clearUser } from "../../../../Slices/profile";
+// import { useEffect } from "react";
+// import { clearUser } from "../../../../Slices/profile";
 export const ProfileMenu = () => {
-  const user = useSelector((state) => state?.profile?.user);
+  const { user } = useSelector((state) => state?.profile);
+
   const dispatch = useDispatch();
-  if (!user) return null;
+
+  useEffect(() => {
+    if (!user) {
+      dispatch(clearUser());
+      dispatch(logout());
+    }
+  }, [user, dispatch]);
 
   return (
     <div className="absolute right-0 top-12 z-50 w-[320px] rounded-2xl bg-white shadow-2xl border border-gray-200">

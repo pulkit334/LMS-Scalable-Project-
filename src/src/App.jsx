@@ -35,6 +35,7 @@ import Catalog from "./pages/catalog";
 import Coursebuy from "./components/core/Student/courseBuy";
 import ViewDetails from "./components/core/ViewCourse/VedioDEtails";
 import ViewCourses from "./pages/ViewCourses";
+import Instructor from "./components/core/Dashboard/InstructorDashboard/Instructor";
 
 function App() {
   const dispatch = useDispatch();
@@ -84,7 +85,7 @@ function App() {
             path="/recover-account/:token"
             element={<EmailVerification />}
           />
-          {/* <Route path="/dashboard/my-profile" element={<MyProfile/>} /> */}
+
           <Route path="/contact" element={<Contactus />} />
           <Route path="/google-auth" element={<GoogleAuth />} />
           <Route path="/about" element={<About />} />
@@ -103,6 +104,7 @@ function App() {
               </PrivateRoute>
             }
           >
+            <Route index element={<MyProfile />} />
             <Route path="my-profile" element={<MyProfile />} />
             <Route path="settings" element={<EditProfile />} />
 
@@ -114,6 +116,7 @@ function App() {
 
             {user?.accountType !== ACCOUNT_TYPE.STUDENT && (
               <>
+                <Route path="instructor" element={<Instructor />} />
                 <Route path="my-courses" element={<Mycourses />} />
                 <Route path="add-course" element={<Course />} />
               </>

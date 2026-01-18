@@ -48,12 +48,17 @@ const profileSlice = createSlice({
     invalidateCategories(state) {
       state.status = "idle";
     },
+    clearUser(state) {
+      state.user = null;
+      state.ready = false;
+    },
   },
 });
 
 export const {
   setUser,
   setloading,
+  clearUser,
   setCategories,
   setCategoryLoading,
   setCategoryError,

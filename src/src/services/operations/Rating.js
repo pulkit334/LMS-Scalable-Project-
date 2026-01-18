@@ -37,6 +37,5 @@ export const MyLectureReview = async (courseId) => {
 //updation api
 export const UpdationApi = async ({reviewId,data})=>{
   const response = await  api.patch(Rating.UpdationApi.replace(":reviewId",reviewId),data);
-console.log("hehehehehehehehe",response?.data )
   return response?.data;
 }

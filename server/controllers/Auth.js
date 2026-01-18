@@ -13,7 +13,7 @@ exports.sendOtp = async (req, res) => {
     console.log("BODY:", req.body);
     console.log("COOKIES:", req.cookies);
     console.log("HEADERS AUTH:", req.headers.authorization);
-    //fetch the email from Req Body 
+    //fetch the email from Req Body
     const { email } = req.body;
     //Check If User alerady exist or Not
     const checkUserpresent = await User.findOne({ email });
@@ -186,9 +186,10 @@ exports.login = async (req, res) => {
     //User Check exist or not
     const isPasswordValid = bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      return res.status(401).json({
-        message: "Invalid password",
+        return res.status(401).json({
         success: false,
+        message: "Invalid password",
+        code: "INVALID_PASSWORD",
       });
     }
 
@@ -199,7 +200,11 @@ exports.login = async (req, res) => {
     };
 
     const token = jwt.sign(payload, process.env.JWT_SECRET, {
-      expiresIn: "2h",
+      expiresIn: "1d",
+    });
+    //refresh Token
+    const Refreshtoken = jwt.sign(payload, process.env.JWT_REFRESH_SECRET, {
+      expiresIn: "7d",
     });
 
     //attach token and remove password
@@ -209,15 +214,21 @@ exports.login = async (req, res) => {
     //create cookie
     const options = {
       httpOnly: true, // cannot access via JS
-      secure: process.env.NODE_ENV === "production", // FIXED for localhost
+      secure: false,
       sameSite: "lax", // prevents CSRF issues
-      expires: new Date(Date.now() + 2 * 60 * 60 * 1000), // 2 hours
+      expires: new Date(Date.now() + 60 * 15 * 1000), // 2 hours
     };
 
+    res.cookie("refreshToken", Refreshtoken, {
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
     return res.cookie("token", token, options).status(200).json({
       success: true,
       user,
-
+      token,
       message: "Logged in",
     });
   } catch (err) {
@@ -257,7 +268,7 @@ exports.changePassword = async (req, res) => {
     // 3. Check old password
     const isOldPasswordCorrect = await bcrypt.compare(
       oldPassword,
-      user.password
+      user.password,
     );
 
     if (!isOldPasswordCorrect) {

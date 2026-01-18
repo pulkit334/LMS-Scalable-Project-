@@ -10,9 +10,10 @@ export const SubmitHandle = async (data, dispatch, navigate) => {
     console.log("LOGIN RESPONSE is", res);
 
     //  KEEPING EXACTLY AS YOU ASKED
-    const { token } = res.user;
+    // const { token } = res.user;
+    const  token = res.token;
     const user = res?.user;
-
+console.log("teh toke is ",token , "Or the old token is ",res.user, "the user itself is ",user)
     //  Invalid credentials / bad response
     if (!user || !token) {
       toast.error("Invalid credentials");

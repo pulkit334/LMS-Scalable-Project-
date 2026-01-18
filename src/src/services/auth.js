@@ -17,6 +17,7 @@ export const AUTH = {
   Delete_Account: "/profile/delete",
   Profile_Recovery: "/profile/recovery",
   EmailVerification: "/recover-account",
+  RefreshVerification: "/refresh",
 };
 
 export const Course = {
@@ -203,7 +204,7 @@ export const createCourseSection = async (data) => {
 };
 export const deleteSection = async (sectionId) => {
   return api.delete(
-    Course_Section.deleteSection.replace(":sectionId", sectionId)
+    Course_Section.deleteSection.replace(":sectionId", sectionId),
   );
 };
 
@@ -236,7 +237,7 @@ export const UpdateSubsection = async (subSectionId, formData) => {
 
   const response = await api.patch(
     Subsection.UpdateSubsection.replace(":subSectionId", subSectionId),
-    formData
+    formData,
   );
   console.log("Hi the data is ", response);
   return response;
@@ -245,7 +246,7 @@ export const UpdateSubsection = async (subSectionId, formData) => {
 export const getFullCourseDetails = async (courseId) => {
   console.log("The courseID is ", courseId);
   const res = await api.get(
-    Course.GetFUllCourseDetails.replace(":courseId", courseId)
+    Course.GetFUllCourseDetails.replace(":courseId", courseId),
   );
   console.log("The Fullcourse edit data is", res);
 
@@ -255,7 +256,7 @@ export const getFullCourseDetails = async (courseId) => {
 export const UpdateUser = async (courseId, formData) => {
   const res = await api.patch(
     Course_Section.UpdateCourse.replace(":courseId", courseId),
-    formData
+    formData,
   );
   console.log("The Data is", res);
   return res?.data;
@@ -265,17 +266,29 @@ export const CourseDelete = async (courseId) => {
   console.log("Deleting course API hit:", courseId);
 
   const response = await api.delete(
-    Course.DeleteCourse.replace(":courseId", courseId)
+    Course.DeleteCourse.replace(":courseId", courseId),
   );
 
   console.log("Delete course response:", response?.data);
   return response?.data;
 };
 
-export const CompleteLectureMarker = async (courseId, subSectionId,token) => {
-  const response = await api.post(Course.CourseLectureProgressMarker, {
-    courseId,
-    subSectionId,
-  },token);
+export const CompleteLectureMarker = async (courseId, subSectionId, token) => {
+  const response = await api.post(
+    Course.CourseLectureProgressMarker,
+    {
+      courseId,
+      subSectionId,
+    },
+    token,
+  );
+  return response?.data;
+};
+
+export const RefreshVerification = async (data) => {
+  const response = await api.post(AUTH.RefreshVerification);
+  // const token = response.data?.token || [];
+  // localStorage.setItem("token", token);
+  console.log("The Token is ",response)
   return response?.data;
 };

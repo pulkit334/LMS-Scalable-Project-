@@ -4,6 +4,7 @@ import { AUTH } from "../auth";
 
 const Profile = {
   Mycourse: "/enrolled-courses",
+  InstructorCourse: "/instructor/course",
 };
 
 export const UserEnrolledCourses = async () => {
@@ -27,3 +28,11 @@ export const UserEnrolledCourses = async () => {
     throw error;
   }
 };
+export const InstructorCourse = async () => {
+    
+    const response =await  api.get(Profile.InstructorCourse);
+    console.log("The data for InstructorCourse is ", response);
+    return response?.data?.courses;
+  
+  }
+3
