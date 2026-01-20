@@ -13,9 +13,9 @@ import "swiper/css/pagination";
 const ReviewSlider = () => {
   const dispatch = useDispatch();
   const { loading, reviews = [] } = useSelector(
-    (state) => state.ratingSlice || {}
+    (state) => state.ratingSlice || {},
   );
- 
+  console.log("the Reveiw is", reviews);
   const [lgreview, setlgreview] = useState(false);
   useEffect(() => {
     if (reviews.length === 0) {
@@ -35,35 +35,36 @@ const ReviewSlider = () => {
         </h1>
       </div>
     );
-
+  console.log("My Course Reviews Are ", reviews);
   return (
     <div className="w-full max-w-6xl mx-auto py-16">
       <Swiper
-        modules={[Navigation, Pagination, Autoplay]}
+        className="swiper-wrapper"
+        modules={[Autoplay]}
         slidesPerView="auto"
-        centeredSlides={true}
         spaceBetween={20}
         loop={true}
+        freeMode={true}
+        freeModeMomentum={false}
         autoplay={{
-          delay: 2000,
+          delay: 0,
           disableOnInteraction: false,
-          pauseOnMouseEnter: true,
         }}
         breakpoints={{
           0: {
-            slidesPerView: 1,
+            slidesPerView: "auto",
             spaceBetween: 16,
           },
           640: {
-            slidesPerView: 2,
+            slidesPerView: "auto",
             spaceBetween: 20,
           },
           1024: {
-            slidesPerView: 3,
+            slidesPerView: "auto",
             spaceBetween: 24,
           },
         }}
-        speed={4000}
+        speed={6000}
         pagination={{ clickable: true }}
         style={{
           "--swiper-pagination-color": "#fffefd",
@@ -92,7 +93,15 @@ const ReviewSlider = () => {
                 {/* USER */}
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center font-bold">
-                    {initials}
+                    {Course?.thumbnail ? (
+                      <img
+                        src={Course.thumbnail}
+                        alt="course"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="font-bold">{initials}</span>
+                    )}
                   </div>
 
                   <div>

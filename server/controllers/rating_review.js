@@ -3,14 +3,16 @@ const RatingAndReviews = require("../models/RatingAndReview");
 const Course = require("../models/course");
 const RatingAndReview = require("../models/RatingAndReview");
 const User = require("../models/User");
+const client = require("../Reddis/client");
 //creatae rating
 exports.createRating = async (req, res) => {
   try {
     //get user id
+
     const userid = req.user.id;
     const { rating, review } = req.body;
     const { courseId } = req.params;
-
+    client.del;
     //verify the user id if not in course or Not
     const courseDetails = await Course.findOne({
       _id: courseId,
@@ -54,9 +56,9 @@ exports.createRating = async (req, res) => {
           ratingAndReviews: ratingDb._id,
         },
       },
-      { new: true }
+      { new: true },
     );
-
+    await client.del("rating:All:slider");
     //return the response
     return res.status(201).json({
       success: true,
@@ -73,8 +75,6 @@ exports.createRating = async (req, res) => {
 //avg rating]
 exports.getAverageRating = async (req, res) => {
   try {
-    //get course id
-    // const course_id = req.body.courseid;
     const { courseId } = req.params;
     //calculate avergae rating
     const result = await RatingAndReviews.aggregate([
@@ -114,6 +114,7 @@ exports.getAverageRating = async (req, res) => {
 exports.getAllRatingReviews = async (req, res) => {
   try {
     //find call then return
+
     const AllData = await RatingAndReviews.find({})
       .populate({
         path: "user",
@@ -129,6 +130,7 @@ exports.getAllRatingReviews = async (req, res) => {
         message: "No Reviews Found",
       });
     }
+
     return res.status(200).json({
       success: true,
       message: "All Reviews Fetched successfully",
@@ -174,6 +176,15 @@ exports.getCourseReviews = async (req, res) => {
 
 exports.sliderReview = async (req, res) => {
   try {
+    const cacheKey = "rating:All:slider";
+    const data = await client.get(cacheKey);
+    if (data) {
+      return res.json({
+        success: true,
+        messsage: "Cached Data",
+        data: JSON.parse(data),
+      });
+    }
     const limit = 10;
     const response = await RatingAndReview.find({})
       .populate("Course", "thumbnail courseName")
@@ -181,6 +192,7 @@ exports.sliderReview = async (req, res) => {
       .sort({ rating: -1, createdAt: -1 })
       .limit(limit)
       .exec();
+    await client.setex(cacheKey, 60, JSON.stringify(response));
     return res.status(200).json({
       success: true,
       message: "General homepage reviews fetched",
@@ -225,7 +237,7 @@ exports.updateRating = async (req, res) => {
       message: "Updated successfully",
     });
   } catch (error) {
-    console.log(error)
+    console.log(error);
     return res.status(500).json({
       success: false,
       message: "Failed Try Again",

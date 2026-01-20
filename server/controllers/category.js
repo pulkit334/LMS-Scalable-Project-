@@ -34,6 +34,7 @@ exports.Category = async (req, res) => {
 
 exports.AllCategory = async (req, res) => {
   try {
+    const cachekey = ""
     const AllCategory = await category
       .find({}, { name: true, description: true })
       .populate({

@@ -5,6 +5,9 @@ html, body, #root {
   overflow-x: hidden;
 
 }
+.swiper-wrapper {
+  transition-timing-function: linear !important;
+}
 
 
 .homepage_bg{

@@ -23,7 +23,6 @@ export const CreateRating = async ({ courseId, data }) => {
 
 export const getRating = async () => {
   const response = await api.get(Rating?.GetALLRatings);
-  console.log("the rating And Reviews are", response);
   return response?.data;
 };
 //my-lecture course Review

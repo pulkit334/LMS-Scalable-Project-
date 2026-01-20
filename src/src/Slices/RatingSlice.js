@@ -8,12 +8,13 @@ export const fetchHomeReviews = createAsyncThunk(
   "home/fetchHomeReviews",
   async (_, { rejectWithValue }) => {
     try {
-        esponse = await getRating();
-      return response;
+      const   response = await getRating();
+      console.log("the Revivew after fetch is ", response);
+      return response?.data;
     } catch (Error) {
       return rejectWithValue(Error?.response || Error);
     }
-  }
+  },
 );
 
 export const fetchCourseReviews = createAsyncThunk(
@@ -26,7 +27,7 @@ export const fetchCourseReviews = createAsyncThunk(
     } catch (error) {
       return rejectWithValue(error?.response || error);
     }
-  }
+  },
 );
 const RatingSlice = createSlice({
   name: "ratingSlice",
@@ -44,10 +45,10 @@ const RatingSlice = createSlice({
         state.loading = true;
       })
       .addCase(fetchHomeReviews.fulfilled, (state, action) => {
-        (state.loading = false), (state.reviews = action.payload);
+        ((state.loading = false), (state.reviews = action.payload));
       })
       .addCase(fetchHomeReviews.rejected, (state, action) => {
-        (state.loading = false), (state.error = action.payload);
+        ((state.loading = false), (state.error = action.payload));
       });
 
     builder
@@ -56,7 +57,7 @@ const RatingSlice = createSlice({
         state.courseLoadingById[courseId] = true;
       })
       .addCase(fetchCourseReviews.fulfilled, (state, action) => {
-          const courseId = action.meta.arg;
+        const courseId = action.meta.arg;
         state.courseLoadingById[courseId] = false;
         state.reviewsByCourse[courseId] = action.payload;
       })
