@@ -72,7 +72,7 @@ exports.createRating = async (req, res) => {
   }
 };
 
-//avg rating]
+//avg rating
 exports.getAverageRating = async (req, res) => {
   try {
     const { courseId } = req.params;
@@ -145,28 +145,92 @@ exports.getAllRatingReviews = async (req, res) => {
 };
 // Get Course Related Reveiw
 
+// exports.getCourseReviews = async (req, res) => {
+//   try {
+
+//     const { courseId } = req.params;
+//     console.log(courseId);
+//     const course = await Course.findById(courseId)
+//       .select("studentEnrolled")
+//       .lean();
+
+//     if (!course) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Course not found",
+//       });
+//     }
+
+//     const reviews = await RatingAndReview.find({
+//       Course: courseId,
+//       user: { $in: course.studentEnrolled },
+//     })
+//       .populate("user", "firstName lastName image")
+//       .limit(3)
+//       .sort({ createdAt: -1 });
+
+//     console.log("the Review is", reviews);
+//     if (!reviews || reviews.length === 0) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "No reviews found for this course",
+//       });
+//     }
+//     console.log("the data is ", reviews);
+//     return res.status(200).json({
+//       success: true,
+//       datarating: course,
+//       data: reviews,
+//     });
+//   } catch (error) {
+//     console.log("the Error is", error);
+//     return res.status(500).json({
+//       success: false,
+//       message: error.message,
+//     });
+//   }
+// };
 exports.getCourseReviews = async (req, res) => {
   try {
     const { courseId } = req.params;
-    console.log(courseId);
-    const reviews = await RatingAndReview.find({ Course: courseId })
-      .populate("user", "firstName lastName image")
-      .sort({ createdAt: -1 });
 
-    console.log("the Review is", reviews);
-    if (!reviews || reviews.length === 0) {
+    // 1️et enrolled students
+    const course = await Course.findById(courseId)
+      .select("studentEnrolled")
+      .lean();
+console.log("the courses are",course)
+    if (!course) {
+      return res.status(404).json({
+        success: false,
+        message: "Course not found",
+      });
+    }
+
+    // 2️Get ONLY reviews by enrolled students
+    const reviews = await RatingAndReview.find({
+      Course: courseId,
+      user: { $in: course.studentEnrolled }, //
+    })
+      .populate("user", "firstName lastName image")
+      .sort({ createdAt: -1 })
+      .limit(3);
+console.log(
+  reviews[0]?.user
+);
+
+    if (!reviews.length) {
       return res.status(404).json({
         success: false,
         message: "No reviews found for this course",
       });
     }
-    console.log("the data is ", reviews);
+// console.log("the Rating and Reviews Courses Are",review)
     return res.status(200).json({
       success: true,
       data: reviews,
     });
   } catch (error) {
-    console.log("the Error is", error);
+    console.error("Review error:", error);
     return res.status(500).json({
       success: false,
       message: error.message,

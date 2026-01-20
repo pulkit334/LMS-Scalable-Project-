@@ -20,6 +20,7 @@
     "axios": "^1.13.2",
     "bcrypt": "^6.0.0",
     "chart.js": "^4.5.1",
+    "cloudflare-cli": "^5.1.1",
     "cloudinary": "^2.8.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",

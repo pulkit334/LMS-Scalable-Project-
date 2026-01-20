@@ -3,6 +3,7 @@ const router = express.Router();
 const { auth, isinstructor, isstudent, admin } = require("../middlewares/auth");
 const jwt = require("jsonwebtoken");
 const passport = require("passport");
+const { cacheMiddleware } = require("../middlewares/Caching");
 //************** for Authentication **************//
 const {
   sendOtp,
@@ -36,10 +37,7 @@ router.get(
 //==============Refresh Token =====================//
 const { refresh } = require("../controllers/Refreshcontroller");
 
-
-router.post("/refresh",refresh)
-
-
+router.post("/refresh", refresh);
 
 //***************for courses****************//
 const {
@@ -108,7 +106,6 @@ const {
   VerifyPayment,
   sendPaymentSuccessEmail,
 } = require("../controllers/payment");
-const nocache = require("../middlewares/nocache");
 
 // ================= PUBLIC AUTH ROUTES =================
 router.post("/auth/send-otp", sendOtp);
@@ -123,9 +120,20 @@ router.post("/auth/change-password", auth, changePassword);
 // ================= COURSE ROUTES =================
 
 // Public
-router.get("/courses", auth, isinstructor, ShowCourses);
+router.get(
+  "/courses",
+  auth,
+  isinstructor,
+  cacheMiddleware((req) => "Courses:ALL", 100),
+  ShowCourses,
+);
 //Protected
-router.get("/enrolled-courses", auth, nocache, getEnrolledCourses);
+router.get(
+  "/enrolled-courses",
+  auth,
+  cacheMiddleware((req) => "Enrolled-Course", 60),
+  getEnrolledCourses,
+);
 router.post("/publish-courses", auth, changestatus);
 // Protected
 router.patch("/course/update/:courseId", auth, isinstructor, updateCourse);
@@ -155,7 +163,7 @@ router.put("/section/update", isinstructor, updateSection);
 router.delete("/section/delete/:sectionId", auth, deleteSection, deleteSection);
 
 // GET SECTION
-router.get("/section/:sectionId", auth, section);
+router.get("/section/:sectionId", auth,  cacheMiddleware((req) => `Cache:section:${req.params.sectionId}`),isstudent, section);
 router.post("/section/create", auth, createSection);
 
 // ================= SUBSECTION ROUTES =================
@@ -164,7 +172,7 @@ router.post("/section/create", auth, createSection);
 router.post("/subsection/create", auth, isinstructor, createSubsection);
 
 // GET SUBSECTION
-router.get("/subsection/:subSectionId", auth, isinstructor, subsection);
+router.get("/subsection/:subSectionId", auth, isinstructor, cacheMiddleware((req) => `Cache:section:${req.params.subsectionId}`),subsection);
 //modifying Subsection
 router.patch("/subsection/:subSectionId", auth, isinstructor, UpdateSubsection);
 // ================= CATEGORY ROUTES =================
@@ -173,7 +181,12 @@ router.patch("/subsection/:subSectionId", auth, isinstructor, UpdateSubsection);
 router.post("/category/create", auth, Category);
 
 // Public (all categories)
-router.get("/category/all", auth, AllCategory);
+router.get(
+  "/category/all",
+  auth,
+  cacheMiddleware((req) => "Category:All", 3600),
+  AllCategory,
+);
 router.post("/course/getCategoryPageDetails", auth, CategoryPageDetails);
 
 // ================= PROFILE ROUTES =================
@@ -193,12 +206,12 @@ router.post("/payment/verifySignature", auth, isstudent, VerifyPayment);
 router.post("/send-payment-email", auth, isstudent, sendPaymentSuccessEmail);
 //=====================Rating Route ==================
 router.post("/courses/:courseId/review", auth, createRating);
-router.get("/courses/:courseId/avg-rating", auth, getAverageRating);
+router.get("/courses/:courseId/avg-rating", auth,cacheMiddleware((req) => `Cache:AvgRating:/courses${req.params.courseId}/avg-rating`), getAverageRating);
 router.patch("/update-review/:reviewId", auth, updateRating);
 
 router.get("/courses/reviews", sliderReview);
 router.get("/my-lecture/:courseId/coursereview", getCourseReviews);
-
+router.get("/payment-review/:courseId/review",getCourseReviews)
 //================Helper Function ======////
 router.post("/aboutus/submit-form", submitContactForm);
 

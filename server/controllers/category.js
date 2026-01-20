@@ -1,8 +1,7 @@
 const category = require("../models/category");
 
 const Course = require("../models/course");
-//create Category ka handle functtion expo
-// hw create catergory
+
 exports.Category = async (req, res) => {
   try {
     const { name, description } = req.body;
@@ -34,7 +33,6 @@ exports.Category = async (req, res) => {
 
 exports.AllCategory = async (req, res) => {
   try {
-    const cachekey = ""
     const AllCategory = await category
       .find({}, { name: true, description: true })
       .populate({

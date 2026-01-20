@@ -36,7 +36,7 @@ exports.createCourse = async (req, res) => {
     }
     console.log(
       "The categoory is dsbhsdhbjcbzxkbzclbjzxlbjzxbjlbjlzlbvzlbkln",
-      category
+      category,
     );
 
     const thumbnail = req.files.thumbnailImage;
@@ -79,7 +79,7 @@ exports.createCourse = async (req, res) => {
     ///upload image top cloudiinry
     const thumngnailImage = await uploadImageToCloudinary(
       thumbnail,
-      process.env.FolderName
+      process.env.FolderName,
     );
 
     //create an entry for new courseco
@@ -102,14 +102,14 @@ exports.createCourse = async (req, res) => {
       {
         $push: { courses: newCourse._id },
       },
-      { new: true }
+      { new: true },
     );
 
     //update the category  schema
     await Category.findByIdAndUpdate(
       category,
       { $push: { course: newCourse._id } },
-      { new: true }
+      { new: true },
     );
 
     console.log("the data is ", response);
@@ -134,7 +134,7 @@ exports.ShowCourses = async (req, res) => {
     const instrucorid = req.user.id;
     const AllCourses = await course
       .find({ Insturctor: instrucorid })
-      .populate("Insturctor") // ⬅MUST MATCH SCHEMA FIELD NAME
+      .populate("Insturctor")
       .exec();
 
     return res.status(200).json({
@@ -169,16 +169,12 @@ exports.getEnrolledCourses = async (req, res) => {
 
     const ProgressMap = new Map();
     progressDocs.forEach((p) => {
-      ProgressMap.set(
-        p.courseId.toString(),
-        p.completedVideos.length
-      );
+      ProgressMap.set(p.courseId.toString(), p.completedVideos.length);
     });
 
     const UpdatedProgress = user.courses.map((course) => {
       const totalLecture = courseLengthCalculate(course);
-      const completedLecture =
-        ProgressMap.get(course._id.toString()) || 0;
+      const completedLecture = ProgressMap.get(course._id.toString()) || 0;
 
       const coursePercentage =
         totalLecture === 0
@@ -203,7 +199,6 @@ exports.getEnrolledCourses = async (req, res) => {
     });
   }
 };
-
 
 // for making the course publish  or saved as draft
 
@@ -403,7 +398,7 @@ exports.updateCourse = async (req, res) => {
           public_id: publicId,
           overwrite: true,
           invalidate: true,
-        }
+        },
       );
 
       updatePayload.image = {
@@ -415,7 +410,7 @@ exports.updateCourse = async (req, res) => {
     const updatedCourse = await course.findByIdAndUpdate(
       courseId,
       { $set: updatePayload },
-      { new: true, runValidators: true }
+      { new: true, runValidators: true },
     );
 
     if (!updatedCourse) {
@@ -467,7 +462,7 @@ exports.deleteCourse = async (req, res) => {
     // 4️ Find all sections of the course (only subSection field)
     const sections = await Section.find(
       { _id: { $in: Course.courseContent } },
-      { subSection: 1 }
+      { subSection: 1 },
     ).lean();
 
     // 5️ Collect all subsection IDs
@@ -488,7 +483,7 @@ exports.deleteCourse = async (req, res) => {
     // 8️ Remove course from ALL enrolled users
     await User.updateMany(
       { courses: courseId },
-      { $pull: { courses: courseId } }
+      { $pull: { courses: courseId } },
     );
 
     // 9️ OPTIONAL: remove course from category (safe guard)
@@ -532,10 +527,10 @@ exports.getCourse = async (req, res) => {
     const data = await course
       .findById(courseId)
       .select(
-        "courseName courseDescription price thumbnail category Insturctor totalDuration status studentEnrolled whatyouwilllearn"
+        "courseName courseDescription price thumbnail category Insturctor totalDuration status studentEnrolled whatyouwilllearn",
       )
       .populate("category", "name")
-      .populate("Insturctor", "firstName lastName email");
+      .populate("Insturctor", "image.url firstName lastName email");
 
     console.log("course data:", data);
 
