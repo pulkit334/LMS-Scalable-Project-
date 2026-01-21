@@ -219,7 +219,7 @@ console.log(
 );
 
     if (!reviews.length) {
-      return res.status(404).json({
+      return res.status(202).json({
         success: false,
         message: "No reviews found for this course",
       });

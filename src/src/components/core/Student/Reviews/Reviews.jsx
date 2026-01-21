@@ -1,22 +1,35 @@
-/* eslint-disable no-unused-vars */
 import ReactStar from "react-rating-stars-component";
+import Result from "../../../../utils/Spinnre";
 
-const Reviews = ({ reviews }) => {
+const Reviews = ({ reviews, loading }) => {
+  // 1) Loading state
+  if (loading) {
+    return <Result loading={true} text="Loading.." />;
+  }
+
+  // 2) No reviews found
+  if (!reviews || !reviews.data || reviews.data.length === 0) {
+    return (
+      <p className="text-2xl flex justify-center items-center font-bold mb-6">
+        No reviews found
+      </p>
+    );
+  }
+
+  // 3) Reviews available
   return (
-    <div>
-      <h2 className="text-2xl font-bold mb-6">
+    <div className="flex flex-col relative left-40">
+      <h2 className="text-2xl flex justify-center items-center font-bold mb-6">
         Reviews from other learners
       </h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {reviews?.data?.map((r, i) => (
+        {reviews.data.map((r, i) => (
           <div
             key={i}
             className="bg-[#020617] p-6 rounded-xl border border-gray-800"
           >
-            {/* HEADER */}
-           <div className="flex gap-6 overflow-x-auto pb-2">
-
+            <div className="flex gap-6 overflow-x-auto pb-2">
               <img
                 src={
                   r.user?.image?.url ||
@@ -41,10 +54,7 @@ const Reviews = ({ reviews }) => {
               </div>
             </div>
 
-            {/* REVIEW TEXT */}
-            <p className="text-sm text-gray-300 leading-relaxed">
-              {r.review}
-            </p>
+            <p className="text-sm text-gray-300 leading-relaxed">{r.review}</p>
           </div>
         ))}
       </div>

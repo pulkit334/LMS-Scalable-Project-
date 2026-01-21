@@ -14,7 +14,7 @@ const RenderTotalAmount = () => {
   };
   return (
     <div className="sticky top-24 rounded-xl bg-richblack-800 p-6 h-fit">
-      <p className="text-sm text-richblack-400 mb-1">Total Amount</p>
+      <p clclassName="text-sm text-richblack-400 mb-1">Total Amount</p>
 
       <p className="text-4xl font-bold text-yellow-50 mb-6">₹ {total}</p>
 

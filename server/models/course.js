@@ -1,5 +1,6 @@
 
   const mongoose = require("mongoose");
+const { type } = require("os");
   const courseSchema = new mongoose.Schema({
     courseName: {
       type: String,
@@ -63,5 +64,6 @@
     studentEnrolled: [
       { type: mongoose.Schema.Types.ObjectId, required: true, ref: "User" },
     ],
+
   });
   module.exports = mongoose.model("Courses", courseSchema);

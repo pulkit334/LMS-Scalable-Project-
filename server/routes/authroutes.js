@@ -105,6 +105,7 @@ const {
   enrolledStudent,
   VerifyPayment,
   sendPaymentSuccessEmail,
+  Paymenthistory,
 } = require("../controllers/payment");
 
 // ================= PUBLIC AUTH ROUTES =================
@@ -142,6 +143,9 @@ router.patch("/course/update/:courseId", auth, isinstructor, updateCourse);
 router.get("/course/:courseId", auth, isstudent, getCourse);
 router.get("/course/:courseId/content", auth, isstudent, getCourseContent);
 router.get("/course/:courseId/reviews", auth, getPaymentCourseReviews);
+router.get("/user/purchased-history",auth,isstudent,Paymenthistory)
+
+
 
 router.get("/getFullCourseDetails/:courseId", auth, getFullCourseDetails);
 // routes/course.js

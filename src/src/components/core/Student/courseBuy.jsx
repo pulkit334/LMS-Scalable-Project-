@@ -46,10 +46,9 @@ const CourseDetailsPage = () => {
       <CourseHeader course={course} reviews={reviews} />
 
       {/* MAIN GRID */}
-      <div className="max-w-300 mx-auto px-6 grid grid-cols-12 gap-10 -mt-16">
-
+      <div className="max-w-300 mx-auto px-6 flex  gap-10 -mt-16">
         {/* LEFT CONTENT */}
-        <div className="col-span-8 space-y-10">
+        <div className=" space-y-10">
           <WhatYouWillLearn text={course.whatyouwilllearn} />
           <CourseContent sections={content} />
           <Author instructor={course.Insturctor} />
@@ -57,12 +56,11 @@ const CourseDetailsPage = () => {
         </div>
 
         {/* RIGHT BUY CARD */}
-        <div className="col-span-4 flex justify-end -mt-24">
+        <div className=" flex justify-end -mt-24">
           <div className="sticky top-14">
             <BuyCard course={course} />
           </div>
         </div>
-
       </div>
     </div>
   );

@@ -5,6 +5,7 @@ export const CoursePayment = {
   GetCourseContent: "/course/:courseId/content",
   getPaymentCourseReviews: "/course/:courseId/reviews",
   getCourseReviews: "/payment-review/:courseId/review",
+  GetPaymentHistory : "/user/purchased-history",
 };
 export const paymentcoursereview = async (course) => {
   const response = await api.get(
@@ -36,6 +37,12 @@ export const GetpaymentCourseData = async (Course) => {
   // console.log("the data of Course Payment In backedn  api ", response);
   return response;
 };
+
+
+export const GetPaymentHistory  = async()=>{
+  const response = await api.get(CoursePayment?.GetPaymentHistory)
+  return response?.data;
+}
 
 //raxer Pay Api
 export const studentEndPoints = {

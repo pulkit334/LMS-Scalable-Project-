@@ -22,3 +22,4 @@ server/filepath/tmp-*
 !/crone/package.json
 !/crone/package-lock.json
 /src/clonesrc
+/SinglePayment

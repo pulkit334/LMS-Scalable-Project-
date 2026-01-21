@@ -36,7 +36,7 @@ import Coursebuy from "./components/core/Student/courseBuy";
 import ViewDetails from "./components/core/ViewCourse/VedioDEtails";
 import ViewCourses from "./pages/ViewCourses";
 import Instructor from "./components/core/Dashboard/InstructorDashboard/Instructor";
-
+import Purchasehistory from "./components/core/Student/PaymentHistory/purchasehistory";
 function App() {
   const dispatch = useDispatch();
   const token = useSelector((state) => state.auth.token);
@@ -108,10 +108,6 @@ function App() {
             <Route path="my-profile" element={<MyProfile />} />
             <Route path="settings" element={<EditProfile />} />
 
-            {user?.accountType !== ACCOUNT_TYPE.STUDENT && (
-              <Route path="cart" element={<StudentOnly />} />
-            )}
-
             <Route path="edit-course/:courseId" element={<EditCourse />} />
 
             {user?.accountType !== ACCOUNT_TYPE.STUDENT && (
@@ -124,8 +120,11 @@ function App() {
 
             {user?.accountType === ACCOUNT_TYPE.STUDENT && (
               <>
+                {" "}
+                <Route path="cart" element={<StudentOnly />} />
                 <Route path="enrolled-courses" element={<EnrolledCourses />} />
                 <Route path="cart" element={<Cart />} />
+                <Route path="purchase-history" element={<Purchasehistory />} />
               </>
             )}
           </Route>
