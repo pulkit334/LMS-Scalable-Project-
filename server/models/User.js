@@ -1,4 +1,3 @@
-
 const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema(
@@ -43,7 +42,11 @@ const userSchema = new mongoose.Schema(
         ref: "Courses", // must match your model name in Course.js
       },
     ],
-
+    status: {
+      type: String,
+      enum: ["Active", "InActive"],
+      default: "Active",
+    },
     image: {
       url: {
         type: String,
@@ -88,10 +91,16 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+ 
   },
   {
     timestamps: true,
-  }
+  },
 );
-
+userSchema.index({ email: 1 }, { unique: true });
+userSchema.index({
+  firstName: "text",
+  lastName: "text",
+  email: "text",
+});
 module.exports = mongoose.model("User", userSchema);

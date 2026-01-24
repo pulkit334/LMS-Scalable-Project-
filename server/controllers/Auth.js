@@ -147,7 +147,7 @@ exports.sinup = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     //get the Data from Req Body
-    const { email, password, role } = req.body;
+    const { email, password} = req.body;
 
     if (!email || !password) {
       return res.status(400).json({
@@ -167,13 +167,7 @@ exports.login = async (req, res) => {
         message: "User does not exist",
       });
     }
-    if (user && user.accountType !== role) {
-      return res.status(403).json({
-        success: false,
-        code: "ACCESS_DENIED",
-        message: "You do not have permission to access this resource.",
-      });
-    }
+
     // check deleted
     if (user.isdeleted) {
       return res.status(403).json({
@@ -225,6 +219,7 @@ exports.login = async (req, res) => {
       sameSite: "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
+    console.log(user?.accountType)
     return res.cookie("token", token, options).status(200).json({
       success: true,
       user,
@@ -241,6 +236,103 @@ exports.login = async (req, res) => {
     });
   }
 };
+// exports.login = async (req, res) => {
+//   try {
+//     //get the Data from Req Body
+//     const { email, password, role } = req.body;
+
+//     if (!email || !password) {
+//       return res.status(400).json({
+//         message: "All fields Are required",
+//         success: false,
+//       });
+//     }
+
+//     //check user exist or not
+
+//     const user = await User.findOne({ email });
+
+//     if (!user) {
+//       return res.status(400).json({
+//         success: false,
+//         code: "USER_NOT_FOUND",
+//         message: "User does not exist",
+//       });
+//     }
+//     if (user && user.accountType !== role) {
+//       return res.status(403).json({
+//         success: false,
+//         code: "ACCESS_DENIED",
+//         message: "You do not have permission to access this resource.",
+//       });
+//     }
+//     // check deleted
+//     if (user.isdeleted) {
+//       return res.status(403).json({
+//         success: false,
+//         code: "ACCOUNT_DELETED REQUEST IS SUBMITTED",
+//         message: "Account is disabled",
+//       });
+//     }
+
+//     //User Check exist or not
+//     const isPasswordValid = bcrypt.compare(password, user.password);
+//     if (!isPasswordValid) {
+//         return res.status(401).json({
+//         success: false,
+//         message: "Invalid password",
+//         code: "INVALID_PASSWORD",
+//       });
+//     }
+
+//     const payload = {
+//       email: user.email,
+//       id: user._id,
+//       accountType: user.accountType,
+//     };
+
+//     const token = jwt.sign(payload, process.env.JWT_SECRET, {
+//       expiresIn: "1d",
+//     });
+//     //refresh Token
+//     const Refreshtoken = jwt.sign(payload, process.env.JWT_REFRESH_SECRET, {
+//       expiresIn: "7d",
+//     });
+
+//     //attach token and remove password
+//     user.token = token;
+//     user.password = undefined;
+
+//     //create cookie
+//     const options = {
+//       httpOnly: true, // cannot access via JS
+//       secure: false,
+//       sameSite: "lax", // prevents CSRF issues
+//       expires: new Date(Date.now() + 60 * 15 * 1000), // 2 hours
+//     };
+
+//     res.cookie("refreshToken", Refreshtoken, {
+//       httpOnly: true,
+//       secure: false,
+//       sameSite: "lax",
+//       maxAge: 7 * 24 * 60 * 60 * 1000,
+//     });
+//     return res.cookie("token", token, options).status(200).json({
+//       success: true,
+//       user,
+//       token,
+//       message: "Logged in",
+//     });
+//   } catch (err) {
+//     console.log("LOGIN ERROR:", err);
+
+//     return res.status(500).json({
+//       message: "Authenticatin Failed",
+//       success: false,
+//       error: err.message,
+//     });
+//   }
+// };
 
 exports.changePassword = async (req, res) => {
   try {

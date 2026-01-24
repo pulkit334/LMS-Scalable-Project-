@@ -1,6 +1,6 @@
 import redisClient from "../../Reddis/client.js";
 
-export const cacheMiddleware = (keyBuilder, ttl = 300) => {
+export const cacheMiddleware = (keyBuilder, ttl = 1000) => {
   return async (req, res, next) => {
     try {
       const key = keyBuilder(req);

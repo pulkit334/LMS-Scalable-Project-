@@ -135,6 +135,7 @@ router.get(
   cacheMiddleware((req) => "Enrolled-Course", 60),
   getEnrolledCourses,
 );
+
 router.post("/publish-courses", auth, changestatus);
 // Protected
 router.patch("/course/update/:courseId", auth, isinstructor, updateCourse);
@@ -143,11 +144,20 @@ router.patch("/course/update/:courseId", auth, isinstructor, updateCourse);
 router.get("/course/:courseId", auth, isstudent, getCourse);
 router.get("/course/:courseId/content", auth, isstudent, getCourseContent);
 router.get("/course/:courseId/reviews", auth, getPaymentCourseReviews);
-router.get("/user/purchased-history",auth,isstudent,Paymenthistory)
+router.get(
+  "/user/purchased-history",
+  auth,
+  cacheMiddleware((req) => `Cache:purchased-History`, 3000),
+  isstudent,
+  Paymenthistory,
+);
 
-
-
-router.get("/getFullCourseDetails/:courseId", auth, getFullCourseDetails);
+router.get(
+  "/getFullCourseDetails/:courseId",
+  auth,
+  cacheMiddleware((req) => `Cache:CourseDeatails`, 6000),
+  getFullCourseDetails,
+);
 // routes/course.js
 router.delete("/course/:courseId", auth, isinstructor, deleteCourse);
 
@@ -167,7 +177,13 @@ router.put("/section/update", isinstructor, updateSection);
 router.delete("/section/delete/:sectionId", auth, deleteSection, deleteSection);
 
 // GET SECTION
-router.get("/section/:sectionId", auth,  cacheMiddleware((req) => `Cache:section:${req.params.sectionId}`),isstudent, section);
+router.get(
+  "/section/:sectionId",
+  auth,
+  cacheMiddleware((req) => `Cache:section:${req.params.sectionId}`),
+  isstudent,
+  section,
+);
 router.post("/section/create", auth, createSection);
 
 // ================= SUBSECTION ROUTES =================
@@ -176,7 +192,13 @@ router.post("/section/create", auth, createSection);
 router.post("/subsection/create", auth, isinstructor, createSubsection);
 
 // GET SUBSECTION
-router.get("/subsection/:subSectionId", auth, isinstructor, cacheMiddleware((req) => `Cache:section:${req.params.subsectionId}`),subsection);
+router.get(
+  "/subsection/:subSectionId",
+  auth,
+  isinstructor,
+  cacheMiddleware((req) => `Cache:section:${req.params.subsectionId}`),
+  subsection,
+);
 //modifying Subsection
 router.patch("/subsection/:subSectionId", auth, isinstructor, UpdateSubsection);
 // ================= CATEGORY ROUTES =================
@@ -191,7 +213,12 @@ router.get(
   cacheMiddleware((req) => "Category:All", 3600),
   AllCategory,
 );
-router.post("/course/getCategoryPageDetails", auth, CategoryPageDetails);
+router.post(
+  "/course/getCategoryPageDetails",
+  auth,
+  cacheMiddleware((req) => `Cache:CategoryDetails`, 600),
+  CategoryPageDetails,
+);
 
 // ================= PROFILE ROUTES =================
 router.patch("/profile/update", auth, UpdateProfile);
@@ -210,12 +237,19 @@ router.post("/payment/verifySignature", auth, isstudent, VerifyPayment);
 router.post("/send-payment-email", auth, isstudent, sendPaymentSuccessEmail);
 //=====================Rating Route ==================
 router.post("/courses/:courseId/review", auth, createRating);
-router.get("/courses/:courseId/avg-rating", auth,cacheMiddleware((req) => `Cache:AvgRating:/courses${req.params.courseId}/avg-rating`), getAverageRating);
+router.get(
+  "/courses/:courseId/avg-rating",
+  auth,
+  cacheMiddleware(
+    (req) => `Cache:AvgRating:/courses${req.params.courseId}/avg-rating`,
+  ),
+  getAverageRating,
+);
 router.patch("/update-review/:reviewId", auth, updateRating);
 
 router.get("/courses/reviews", sliderReview);
 router.get("/my-lecture/:courseId/coursereview", getCourseReviews);
-router.get("/payment-review/:courseId/review",getCourseReviews)
+router.get("/payment-review/:courseId/review", getCourseReviews);
 //================Helper Function ======////
 router.post("/aboutus/submit-form", submitContactForm);
 

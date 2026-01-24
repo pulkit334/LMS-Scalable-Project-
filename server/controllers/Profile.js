@@ -190,7 +190,6 @@ exports.getAllUserDetiles = async (req, res) => {
   }
 };
 
-//update proifle photo
 // update profile photo
 exports.UpdateProfilePhoto = async (req, res) => {
   try {

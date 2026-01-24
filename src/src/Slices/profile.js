@@ -2,11 +2,9 @@ import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
   user: null,
-
   // auth / profile
   loading: false,
   ready: false,
-
   // categories
   categories: [],
   status: "idle",

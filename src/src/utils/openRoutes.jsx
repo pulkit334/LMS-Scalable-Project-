@@ -2,14 +2,19 @@ import { useSelector } from "react-redux";
 import { Navigate } from "react-router-dom";
 
 const OpenRoute = ({ children }) => {
-  const { token } = useSelector((state) => state.auth);
+  const token = useSelector((state) => state.auth.token);
+  const user = useSelector((state) => state.profile.user);
 
-  // If logged in → redirect
+  const role = user?.accountType?.trim()?.toLowerCase();
+
+  if (token && role === "admin") {
+    return <Navigate to="/admin/insight" replace />;
+  }
+
   if (token) {
     return <Navigate to="/dashboard" replace />;
   }
 
-  // Else allow access
   return children;
 };
 

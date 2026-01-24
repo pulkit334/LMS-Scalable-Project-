@@ -1,6 +1,5 @@
 import dotenv from "dotenv";
 dotenv.config();
-
 import express from "express";
 import cors from "cors";
 import morgan from "morgan";
@@ -8,23 +7,22 @@ import helmet from "helmet";
 import cookieParser from "cookie-parser";
 import { xss } from "express-xss-sanitizer";
 import fileUpload from "express-fileupload";
-import passport from "passport";
 // import requestIp from "request-ip"
 // ---- LOCAL IMPORTS ----
 import "./schedular/cronejob.js";
 import authRoutes from "./routes/authroutes.js";
 import connect from "./config/db.js";
 import "./config/passport.js";
-
+import adminRoutes from "./routes/AdminRoutes.js";
 // ---- APP INIT ----
 const app = express();
 
 // ---------- BODY PARSERS ----------
-app.use(express.json({limit : "100mb"}));
-app.use(express.urlencoded({ limit : "100mb" ,extended: true }));
+app.use(express.json({ limit: "100mb" }));
+app.use(express.urlencoded({ limit: "100mb", extended: true }));
 
 // ---------- PASSPORT ----------
-app.use(passport.initialize());
+// app.use(passport.initialize());
 
 // ---------- SECURITY ----------
 app.use(helmet());
@@ -38,7 +36,7 @@ app.use(
   cors({
     origin: "http://localhost:5173",
     credentials: true,
-  })
+  }),
 );
 
 // ---------- FILE UPLOAD ----------
@@ -46,7 +44,7 @@ app.use(
   fileUpload({
     useTempFiles: true,
     tempFileDir: "/tmp",
-  })
+  }),
 );
 
 // ---------- LOGGER ----------
@@ -54,7 +52,7 @@ app.use(morgan("dev"));
 
 // ---------- ROUTES ----------
 app.use("/api/v1", authRoutes);
-
+app.use("/api/v2",adminRoutes)
 // ---------- ERROR HANDLER ----------
 app.use((err, req, res, next) => {
   console.error(err.stack);
@@ -65,10 +63,10 @@ app.use((err, req, res, next) => {
 });
 
 // ---------- SERVER ----------
-const PORT = process.env.PORT ;
+const PORT = process.env.PORT;
 
 app.listen(PORT, async () => {
-   connect();
+  connect();
   console.log(` Server running on port ${PORT}`);
 });
 // import cluster from "cluster";

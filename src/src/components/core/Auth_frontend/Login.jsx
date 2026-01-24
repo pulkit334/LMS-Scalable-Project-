@@ -4,14 +4,13 @@ import { Link, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 
 export const Login = () => {
-  const [darkstate, setdarkstate] = useState("student");
+  // const [darkstate, setdarkstate] = useState("student");
   const dispatch = useDispatch();
   const Navigate = useNavigate();
 
   const [formdata, setformdata] = useState({
     email: "",
     password: "",
-    
   });
 
   // const [loading, setLoading] = useState(false);
@@ -25,9 +24,11 @@ export const Login = () => {
 
   return (
     <div className="min-h-screen overflow-y-hidden bg-[#0b1220] flex items-center justify-center">
-      <div className="w-[90%] max-w-6xl grid grid-cols-2 gap-14 items-center">
+      <div className="w-[90%] relative overflow-hidden max-w-6xl grid grid-cols-2 gap-14 items-center">
         {/* ================= LEFT : LOGIN FORM ================= */}
-        <div className="bg-[#161d29] p-10 rounded-xl text-white space-y-6">
+
+        <div className="bg-[#161d29] flex flex-col gap-1  p-10 rounded-xl text-white space-y-6">
+
           <div>
             <h1 className="text-3xl font-semibold">Welcome Back</h1>
             <p className="text-sm text-slate-400 mt-1">
@@ -38,27 +39,9 @@ export const Login = () => {
             </p>
           </div>
 
-          <div className="flex bg-[#0b1220] cursor-pointer rounded-full p-1 w-fit">
-            <button
-              onClick={() => setdarkstate("student")}
-              className={`px-4 py-1 text-sm rounded-full ${
-                darkstate === "student" ? "bg-[#161d29]" : "text-slate-400"
-              }`}
-            >
-              Student
-            </button>
-            <button
-              onClick={() => setdarkstate("instructor")}
-              className={`px-4 py-1 text-sm rounded-full ${
-                darkstate === "instructor" ? "bg-[#161d29]" : "text-slate-400"
-              }`}
-            >
-              Instructor
-            </button>
-          </div>
 
           <div className="space-y-1">
-            <label className="text-sm text-slate-400">Email Address</label>
+            <label className="text-sm text-slate-400  ">Email Address</label>
             <input
               type="email"
               name="email"
@@ -69,7 +52,6 @@ export const Login = () => {
               className="w-full bg-[#0b1220] px-4 py-2 rounded-md outline-none border border-transparent focus:border-cyan-400"
             />
           </div>
-
           <div className="space-y-1">
             <label className="text-sm text-slate-400">Password</label>
             <input
@@ -90,10 +72,9 @@ export const Login = () => {
                 {
                   email: formdata.email,
                   password: formdata.password,
-                  role: darkstate,
                 },
                 dispatch,
-                Navigate
+                Navigate,
               );
             }}
             className="w-full bg-yellow-400 text-black py-2 rounded-md font-semibold hover:bg-yellow-300 transition"
@@ -133,7 +114,7 @@ export const Login = () => {
           <img
             src="/Images/login.webp"
             alt="Login illustration"
-            className="h-110 w-auto rounded-2xl object-cover shadow-xl"
+            className="h-120 w-auto rounded-2xl object-cover shadow-xl"
           />
         </div>
       </div>

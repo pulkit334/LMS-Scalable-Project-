@@ -1,44 +1,45 @@
+  import { loginUser } from "../../services/auth";
+  import { setUser } from "../../Slices/profile";
+  import { setToken } from "../../Slices/authslice";
+  import toast from "react-hot-toast";
 
-import { loginUser } from "../../services/auth";
-import { setUser } from "../../Slices/profile";
-import { setToken } from "../../Slices/authslice";
-import toast from "react-hot-toast";
+  export const SubmitHandle = async (data, dispatch, navigate) => {
+    try {
+      const res = await loginUser(data);
 
-export const SubmitHandle = async (data, dispatch, navigate) => {
-  try {
-    const res = await loginUser(data);
-    console.log("LOGIN RESPONSE is", res);
+      const token = res?.token;
+      const user = res?.user;
+console.log(user?.accountType)
+      if (!user || !token) {
+        toast.error("Invalid credentials");
+        return;
+      }
+      console.log("Redirect role:", user.accountType);
 
-    //  KEEPING EXACTLY AS YOU ASKED
-    // const { token } = res.user;
-    const  token = res.token;
-    const user = res?.user;
-console.log("teh toke is ",token , "Or the old token is ",res.user, "the user itself is ",user)
-    //  Invalid credentials / bad response
-    if (!user || !token) {
-      toast.error("Invalid credentials");
-      return;
+      // Update Redux
+      dispatch(setToken(token));
+      dispatch(setUser(user));
+
+      //  Persist token
+      localStorage.setItem("token", token);
+
+const role = user?.accountType?.trim()?.toLowerCase();
+if (role === "admin") {
+  console.log("Navigating to admin...");
+  navigate("/admin/insight", { replace: true });
+  return;
+}
+
+
+      toast.success("Login successful");
+
+      //  Redirect based on role
+
+      navigate("/"); // Student / default
+    } catch (error) {
+      const message =
+        error?.response?.data?.message || error?.message || "Invalid credentials";
+
+      toast.error(message);
     }
-    //  Update Redux
-    dispatch(setToken(token));
-    dispatch(setUser(user));
-
-    //  Persist token
-    localStorage.setItem("token", token);
-
-    toast.success("Login successful");
-
-    //  Navigate only on success
-    navigate("/");
-  } catch (error) {
-    console.log("Error While Logging", error);
-
-    // THIS is why toast was not showing earlier
-    const message =
-      error?.response?.data?.message ||
-      error?.message ||
-      "Invalid credentials";
-
-    toast.error(message);
-  }
-};
+  };

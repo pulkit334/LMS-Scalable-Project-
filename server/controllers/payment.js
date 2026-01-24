@@ -187,9 +187,9 @@ exports.VerifyPayment = async (req, res) => {
     }
 
     const CourseDoc = await Course.find({ _id: { $in: courses } })
-      .select("_id price")
+      .select("price")
       .lean();
-
+    // .select("_id price")
     const PriceMap = new Map(CourseDoc.map((c) => [String(c._id), c.price]));
 
     const ResponseData = courses.map((courseId) => ({
@@ -325,7 +325,7 @@ exports.Paymenthistory = async (req, res) => {
     const history = await Payment.find({ user: userid }).populate(
       "course",
       "courseName thumbnail price",
-    );
+    ).lean()
     if (!history) {
       return res.status(202).json({
         success: true,

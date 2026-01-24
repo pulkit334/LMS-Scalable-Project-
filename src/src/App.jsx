@@ -37,6 +37,10 @@ import ViewDetails from "./components/core/ViewCourse/VedioDEtails";
 import ViewCourses from "./pages/ViewCourses";
 import Instructor from "./components/core/Dashboard/InstructorDashboard/Instructor";
 import Purchasehistory from "./components/core/Student/PaymentHistory/purchasehistory";
+import Admin from "./pages/Adminpage/Admin";
+import AdminInsights from "./components/Admin/AdminInsights"
+
+console.log(AdminInsights,"sbdfdsbhfhsduhafuasukfsadbjkkfsadhufsadukfhdshusudfs bubrwraewrweyrbwiuergbweuegewuk   ")
 function App() {
   const dispatch = useDispatch();
   const token = useSelector((state) => state.auth.token);
@@ -52,7 +56,7 @@ function App() {
     if (status === "idle") {
       dispatch(fetchCategories());
     }
-  });
+  },[dispatch,status]);
   useEffect(() => {
     hydrateAuth(dispatch);
   }, [dispatch]);
@@ -151,7 +155,20 @@ function App() {
               </>
             )}
           </Route>
+          {/* <Route
+            path="/admin/*"
+            element={
+              <PrivateRoute>
+                <Admin />
+              </PrivateRoute>
+            }
+          /> */}
         </Route>
+
+      <Route path="/admin" element={<Admin />}>
+    <Route path="insight" element={<AdminInsights />} />
+  </Route>
+
       </Routes>
     </div>
   );
