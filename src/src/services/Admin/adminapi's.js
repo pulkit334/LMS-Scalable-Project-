@@ -1,11 +1,11 @@
 
-import { api } from "../apiconnnector";
+import {adminApi } from "../apiconnnector";
 
 const Admin = {
-  InsightData: "/auth/admin-login",
+  InsightData: "/auth/admin/insight",
 };
-export const AdminInsights = async () => {
-  const response =await api.get(Admin.InsightData);
+export const AdminInsightApi = async () => {
+  const response =await adminApi.get(Admin.InsightData);
   console.log("the admin Data Insight is", response);
   return response?.data;
 };

@@ -3,7 +3,6 @@ const Course = require("../models/course");
 const User = require("../models/User");
 const Payment = require("../models/payment");
 
-
 exports.InsightData = async (req, res) => {
   try {
     const [
@@ -14,6 +13,7 @@ exports.InsightData = async (req, res) => {
       totalStudentsAgg,
       YearRevenue,
       LastMonthRevenueAgg,
+      CategoryEnrollments,
     ] = await Promise.all([
       //Total Courses
       Course.countDocuments(),
@@ -23,6 +23,7 @@ exports.InsightData = async (req, res) => {
 
       //   / Instructor Count
       User.countDocuments({ accountType: "instructor" }),
+      //take the Catgorires details
 
       Payment.aggregate([
         { $match: { status: "success" } },
@@ -66,13 +67,33 @@ exports.InsightData = async (req, res) => {
         { $sort: { "_id.year": -1, "_id.month": -1 } },
         { $limit: 1 },
       ]),
+      
+         Course.aggregate([
+      { $match: { status: "PUBLISHED" } },
+      { $unwind: "$studentEnrolled" },
+      {
+        $lookup: {
+          from: "categories",
+          localField: "category",
+          foreignField: "_id",
+          as: "categoryData",
+        },
+      },
+      { $unwind: "$categoryData" },
+      {
+        $group: {
+          _id: "$categoryData.name",
+          total: { $sum: 1 },
+        },
+      }
+    ]),
     ]);
 
     const TotalPrice = totalPriceAgg?.[0]?.total || 0;
     const TotalStudents = totalStudentsAgg?.[0]?.totalEnrollments || 0;
     const LastMonthRevenue = LastMonthRevenueAgg?.[0]?.total || 0;
-
-    return res.status(200).json({
+ 
+    return res.status(202).json({
       success: true,
       message: "Admin Insights Data",
       data: {
@@ -81,13 +102,17 @@ exports.InsightData = async (req, res) => {
         TotalIns,
         TotalPrice,
         TotalStudents,
+
         charts: {
           YearRevenue,
+
           LastMonthRevenue,
+          CategoryEnrollments,
         },
       },
     });
   } catch (error) {
+    console.log(error);
     return res.status(500).json({
       success: false,
       message: "Failed To Fetch",
@@ -271,21 +296,21 @@ exports.chartMangment = async (req, res) => {
 
     const trendData = await Course.aggregate([
       //kinte User Kis Course Me Enroll Huye Sabse Jyada
-  {
-    $match: {
-      createdAt: { $gte: StartDate },
-      status: "PUBLISHED",
-    },
-  },
-       {  
+      {
+        $match: {
+          createdAt: { $gte: StartDate },
+          status: "PUBLISHED",
+        },
+      },
+      {
         $project: {
           category: 1,
           year: { $year: "$createdAt" },
           month: { $month: "$createdAt" },
-          enrollments: { $size: { $ifNull :["$studentsEnrolled",[]]} },
+          enrollments: { $size: { $ifNull: ["$studentsEnrolled", []] } },
         },
       },
-         {
+      {
         $group: {
           _id: {
             category: "$category",

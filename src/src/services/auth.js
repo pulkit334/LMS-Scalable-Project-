@@ -19,7 +19,7 @@ export const AUTH = {
   EmailVerification: "/recover-account",
   RefreshVerification: "/refresh",
 };
-
+` `
 export const Course = {
   CreateCourse: "/course/create",
   categories: "/category/all",

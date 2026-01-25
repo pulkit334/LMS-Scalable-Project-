@@ -1,4 +1,3 @@
-// export default App;
 import React, { useEffect } from "react";
 import { Route, Routes } from "react-router-dom";
 import Home from "./pages/Home";
@@ -21,7 +20,6 @@ import EditProfile from "./pages/setting";
 import EnrolledCourses from "./components/core/Dashboard/EnroilledCourses";
 import Cart from "./components/core/Dashboard/Cart";
 import { ACCOUNT_TYPE } from "./utils/constants";
-import StudentOnly from "./Warning/one";
 import AccountDeactivated from "./pages/AccountDeactivated";
 import Authrecovery from "./pages/Auth-recovery";
 import EmailVerification from "./pages/EmailVerification";
@@ -38,14 +36,16 @@ import ViewCourses from "./pages/ViewCourses";
 import Instructor from "./components/core/Dashboard/InstructorDashboard/Instructor";
 import Purchasehistory from "./components/core/Student/PaymentHistory/purchasehistory";
 import Admin from "./pages/Adminpage/Admin";
-import AdminInsights from "./components/Admin/AdminInsights"
-
-console.log(AdminInsights,"sbdfdsbhfhsduhafuasukfsadbjkkfsadhufsadukfhdshusudfs bubrwraewrweyrbwiuergbweuegewuk   ")
+import AdminLayout from "./components/Admin/AdminInsights";
+import AdminRoute from "./components/Auth/AdminRoute";
+import StudentGuard from "./components/Auth/studentonly";
+import AdminInsights from "./components/Admin/Admin-Components/AdminInsightPage";
 function App() {
   const dispatch = useDispatch();
   const token = useSelector((state) => state.auth.token);
   const user = useSelector((state) => state.profile.user);
   const status = useSelector((state) => state.profile.status);
+
   useEffect(() => {
     if (token && !user) {
       restoreUser(dispatch);
@@ -56,28 +56,30 @@ function App() {
     if (status === "idle") {
       dispatch(fetchCategories());
     }
-  },[dispatch,status]);
+  }, [dispatch, status]);
+
   useEffect(() => {
     hydrateAuth(dispatch);
   }, [dispatch]);
+
   return (
     <div className="w-screen min-h-screen flex flex-col font-inter">
       <Routes>
-        {/* Public layout */}
+        {/* PUBLIC LAYOUT */}
         <Route element={<MainLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/catalog/:catalogName" element={<Catalog />} />
-          {/* <Route path="/catalog/:catalogName" element={<COurseDetails />} /> */}
+
           <Route
             path="/login"
             element={
               <OpenRoute>
-                {" "}
                 <Login />
               </OpenRoute>
             }
           />
+
           <Route path="/verify-otp" element={<VerifyOtp />} />
           <Route path="/account-deactivated" element={<AccountDeactivated />} />
           <Route
@@ -89,17 +91,16 @@ function App() {
             path="/recover-account/:token"
             element={<EmailVerification />}
           />
-
           <Route path="/contact" element={<Contactus />} />
           <Route path="/google-auth" element={<GoogleAuth />} />
           <Route path="/about" element={<About />} />
-          <Route path="*" element={<Error />} />
 
-          {/* Auth */}
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/update-password/:token" element={<UpdatePassword />} />
 
-          {/*  PROTECTED DASHBOARD (FIXED) */}
+          <Route path="*" element={<Error />} />
+
+          {/* DASHBOARD */}
           <Route
             path="/dashboard"
             element={
@@ -111,29 +112,43 @@ function App() {
             <Route index element={<MyProfile />} />
             <Route path="my-profile" element={<MyProfile />} />
             <Route path="settings" element={<EditProfile />} />
-
             <Route path="edit-course/:courseId" element={<EditCourse />} />
 
-            {user?.accountType !== ACCOUNT_TYPE.STUDENT && (
-              <>
-                <Route path="instructor" element={<Instructor />} />
-                <Route path="my-courses" element={<Mycourses />} />
-                <Route path="add-course" element={<Course />} />
-              </>
-            )}
+            {/* STUDENT ONLY */}
+            <Route
+              path="cart"
+              element={
+                <StudentGuard>
+                  <Cart />
+                </StudentGuard>
+              }
+            />
 
-            {user?.accountType === ACCOUNT_TYPE.STUDENT && (
-              <>
-                {" "}
-                <Route path="cart" element={<StudentOnly />} />
-                <Route path="enrolled-courses" element={<EnrolledCourses />} />
-                <Route path="cart" element={<Cart />} />
-                <Route path="purchase-history" element={<Purchasehistory />} />
-              </>
-            )}
+            <Route
+              path="enrolled-courses"
+              element={
+                <StudentGuard>
+                  <EnrolledCourses />
+                </StudentGuard>
+              }
+            />
+
+            <Route
+              path="purchase-history"
+              element={
+                <StudentGuard>
+                  <Purchasehistory />
+                </StudentGuard>
+              }
+            />
+
+            {/* INSTRUCTOR / ADMIN */}
+            <Route path="instructor" element={<Instructor />} />
+            <Route path="my-courses" element={<Mycourses />} />
+            <Route path="add-course" element={<Course />} />
           </Route>
 
-          {/* Course  */}
+          {/* VIEW COURSE */}
           <Route
             element={
               <PrivateRoute>
@@ -141,34 +156,40 @@ function App() {
               </PrivateRoute>
             }
           >
-            {user?.accountType === ACCOUNT_TYPE.STUDENT && (
-              <>
-                <Route
-                  path="view-course/:courseId/section/:sectionId"
-                  element={<ViewDetails />}
-                />
+            <Route
+              path="view-course/:courseId/section/:sectionId"
+              element={
+                <StudentGuard>
+                  <ViewDetails />
+                </StudentGuard>
+              }
+            />
 
-                <Route
-                  path="view-course/:courseId/section/:sectionId/sub-section/:subSectionId"
-                  element={<ViewDetails />}
-                />
-              </>
-            )}
+            <Route
+              path="view-course/:courseId/section/:sectionId/sub-section/:subSectionId"
+              element={
+                <StudentGuard>
+                  <ViewDetails />
+                </StudentGuard>
+              }
+            />
           </Route>
-          {/* <Route
-            path="/admin/*"
-            element={
-              <PrivateRoute>
-                <Admin />
-              </PrivateRoute>
-            }
-          /> */}
         </Route>
 
-      <Route path="/admin" element={<Admin />}>
-    <Route path="insight" element={<AdminInsights />} />
-  </Route>
-
+        {/* ADMIN */}
+        <Route
+          path="/admin"
+          element={
+            <AdminRoute>
+              <Admin />
+            </AdminRoute>
+          }
+        >
+          {/* sidebar layout */}
+          <Route element={<AdminLayout />}>
+            <Route path="insight" element={<AdminInsights />} />
+          </Route>
+        </Route>
       </Routes>
     </div>
   );

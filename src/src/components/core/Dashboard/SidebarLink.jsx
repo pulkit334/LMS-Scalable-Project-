@@ -5,10 +5,10 @@ const SidebarLink = ({ link, iconsName }) => {
   const IconComponent = icons[iconsName];
   const location = useLocation();
 
-  const matchRoute = (route) => {
-    return matchPath({ path: route }, location.pathname);
-  };
 
+  const matchRoute = (route)=>{
+    return matchPath({path : route},location.pathname)
+  }
   const isActive = matchRoute(link.path);
 
   return (

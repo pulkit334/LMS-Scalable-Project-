@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import Footer from "../components/core/Homepage/footer";
 import getCatalogData from "../services/pageComponentdata";
-import { GetCategorires } from "../services/auth";
+import { Course, GetCategorires } from "../services/auth";
 import Course_Card from "../components/core/catalog/Course_Card";
 import CourseSlider from "../components/core/catalog/CourseSlider";
 
@@ -20,7 +20,7 @@ const Catalog = () => {
       const matchedCategory = res?.find(
         (ct) =>
           ct.name.split(" ").join("-").toLowerCase() ===
-          catalogName.toLowerCase()
+          catalogName.toLowerCase(),
       );
       setCategoryId(matchedCategory?._id);
     };
@@ -42,10 +42,9 @@ const Catalog = () => {
 
     fetchCatalogData();
   }, [categoryID]);
-console.log("The Data in catalog",catalogPageData)
+  console.log("The Data in catalog", catalogPageData?.mostSellingCourses);
   return (
     <div className="bg-[#000814] text-[#F1F2FF] min-h-screen">
-
       {/* ================= HERO ================= */}
       <section className="bg-gradient-to-b from-[#161D29] to-[#000814] border-b border-[#2C333F]">
         <div className="max-w-7xl mx-auto px-6 py-16">
@@ -80,11 +79,9 @@ console.log("The Data in catalog",catalogPageData)
           </button>
         </div>
 
-        {/* 🔧 FIXED SLIDER CONTAINER */}
+        {/*  FIXED SLIDER CONTAINER */}
         <div className="relative  overflow-hidden">
-          <CourseSlider
-            Courses={catalogPageData?.selectedCategory?.course}
-          />
+          <CourseSlider Courses={catalogPageData?.selectedCategory?.course} />
         </div>
       </section>
 
@@ -92,16 +89,13 @@ console.log("The Data in catalog",catalogPageData)
       <section className="max-w-7xl mx-auto px-6 py-20 border-t border-[#1F2430]">
         <h2 className="text-2xl font-semibold mb-8">
           Top courses in{" "}
-          <span className="text-yellow-400">
+          <span className="text-yellow-400 capitalize">
             {catalogPageData?.selectedCategory?.name}
           </span>
         </h2>
 
-        {/* 🔧 FIXED SLIDER CONTAINER */}
         <div className="relative overflow-hidden">
-          <CourseSlider
-            Courses={catalogPageData?.differentCategories?.course}
-          />
+          <CourseSlider Courses={catalogPageData?.mostSellingCourses} />
         </div>
       </section>
 

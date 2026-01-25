@@ -4,7 +4,7 @@ const { admin, auth } = require("../middlewares/auth");
 const router = express.Router();
 
 //Insights
-router.get("/auth/admin-login", auth, admin, InsightData);
+router.get("/auth/admin/insight", auth, admin, InsightData);
 //Instrcutor Data
 router.get("/auth/admin/instructors", auth, admin, InstructorData);
 //User Data

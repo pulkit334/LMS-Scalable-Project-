@@ -7,6 +7,7 @@ const AdminRoute = ({ children }) => {
   const user = useSelector((state) => state.profile.user);
   const Navigate = useNavigate();
   if (!token) return Navigate("/login");
+    
   console.log("the login accountType is ", user);
 
   return children;

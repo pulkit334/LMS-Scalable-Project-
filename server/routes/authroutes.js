@@ -125,14 +125,14 @@ router.get(
   "/courses",
   auth,
   isinstructor,
-  cacheMiddleware((req) => "Courses:ALL", 100),
+  // cacheMiddleware((req) => "Courses:ALL", 100),
   ShowCourses,
 );
 //Protected
 router.get(
   "/enrolled-courses",
   auth,
-  cacheMiddleware((req) => "Enrolled-Course", 60),
+  // cacheMiddleware((req) => "Enrolled-Course", 60),
   getEnrolledCourses,
 );
 
@@ -147,7 +147,7 @@ router.get("/course/:courseId/reviews", auth, getPaymentCourseReviews);
 router.get(
   "/user/purchased-history",
   auth,
-  cacheMiddleware((req) => `Cache:purchased-History`, 3000),
+  // cacheMiddleware((req) => `Cache:purchased-History`, 3000),
   isstudent,
   Paymenthistory,
 );
@@ -155,7 +155,7 @@ router.get(
 router.get(
   "/getFullCourseDetails/:courseId",
   auth,
-  cacheMiddleware((req) => `Cache:CourseDeatails`, 6000),
+  cacheMiddleware((req) => `Cache:CourseDeatails`, 60),
   getFullCourseDetails,
 );
 // routes/course.js
@@ -210,13 +210,13 @@ router.post("/category/create", auth, Category);
 router.get(
   "/category/all",
   auth,
-  cacheMiddleware((req) => "Category:All", 3600),
+  cacheMiddleware((req) => "Category:All", 360),
   AllCategory,
 );
 router.post(
   "/course/getCategoryPageDetails",
   auth,
-  cacheMiddleware((req) => `Cache:CategoryDetails`, 600),
+  // cacheMiddleware((req) => `Cache:CategoryDetails`, 600),
   CategoryPageDetails,
 );
 
@@ -240,9 +240,9 @@ router.post("/courses/:courseId/review", auth, createRating);
 router.get(
   "/courses/:courseId/avg-rating",
   auth,
-  cacheMiddleware(
-    (req) => `Cache:AvgRating:/courses${req.params.courseId}/avg-rating`,
-  ),
+  // cacheMiddleware(
+  //   (req) => `Cache:AvgRating:/courses${req.params.courseId}/avg-rating`,
+  // ),
   getAverageRating,
 );
 router.patch("/update-review/:reviewId", auth, updateRating);

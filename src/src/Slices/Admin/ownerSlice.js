@@ -1,14 +1,12 @@
 /* eslint-disable no-unused-vars */
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { AdminInsights } from "../../services/Admin/adminapi's";
+import { AdminInsightApi } from "../../services/Admin/adminapi's";
 import { fetchEnrolledCourses } from "../EnroilledCourseSlice";
-const fetchDataInsight = createAsyncThunk(
+export const fetchDataInsight = createAsyncThunk(
   "Admin/Data",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await AdminInsights();
-      console.log("the data of the admin is ",response)
-      return response;
+      return  await AdminInsightApi();
     } catch (err) {
       return rejectWithValue(err);
     }

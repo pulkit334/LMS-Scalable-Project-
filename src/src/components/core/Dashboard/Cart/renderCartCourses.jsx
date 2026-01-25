@@ -1,4 +1,3 @@
-
 import { useDispatch, useSelector } from "react-redux";
 import ReactStars from "react-rating-stars-component";
 import { IoIosStar } from "react-icons/io";
@@ -9,11 +8,7 @@ import { removeFromCart } from "../../../../Slices/cartSlice";
 const RenderCartCourses = () => {
   const { cart } = useSelector((state) => state.cart);
   const dispatch = useDispatch();
-{
-  cart.map((course)=>{
-    console.log(course)
-  })
-}
+
   return (
     <div className="space-y-6">
       {cart.map((course) => (

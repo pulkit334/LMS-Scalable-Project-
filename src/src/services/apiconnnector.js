@@ -7,6 +7,10 @@ export const api = axios.create({
   baseURL: import.meta.env.VITE_BASE_URL,
   withCredentials: true,
 });
+export const adminApi = axios.create({
+  baseURL: import.meta.env.VITE_ADMIN_BASE_URL,
+  withCredentials: true,
+});
 let isRefreshing = false;
 let refreshPromise = null;
 api.interceptors.response.use(
@@ -71,8 +75,26 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+//Admin APi
+adminApi.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
 export const apiConnector = (method, url, bodydata, headers, params) => {
   return api({
+    method: `${method}`,
+    url: `${url}`,
+    data: bodydata ? bodydata : null,
+    headers: {
+      ...headers,
+    },
+    params: params ? params : null,
+  });
+};
+
+export const apiConnector2 = (method, url, bodydata, headers, params) => {
+  return adminApi({
     method: `${method}`,
     url: `${url}`,
     data: bodydata ? bodydata : null,

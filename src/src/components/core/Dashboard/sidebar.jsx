@@ -20,7 +20,7 @@ const Sidebar = () => {
   if (profileLoading || authLoading) {
     return <div className="p-4 text-white">Loading...</div>;
   }
-  console.log("ROLE:", user?.accountType);
+
   return (
     <aside className="w-64 min-h-screen bg-[#161D29] border-r border-slate-800 px-4 py-6 text-white">
       <h2 className="mb-6 text-xl font-semibold">Dashboard</h2>

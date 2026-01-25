@@ -89,7 +89,12 @@ exports.CategoryPageDetails = async (req, res) => {
 
     try {
       mostSellingCourses = await Course.aggregate([
-        { $match: { status: "PUBLISHED" } },
+        {
+          $match: {
+            status: "PUBLISHED",
+            category: selectedCategory._id,
+          },
+        },
         {
           $addFields: {
             totalStudents: {
@@ -98,28 +103,7 @@ exports.CategoryPageDetails = async (req, res) => {
           },
         },
         { $sort: { totalStudents: -1 } },
-        {
-          $lookup: {
-            from: "ratingandreviews",
-            localField: "_id",
-            foreignField: "Course",
-            as: "ratingAndReviews",
-          },
-        },
-        {
-          $lookup: {
-            from: "users",
-            localField: "Insturctor",
-            foreignField: "_id",
-            as: "Insturctor",
-          },
-        },
-        {
-          $unwind: {
-            path: "$Insturctor",
-            preserveNullAndEmptyArrays: true,
-          },
-        },
+        { $limit: 5 },
       ]);
     } catch (err) {
       console.error("Most selling aggregation failed:", err.message);
@@ -134,7 +118,7 @@ exports.CategoryPageDetails = async (req, res) => {
     //     totalStudents: course.studentEnrolled?.length || 0,
     //   }))
     //   .sort((a, b) => b.totalStudents - a.totalStudents);
-
+    console.log("the Mostselling Courses are", mostSellingCourses);
     return res.status(200).json({
       success: true,
       selectedCategory,
