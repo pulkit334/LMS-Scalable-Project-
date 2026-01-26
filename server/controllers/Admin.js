@@ -67,32 +67,32 @@ exports.InsightData = async (req, res) => {
         { $sort: { "_id.year": -1, "_id.month": -1 } },
         { $limit: 1 },
       ]),
-      
-         Course.aggregate([
-      { $match: { status: "PUBLISHED" } },
-      { $unwind: "$studentEnrolled" },
-      {
-        $lookup: {
-          from: "categories",
-          localField: "category",
-          foreignField: "_id",
-          as: "categoryData",
+
+      Course.aggregate([
+        { $match: { status: "PUBLISHED" } },
+        { $unwind: "$studentEnrolled" },
+        {
+          $lookup: {
+            from: "categories",
+            localField: "category",
+            foreignField: "_id",
+            as: "categoryData",
+          },
         },
-      },
-      { $unwind: "$categoryData" },
-      {
-        $group: {
-          _id: "$categoryData.name",
-          total: { $sum: 1 },
+        { $unwind: "$categoryData" },
+        {
+          $group: {
+            _id: "$categoryData.name",
+            total: { $sum: 1 },
+          },
         },
-      }
-    ]),
+      ]),
     ]);
 
     const TotalPrice = totalPriceAgg?.[0]?.total || 0;
     const TotalStudents = totalStudentsAgg?.[0]?.totalEnrollments || 0;
     const LastMonthRevenue = LastMonthRevenueAgg?.[0]?.total || 0;
- 
+
     return res.status(202).json({
       success: true,
       message: "Admin Insights Data",
@@ -137,15 +137,14 @@ exports.InstructorData = async (req, res) => {
     };
     const [InstructorData, total] = await Promise.all([
       User.find(filter)
-        .select("firstName lastName  image createdAt email")
+        .select("firstName lastName  status  image createdAt email")
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit),
 
       User.countDocuments(filter),
     ]);
-    // console.log("the data")
-    // Course Count For Each Instructor Data //
+
     const instructorIds = InstructorData.map((inst) => inst._id);
 
     const CourseCount = await Course.aggregate([
@@ -160,14 +159,42 @@ exports.InstructorData = async (req, res) => {
     CourseCount.forEach((c) => {
       map.set(c._id.toString(), c.count);
     });
+    //
+    //Course Related Reviews
+    const AvgRating = await Course.aggregate([
+      { $match: { Insturctor: { $in: instructorIds } } },
 
+      {
+        $lookup: {
+          from: "ratingandreviews",
+          localField: "_id",
+          foreignField: "Course", // make sure field name is correct
+          as: "reviews",
+        },
+      },
+
+      { $unwind: "$reviews" },
+
+      {
+        $group: {
+          _id: "$Insturctor",
+          avgRating: { $avg: "$reviews.rating" },
+        },
+      },
+    ]);
+
+    const RatingMap = new Map();
+    AvgRating.forEach((c) => {
+      RatingMap.set(c._id.toString(), c.avgRating);
+    });
     const FinalData = InstructorData.map((c) => ({
       ...c.toObject(),
       CourseCount: map.get(c._id.toString()) || 0,
+      AvgRating: Number(RatingMap.get(c._id.toString()) || 0),
     }));
-
+    const totalPages = Math.ceil(total / limit);
     // abh Merge Kar dete hai Codes Ko As Insturtor wiht firtsName LastName and _id->Count Merge
-    return res.status(200).json({
+    return res.status(202).json({
       success: true,
       message: "All instructors fetched",
       data: {
@@ -176,11 +203,14 @@ exports.InstructorData = async (req, res) => {
           total,
           page,
           limit,
-          totalPages: Math.ceil(total / limit),
+          totalPages,
+          hasNextPage: page < totalPages,
+          hasPrevPage: page > 1,
         },
       },
     });
   } catch (error) {
+    console.log("the Admin is", error);
     return res.status(500).json({
       success: false,
       message: "Failed To Fetch",

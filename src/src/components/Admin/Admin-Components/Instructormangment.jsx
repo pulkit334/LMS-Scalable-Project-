@@ -1,0 +1,140 @@
+/* eslint-disable no-unused-vars */
+/* eslint-disable react-hooks/exhaustive-deps */
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchInstructorInsight } from "../../../Slices/Admin/ownerSlice";
+import axios from "axios";
+
+const Instructormangment = () => {
+  const dispatch = useDispatch();
+
+  const { InstructorData, loading } = useSelector((state) => state.admin);
+  const ImgApi = () => `https://picsum.photos/400/300?random=${Date.now()}`;
+
+  useEffect(() => {
+    dispatch(fetchInstructorInsight());
+  }, [dispatch]);
+
+  const instructors = InstructorData?.data?.instructors || [];
+  console.log(
+    "the instructors Data is ",
+    InstructorData?.data?.instructors,
+    "the image is",
+    ImgApi,
+  );
+  return (
+    <div
+      className="min-h-screen w-full text-white p-6
+bg-[#070b16]
+bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.18),transparent_55%),radial-gradient(circle_at_bottom,rgba(14,165,233,0.12),transparent_60%)]"
+    >
+      {/* TABLE */}
+      <div className="w-full overflow-x-auto rounded-xl border border-white/10 bg-[#0f172a]">
+        <table className="w-full table-auto border-collapse">
+          <thead className="border-b border-white/10">
+            <tr className="text-gray-300 text-sm">
+              <th className="text-left px-6 py-4 font-semibold">Instructor</th>
+              <th className="text-center px-6 py-4 font-semibold">Courses</th>
+              <th className="text-center px-6 py-4 font-semibold">Rating</th>
+              <th className="text-center px-6 py-4 font-semibold">Status</th>
+              <th className="text-center px-6 py-4 font-semibold">Actions</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {loading ? (
+              <tr>
+                <td className="px-6 py-6 text-center text-gray-400" colSpan="5">
+                  Loading...
+                </td>
+              </tr>
+            ) : instructors.length === 0 ? (
+              <tr>
+                <td className="px-6 py-6 text-center text-gray-400" colSpan="5">
+                  No instructors found
+                </td>
+              </tr>
+            ) : (
+              instructors.map((inst) => (
+                <tr
+                  key={inst._id}
+                  className="border-b border-white/10 hover:bg-white/5 transition"
+                >
+                  {/* Instructor */}
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={inst.image?.url ? inst.image.url : ImgApi()}
+                        alt={`${inst.firstName} ${inst.lastName}`}
+                        className="h-10 w-10 rounded-full object-cover bg-gray-700"
+                      />
+                      <div>
+                        <p className="font-medium">
+                          {inst.firstName} {inst.lastName}
+                        </p>
+                        <p className="text-xs text-gray-400">{inst.email}</p>
+                      </div>
+                    </div>
+                  </td>
+
+                  {/* Courses */}
+                  <td className="px-6 py-4 text-center">
+                    {inst.CourseCount || 0}
+                  </td>
+
+                  {/* Rating */}
+                  <td className="px-6 py-4 text-center">
+                    <span className="text-yellow-400">★</span>{" "}
+                    <span className="text-gray-200">
+                      {(inst.AvgRating || 0).toFixed(1)}
+                    </span>
+                  </td>
+
+                  {/* Status */}
+                  <td
+                    className={`px-6 py-4 text-center font-medium ${
+                      inst.status === "Inactive"
+                        ? "text-gray-400"
+                        : "text-green-400"
+                    }`}
+                  >
+                    {inst.status || "Actives"}
+                  </td>
+
+                  {/* Actions */}
+                  <td className="px-6 py-4">
+                    <div className="flex justify-center gap-3">
+                      <button className="px-4 py-1 rounded-md bg-white/10 hover:bg-white/20 transition">
+                        Edit
+                      </button>
+                      <button className="px-4 py-1 rounded-md bg-white/10 hover:bg-white/20 transition">
+                        Remove
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/*  Pagination */}
+      <div className="h-16 flex items-center justify-center text-gray-400">
+        Pagination Space (1,2,3... Next)
+      </div>
+
+      {/*  Graph  */}
+      <div className="mt-6 h-64 rounded-xl bg-[#0f172a] border border-white/10 flex items-center justify-center text-gray-400">
+        Graph Space
+      </div>
+
+      {/*  Chart  */}
+      <div className="mt-6 h-64 rounded-xl bg-[#0f172a] border border-white/10 flex items-center justify-center text-gray-400">
+        Chart Space
+      </div>
+    </div>
+  );
+};
+
+export default Instructormangment;

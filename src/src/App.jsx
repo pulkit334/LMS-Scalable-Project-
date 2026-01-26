@@ -40,6 +40,7 @@ import AdminLayout from "./components/Admin/AdminInsights";
 import AdminRoute from "./components/Auth/AdminRoute";
 import StudentGuard from "./components/Auth/studentonly";
 import AdminInsights from "./components/Admin/Admin-Components/AdminInsightPage";
+import Instructormangment from "./components/Admin/Admin-Components/Instructormangment";
 function App() {
   const dispatch = useDispatch();
   const token = useSelector((state) => state.auth.token);
@@ -188,6 +189,7 @@ function App() {
           {/* sidebar layout */}
           <Route element={<AdminLayout />}>
             <Route path="insight" element={<AdminInsights />} />
+            <Route path="instructors" element={< Instructormangment />} />
           </Route>
         </Route>
       </Routes>

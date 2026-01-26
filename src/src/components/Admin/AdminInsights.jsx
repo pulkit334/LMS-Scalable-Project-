@@ -29,7 +29,7 @@ const AdminLayout = () => {
         )}
 
         <aside
-          className={`w-64 min-h-screen bg-[#0f151f] border-r border-slate-800 px-4 py-6   transition-transform duration-300 ease-in-out text-white ${open ? "translate-x-0" : "-translate-x-full"}`}
+          className={`w-67 min-h-screen bg-[#0f151f] border-r border-slate-800 px-4 py-6   transition-transform duration-300 ease-in-out text-white ${open ? "translate-x-0" : "-translate-x-full"}`}
         >
           <div className="flex space-x-20  space-y-2  justify-center">
             <h2 className="mb-6  text-xl font-semibold  text-white">
