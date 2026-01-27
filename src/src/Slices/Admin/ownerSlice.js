@@ -22,9 +22,9 @@ export const fetchDataInsight = createAsyncThunk(
 
 export const fetchInstructorInsight = createAsyncThunk(
   "Admin/fetchInstructorInsight",
-  async (_, { rejectWithValue }) => {
+  async ({ page = 1, limit = 5 }, { rejectWithValue }) => {
     try {
-      const res = await InstrctorApi();
+      const res = await InstrctorApi(page, limit);
       return res;
     } catch (err) {
       return rejectWithValue(err);
@@ -100,7 +100,7 @@ const OwnerSlice = createSlice({
       //  Instructor Insight
       .addCase(fetchInstructorInsight.pending, (state) => {
         state.loading = true;
-        state.error = null;
+      
       })
       .addCase(fetchInstructorInsight.fulfilled, (state, action) => {
         state.loading = false;
@@ -109,7 +109,6 @@ const OwnerSlice = createSlice({
       .addCase(fetchInstructorInsight.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-        state.InstructorData = [];
       })
 
       //user Insight Data

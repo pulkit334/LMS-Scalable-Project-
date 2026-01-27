@@ -13,9 +13,10 @@ export const AdminInsightApi = async () => {
   return response?.data;
 };
 
-export const InstrctorApi = async () => {
-  const response = await adminApi.get(Admin.InstructorPath);
-  console.log("the instrcutor Data Insight is", response);
+export const InstrctorApi = async (page,limit) => {
+  const response = await adminApi.get(Admin.InstructorPath,{params :{page,limit}});
+  console.log("the instrcutor Data Insight is1", response);
+  console.log("the instrcutor Data Insight is2", response);
   return response?.data;
 };
 //User Path Data 

@@ -18,12 +18,12 @@ router.get(
   cacheMiddleware(
     (req) => {
       const page = req.query.page || 1;
-      const limit = req.query.limit || 10;
+      const limit = req.query.limit || 5;
       const search = req.query.search || "";
 
       return `Cache:CourseInstructor:page=${page}:limit=${limit}:search=${search}`;
     },
-    50,
+    100,
   ),
   auth,
   admin,

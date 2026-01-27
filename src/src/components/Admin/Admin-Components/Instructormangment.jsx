@@ -1,27 +1,48 @@
+/* eslint-disable no-undef */
 /* eslint-disable no-unused-vars */
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchInstructorInsight } from "../../../Slices/Admin/ownerSlice";
 import axios from "axios";
-
+import { current } from "@reduxjs/toolkit";
+import Result from "../../../utils/Spinnre"
 const Instructormangment = () => {
   const dispatch = useDispatch();
 
   const { InstructorData, loading } = useSelector((state) => state.admin);
+
+  const pagination = InstructorData?.data?.pagination || {};
+
+  const totalPages = pagination.totalPages || 1;
+  const page = pagination.page || 1;
+  const hasNextPage = pagination.hasNextPage || false;
+  const hasPrevPage = pagination.hasPrevPage || false;
+
+  console.log("the Total Page", totalPages, page, hasNextPage, hasPrevPage);
   const ImgApi = () => `https://picsum.photos/400/300?random=${Date.now()}`;
+  const [currentPage, setCurrentPage] = useState(1);
 
+  const getPages = () => {
+    const pages = [];
+    const ChunkSize = 10;
+    const currentChunk = Math.floor((currentPage - 1) / ChunkSize);
+    const startPage = currentChunk * ChunkSize + 1;
+    const endPage = Math.min(startPage + ChunkSize - 1, totalPages);
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+    if (endPage < totalPages) {
+      pages.push("...");
+      pages.push(totalPages);
+    }
+    return pages;
+  };
   useEffect(() => {
-    dispatch(fetchInstructorInsight());
-  }, [dispatch]);
-
+    dispatch(fetchInstructorInsight({ page: currentPage, limit: 5 }));
+  }, [currentPage]);
   const instructors = InstructorData?.data?.instructors || [];
-  console.log(
-    "the instructors Data is ",
-    InstructorData?.data?.instructors,
-    "the image is",
-    ImgApi,
-  );
+
   return (
     <div
       className="min-h-screen w-full text-white p-6
@@ -45,7 +66,7 @@ bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.18),transparent_55%),radial-
             {loading ? (
               <tr>
                 <td className="px-6 py-6 text-center text-gray-400" colSpan="5">
-                  Loading...
+               <Result loading={true} text="Loading"/>
                 </td>
               </tr>
             ) : instructors.length === 0 ? (
@@ -120,8 +141,50 @@ bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.18),transparent_55%),radial-
       </div>
 
       {/*  Pagination */}
-      <div className="h-16 flex items-center justify-center text-gray-400">
-        Pagination Space (1,2,3... Next)
+      <div className="h-16 m-2 flex items-center justify-center gap-1 text-gray-400">
+        { (
+          !hasPrevPage ?  <button disabled
+            className="px-3 py-1 hover:bg-gray-700 rounded"
+            onClick={() => setCurrentPage((p) => p - 1)}
+          >
+            Prev Page
+          </button> :   <button
+            className="px-3 py-1 hover:bg-gray-700 rounded"
+            onClick={() => setCurrentPage((p) => p - 1)}
+          >
+            Prev Page
+          </button>
+         
+        )}
+        
+        {getPages().map((c, idx) =>
+          c === "..." ? (
+            <span key={idx} className="px-3">
+              ...
+            </span>
+          ) : (
+            <button
+              key={c}
+              onClick={() => setCurrentPage(c)}
+              className={`px-4 py-2 rounded-md ${
+                c === currentPage
+                  ? "bg-blue-600 text-white"
+                  : "hover:bg-gray-700"
+              }`}
+            >
+              {c}
+            </button>
+          ),
+        )}
+
+        {hasNextPage && (
+          <button
+            onClick={() => setCurrentPage((p) => p + 1)}
+            className="px-3 py-1 hover:bg-gray-700 rounded"
+          >
+            Next Page
+          </button>
+        )}
       </div>
 
       {/*  Graph  */}
