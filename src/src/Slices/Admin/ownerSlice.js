@@ -6,6 +6,7 @@ import {
   Coursetrend,
   InstrctorApi,
   UserApi,
+  ToptrendingData,
 } from "../../services/Admin/adminapi's";
 
 export const fetchDataInsight = createAsyncThunk(
@@ -67,6 +68,18 @@ export const fetchCourseChartPath = createAsyncThunk(
     }
   },
 );
+//Trending Categoires Data
+export const fetchcategoriesTrend = createAsyncThunk(
+  "Admin/fetchTopCategories",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await ToptrendingData();
+      return res;
+    } catch (err) {
+      return rejectWithValue(err);
+    }
+  },
+);
 
 const OwnerSlice = createSlice({
   name: "admin",
@@ -78,6 +91,7 @@ const OwnerSlice = createSlice({
     UserData: [],
     CourseData: [],
     Coursetrend: [],
+    TopCategories: [],
   },
   reducers: {},
   extraReducers: (builder) => {
@@ -94,13 +108,11 @@ const OwnerSlice = createSlice({
       .addCase(fetchDataInsight.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-        state.Data = [];
       })
 
       //  Instructor Insight
       .addCase(fetchInstructorInsight.pending, (state) => {
         state.loading = true;
-      
       })
       .addCase(fetchInstructorInsight.fulfilled, (state, action) => {
         state.loading = false;
@@ -123,7 +135,6 @@ const OwnerSlice = createSlice({
       .addCase(fetchUserInsight.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-        state.InstructorData = [];
       })
 
       //Course Insight Data
@@ -138,7 +149,6 @@ const OwnerSlice = createSlice({
       .addCase(fetchCourseInsight.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-        state.InstructorData = [];
       })
 
       //Course Trend Chart is
@@ -153,7 +163,19 @@ const OwnerSlice = createSlice({
       .addCase(fetchCourseChartPath.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-        state.InstructorData = [];
+      })
+      //Categoires Trending
+      .addCase(fetchcategoriesTrend.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchcategoriesTrend.fulfilled, (state, action) => {
+        state.loading = false;
+        state.TopCategories = action.payload;
+      })
+      .addCase(fetchcategoriesTrend.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       });
   },
 });

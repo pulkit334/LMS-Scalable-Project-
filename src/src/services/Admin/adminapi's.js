@@ -5,7 +5,8 @@ const Admin = {
   InstructorPath: "/auth/admin/instructors",
   UserPath: "/auth/admin/user-mangment",
   COursePath : "/auth/admin/course-mangment",
-  CharttrendPath : "/auth/admin/course-mangment-trend"
+  CharttrendPath : "/auth/admin/course-mangment-trend",
+  TopCategories : "/admin/charts/top-categories"
 };
 export const AdminInsightApi = async () => {
   const response = await adminApi.get(Admin.InsightPath);
@@ -35,6 +36,12 @@ export const CourseApi= async () => {
 
 export const Coursetrend = async () => {
   const response = await adminApi.get(Admin.CharttrendPath);
+  console.log("the Course Chart Data  Insight is", response);
+  return response?.data;
+};
+//Categories Wise Trending Data 
+export const ToptrendingData = async () => {
+  const response = await adminApi.get(Admin.TopCategories);
   console.log("the Course Chart Data  Insight is", response);
   return response?.data;
 };

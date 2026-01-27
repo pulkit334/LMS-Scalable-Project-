@@ -2,6 +2,7 @@
 const Course = require("../models/course");
 const User = require("../models/User");
 const Payment = require("../models/payment");
+const category = require("../models/category");
 
 exports.InsightData = async (req, res) => {
   try {
@@ -320,7 +321,7 @@ exports.chartMangment = async (req, res) => {
     // Later We Can DO Chart Analysis
     //first Set 12 Months Data Atleast
     const StartDate = new Date();
-    StartDate.setMonth(StartDate.getMonth() - 11);
+    StartDate.setMonth(StartDate.getMonth() - 12  );
     StartDate.setDate(1);
     StartDate.setHours(0, 0, 0, 0);
 
@@ -337,7 +338,7 @@ exports.chartMangment = async (req, res) => {
           category: 1,
           year: { $year: "$createdAt" },
           month: { $month: "$createdAt" },
-          enrollments: { $size: { $ifNull: ["$studentsEnrolled", []] } },
+          enrollments: { $size: { $ifNull: ["$studentEnrolled", []] } },
         },
       },
       {
@@ -361,6 +362,61 @@ exports.chartMangment = async (req, res) => {
   } catch (err) {
     console.log(err?.message);
     return res.status(500).json({
+      success: false,
+      message: "Failed To Fetch",
+    });
+  }
+};
+//Top N COurses I want By N Enrollemtn
+exports.getTopCourses = async (req, res) => {
+  try {
+    const limit = Number(req.query.limit) || 4;
+    const TopCoursesData = await Course.aggregate([
+      { $match: { status: "PUBLISHED" } },
+      {
+        $project: {
+          category: 1,
+          enrollments: {
+            $size: { $ifNull: ["$studentEnrolled", []] },
+          },
+        },
+      },
+      {
+        $group: {
+          _id: "$category",
+
+          totalEnrollments: { $sum: "$enrollments" },
+        },
+      },
+      {
+        $sort: { totalEnrollments: -1 },
+      },
+      {
+        $limit: limit,
+      },
+      {
+        $lookup: {
+          from: "categories",
+          localField: "_id",
+          foreignField: "_id",
+          as: "CategoryData",
+        },
+      },
+      {
+        $unwind: "$CategoryData",
+      },
+      {
+        $project: {
+          _id: 0,
+          categoryId: "$CategoryData._id",
+          categoryName: "$CategoryData.name",
+          totalEnrollments: 1,
+        },
+      },
+    ]);
+    res.json({ success: true, TopCoursesData });
+  } catch (err) {
+    res.status(500).json({
       success: false,
       message: "Failed To Fetch",
     });

@@ -4,6 +4,7 @@ const {
   UserMangment,
   CourseManagment,
   chartMangment,
+  getTopCourses 
 } = require("../controllers/Admin");
 const express = require("express");
 const { admin, auth } = require("../middlewares/auth");
@@ -36,4 +37,9 @@ router.get("/auth/admin/user-mangment", auth, admin, UserMangment);
 router.get("/auth/admin/course-mangment", auth, admin, CourseManagment);
 //Course Mangement Data
 router.get("/auth/admin/course-mangment-trend", auth, admin, chartMangment);
+//admin  top categories 
+router.get("/admin/charts/top-categories", auth,admin,getTopCourses )
+
+
+
 module.exports = router;

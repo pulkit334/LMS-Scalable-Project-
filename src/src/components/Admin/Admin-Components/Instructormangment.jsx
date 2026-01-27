@@ -1,47 +1,107 @@
-/* eslint-disable no-undef */
 /* eslint-disable no-unused-vars */
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useEffect, useState } from "react";
+
+import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchInstructorInsight } from "../../../Slices/Admin/ownerSlice";
-import axios from "axios";
-import { current } from "@reduxjs/toolkit";
-import Result from "../../../utils/Spinnre"
+import { Bar } from "react-chartjs-2";
+import { useMemo } from "react";
+import {
+  fetchCourseChartPath,
+  fetchInstructorInsight,
+  fetchcategoriesTrend,
+} from "../../../Slices/Admin/ownerSlice";
+
+import Result from "../../../utils/Spinnre";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Tooltip,
+  Legend,
+} from "chart.js";
+import EnrollmentBarChart from "../../../utils/BarChart";
+import TopCoursesProgress from "../../../utils/PorgressBar";
+
+ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
+
 const Instructormangment = () => {
   const dispatch = useDispatch();
 
-  const { InstructorData, loading } = useSelector((state) => state.admin);
+  const { InstructorData, loading, Coursetrend, TopCategories } = useSelector(
+    (state) => state.admin,
+  );
+
+  const coursetrend = Coursetrend?.data || [];
 
   const pagination = InstructorData?.data?.pagination || {};
+  const instructors = InstructorData?.data?.instructors || [];
 
+  const currentPage = pagination.page || 1;
   const totalPages = pagination.totalPages || 1;
-  const page = pagination.page || 1;
   const hasNextPage = pagination.hasNextPage || false;
   const hasPrevPage = pagination.hasPrevPage || false;
 
-  console.log("the Total Page", totalPages, page, hasNextPage, hasPrevPage);
   const ImgApi = () => `https://picsum.photos/400/300?random=${Date.now()}`;
-  const [currentPage, setCurrentPage] = useState(1);
+  console.log("the Instructor Trending COurse is ", TopCategories);
 
+  /* ---------------- FETCH FIRST PAGE ---------------- */
+  useEffect(() => {
+    dispatch(fetchInstructorInsight({ page: 1, limit: 5 }));
+    dispatch(fetchCourseChartPath());
+    dispatch(fetchcategoriesTrend());
+  }, []);
+
+  /* ---------------- PAGINATION LOGIC ---------------- */
   const getPages = () => {
     const pages = [];
-    const ChunkSize = 10;
-    const currentChunk = Math.floor((currentPage - 1) / ChunkSize);
-    const startPage = currentChunk * ChunkSize + 1;
-    const endPage = Math.min(startPage + ChunkSize - 1, totalPages);
+    const chunkSize = 10;
+
+    const currentChunk = Math.floor((currentPage - 1) / chunkSize);
+    const startPage = currentChunk * chunkSize + 1;
+    const endPage = Math.min(startPage + chunkSize - 1, totalPages);
+
     for (let i = startPage; i <= endPage; i++) {
       pages.push(i);
     }
+
     if (endPage < totalPages) {
       pages.push("...");
       pages.push(totalPages);
     }
+
     return pages;
   };
-  useEffect(() => {
-    dispatch(fetchInstructorInsight({ page: currentPage, limit: 5 }));
-  }, [currentPage]);
-  const instructors = InstructorData?.data?.instructors || [];
+
+  const goToPage = (page) => {
+    if (page < 1 || page > totalPages) return;
+    dispatch(fetchInstructorInsight({ page, limit: 5 }));
+  };
+
+  // ************************************************Months**************************************************//
+  const MONTHS = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+  const monthlyTotals = useMemo(() => {
+    const totals = new Array(12).fill(0);
+    //Use Memo Hook
+    coursetrend.forEach((item) => {
+      const monthIndex = item._id.month - 1; //
+      totals[monthIndex] += item.totalEnrollments;
+    });
+    return totals;
+  }, [coursetrend]);
 
   return (
     <div
@@ -66,7 +126,7 @@ bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.18),transparent_55%),radial-
             {loading ? (
               <tr>
                 <td className="px-6 py-6 text-center text-gray-400" colSpan="5">
-               <Result loading={true} text="Loading"/>
+                  <Result loading={true} text="Loading" />
                 </td>
               </tr>
             ) : instructors.length === 0 ? (
@@ -142,21 +202,23 @@ bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.18),transparent_55%),radial-
 
       {/*  Pagination */}
       <div className="h-16 m-2 flex items-center justify-center gap-1 text-gray-400">
-        { (
-          !hasPrevPage ?  <button disabled
+        {!hasPrevPage ? (
+          <button
+            disabled
             className="px-3 py-1 hover:bg-gray-700 rounded"
-            onClick={() => setCurrentPage((p) => p - 1)}
-          >
-            Prev Page
-          </button> :   <button
-            className="px-3 py-1 hover:bg-gray-700 rounded"
-            onClick={() => setCurrentPage((p) => p - 1)}
+            onClick={() => goToPage(currentPage - 1)}
           >
             Prev Page
           </button>
-         
+        ) : (
+          <button
+            className="px-3 py-1 hover:bg-gray-700 rounded"
+            onClick={() => goToPage(currentPage - 1)}
+          >
+            Prev Page
+          </button>
         )}
-        
+
         {getPages().map((c, idx) =>
           c === "..." ? (
             <span key={idx} className="px-3">
@@ -165,7 +227,7 @@ bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.18),transparent_55%),radial-
           ) : (
             <button
               key={c}
-              onClick={() => setCurrentPage(c)}
+              onClick={() => goToPage(c)}
               className={`px-4 py-2 rounded-md ${
                 c === currentPage
                   ? "bg-blue-600 text-white"
@@ -179,22 +241,30 @@ bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.18),transparent_55%),radial-
 
         {hasNextPage && (
           <button
-            onClick={() => setCurrentPage((p) => p + 1)}
+            onClick={() => goToPage(currentPage + 1)}
             className="px-3 py-1 hover:bg-gray-700 rounded"
           >
             Next Page
           </button>
         )}
       </div>
+      <div className="flex gap-10">
+        {/* Graph */}
+        <div className="mt-6 h-64 w-full rounded-xl bg-[#0f172a] border border-white/10 p-4">
+          <EnrollmentBarChart
+            labels={MONTHS}
+            values={monthlyTotals}
+            title="Monthly Enrollments"
+          />
+        </div>
 
-      {/*  Graph  */}
-      <div className="mt-6 h-64 rounded-xl bg-[#0f172a] border border-white/10 flex items-center justify-center text-gray-400">
-        Graph Space
-      </div>
-
-      {/*  Chart  */}
-      <div className="mt-6 h-64 rounded-xl bg-[#0f172a] border border-white/10 flex items-center justify-center text-gray-400">
-        Chart Space
+        {/* Chart */}
+        <div
+          className="mt-6 h-64 w-full rounded-xl bg-[#0f172a] 
+border border-white/10 p-4 overflow-y-auto"
+        >
+          <TopCoursesProgress data={TopCategories?.TopCoursesData} />
+        </div>
       </div>
     </div>
   );
