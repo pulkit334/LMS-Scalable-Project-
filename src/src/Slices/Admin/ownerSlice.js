@@ -38,12 +38,13 @@ export const fetchUserInsight = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const res = await UserApi();
-      return res;
+      return res?.data?.AllData;
     } catch (err) {
       return rejectWithValue(err);
     }
   },
 );
+
 //fetch Course Path
 export const fetchCourseInsight = createAsyncThunk(
   "Admin/fetchCourseInsight",
@@ -132,9 +133,9 @@ const OwnerSlice = createSlice({
         state.loading = false;
         state.UserData = action.payload;
       })
+
       .addCase(fetchUserInsight.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
       })
 
       //Course Insight Data

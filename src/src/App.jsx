@@ -41,6 +41,8 @@ import AdminRoute from "./components/Auth/AdminRoute";
 import StudentGuard from "./components/Auth/studentonly";
 import AdminInsights from "./components/Admin/Admin-Components/AdminInsightPage";
 import Instructormangment from "./components/Admin/Admin-Components/Instructormangment";
+import Admin_usermangemt from "./components/Admin/Admin-Components/Admin_usermangemt";
+import Course_mangment from "./components/Admin/Admin-Components/Course_mangment";
 function App() {
   const dispatch = useDispatch();
   const token = useSelector((state) => state.auth.token);
@@ -189,7 +191,9 @@ function App() {
           {/* sidebar layout */}
           <Route element={<AdminLayout />}>
             <Route path="insight" element={<AdminInsights />} />
-            <Route path="instructors" element={< Instructormangment />} />
+            <Route path="instructors" element={<Instructormangment />} />
+            <Route path="users" element={<Admin_usermangemt />} />
+            <Route  path="courses" element={<Course_mangment/>}/>
           </Route>
         </Route>
       </Routes>

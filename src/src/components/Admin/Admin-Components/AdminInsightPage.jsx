@@ -119,13 +119,13 @@ const AdminInsights = () => {
   };
 
   return (
-    <div className="flex flex-col flex-1 overflow-y-auto text-white">
+    <div className="flex flex-col flex-1 overflow-y-auto text-white bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.18),transparent_55%),radial-gradient(circle_at_bottom,rgba(14,165,233,0.12),transparent_60%)]">
       <div className="flex flex-col space-y-6 p-6 max-w-7xl mx-auto w-full">
         {/* HEADER */}
         <h1 className="text-2xl font-semibold">Insights</h1>
 
         {/* ================= TOP CARDS ================= */}
-        <div className="flex flex-wrap gap-4">
+        <div className="flex flex-wrap gap-4 ">
           {[
             { label: "Registered Users", value: insight?.TotalUsers },
             { label: "Total Courses", value: insight?.TotalCourses },
@@ -134,7 +134,7 @@ const AdminInsights = () => {
           ].map((item, i) => (
             <div
               key={i}
-              className="flex-1 min-w-40 rounded-xl bg-linear-to-br from-slate-800 to-slate-900 p-4 border border-slate-700"
+              className="flex-1  ring-blue-500 ring-1  min-w-40 rounded-xl bg-linear-to-br from-slate-800 to-slate-900 p-4 border border-slate-700"
             >
               <p className="text-sm text-slate-400">{item.label}</p>
               <h2 className="text-2xl font-bold mt-1">{item.value ?? 0}</h2>
@@ -145,15 +145,15 @@ const AdminInsights = () => {
 
         {/* ================= MIDDLE ================= */}
         <div className="flex   gap-4">
-          <div className="flex-1 min-w-[300px] rounded-xl bg-linear-to-br from-slate-800 to-slate-900 p-5 border border-slate-700">
+          <div className="flex-1 ring-blue-500 ring-1  min-w-[300px] rounded-xl bg-linear-to-br from-slate-800 to-slate-900 p-5 border border-slate-700">
             <p className="text-sm text-slate-400">Active Instructors</p>
             <p className="text-3xl font-bold mt-2">{insight?.TotalIns ?? 0}</p>
             <p className="text-xs text-slate-400">Engaged Teachers</p>
             <div className="mt-3 h-0.75 w-[90%] bg-blue-500 rounded" />
           </div>
 
-          <div className="flex-1 min-w-[320px] rounded-xl bg-linear-to-br from-slate-800 to-slate-900 p-5 border border-slate-700">
-            <p className="text-sm text-slate-400">New Enrollments</p>
+          <div className="flex-1 ring-blue-500 ring-1  min-w-[320px] rounded-xl bg-linear-to-br from-slate-800 to-slate-900 p-5 border border-slate-700">
+            <p className="text-sm  text-slate-400">New Enrollments</p>
             <p className="text-3xl font-bold mt-2">
               {insight?.TotalStudents ?? 0}
             </p>
@@ -165,7 +165,7 @@ const AdminInsights = () => {
         {/* ================= BOTTOM ================= */}
         <div className="flex flex-wrap gap-4">
           {/* Revenue Growth */}
-          <div className="flex-2 min-w-[320px] rounded-xl bg-linear-to-br from-slate-800 to-slate-900 p-5 border border-slate-700">
+          <div className="flex-2 ring-red-500 ring-2 min-w-[320px] rounded-xl bg-linear-to-br from-slate-800 to-slate-900 p-5 border border-slate-700">
             <h3 className="text-sm font-medium mb-4">Revenue Growth</h3>
             <div className="h-64">
               <Line data={revenueLineData} options={lineOptions} />
@@ -173,8 +173,8 @@ const AdminInsights = () => {
           </div>
 
           {/* Enrollments Overview */}
-          <div className="flex-1 min-w-70 rounded-xl bg-linear-to-br from-slate-800 to-slate-900 p-5 border border-slate-700">
-            <h3 className="text-sm font-medium mb-4">Enrollments Overview</h3>
+          <div className="flex-1  ring-red-500 ring-2  min-w-70 rounded-xl bg-linear-to-br from-slate-800 to-slate-900 p-5 border border-slate-700">
+            <h3 className="text-sm  font-medium mb-4">Enrollments Overview</h3>
 
             <div className="h-57 flex items-center justify-center">
               <Doughnut data={enrollmentData} options={doughnutOptions} />

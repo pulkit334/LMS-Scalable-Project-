@@ -3,7 +3,7 @@
 html, body, #root {
   block-size: 100%;
   overflow-x: hidden;
-
+   cursor: url("/Images/cursor-_1_.cur") 0 0, auto;
 }
 .swiper-wrapper {
   transition-timing-function: linear !important;
@@ -31,4 +31,7 @@ body {
     opacity: 1;
     transform: scale(1) translateY(0);
   }
+}
+.disabled {
+  cursor: not-allowed;
 }

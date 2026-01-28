@@ -56,15 +56,14 @@ const Instructormangment = () => {
   const getPages = () => {
     const pages = [];
     const chunkSize = 10;
-
+    const range = 2;
     const currentChunk = Math.floor((currentPage - 1) / chunkSize);
     const startPage = currentChunk * chunkSize + 1;
     const endPage = Math.min(startPage + chunkSize - 1, totalPages);
 
-    for (let i = startPage; i <= endPage; i++) {
+    for (let i = startPage; i < chunkSize; i++) {
       pages.push(i);
     }
-
     if (endPage < totalPages) {
       pages.push("...");
       pages.push(totalPages);
@@ -113,9 +112,9 @@ bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.18),transparent_55%),radial-
       <div className="w-full overflow-x-auto rounded-xl border border-white/10 bg-[#0f172a]">
         <table className="w-full table-auto border-collapse">
           <thead className="border-b border-white/10">
-            <tr className="text-gray-300 text-sm">
-              <th className="text-left px-6 py-4 font-semibold">Instructor</th>
-              <th className="text-center px-6 py-4 font-semibold">Courses</th>
+            <tr className="text-gray-300 text-sm ">
+              <th className="text-left px-6 py-4  font-semibold">Instructor</th>
+              <th className="text-center px-6 py-4   font-semibold">Courses</th>
               <th className="text-center px-6 py-4 font-semibold">Rating</th>
               <th className="text-center px-6 py-4 font-semibold">Status</th>
               <th className="text-center px-6 py-4 font-semibold">Actions</th>
@@ -147,7 +146,7 @@ bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.18),transparent_55%),radial-
                       <img
                         src={inst.image?.url ? inst.image.url : ImgApi()}
                         alt={`${inst.firstName} ${inst.lastName}`}
-                        className="h-10 w-10 rounded-full object-cover bg-gray-700"
+                        className="h-10 w-10  ring-red-500 ring-1  rounded-full object-cover bg-gray-700"
                       />
                       <div>
                         <p className="font-medium">
@@ -185,10 +184,10 @@ bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.18),transparent_55%),radial-
                   {/* Actions */}
                   <td className="px-6 py-4">
                     <div className="flex justify-center gap-3">
-                      <button className="px-4 py-1 rounded-md bg-white/10 hover:bg-white/20 transition">
+                      <button className="px-4  ring-blue-500 ring-1  py-1 rounded-md bg-white/10 hover:bg-white/20 transition">
                         Edit
                       </button>
-                      <button className="px-4 py-1 rounded-md bg-white/10 hover:bg-white/20 transition">
+                      <button className="px-4  ring-blue-500 ring-1  py-1 rounded-md bg-white/10 hover:bg-white/20 transition">
                         Remove
                       </button>
                     </div>
@@ -250,7 +249,7 @@ bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.18),transparent_55%),radial-
       </div>
       <div className="flex gap-10">
         {/* Graph */}
-        <div className="mt-6 h-64 w-full rounded-xl bg-[#0f172a] border border-white/10 p-4">
+        <div className="mt-6 h-64  ring-indigo-500 ring-1  w-full rounded-xl bg-[#0f172a] border border-white/10 p-4">
           <EnrollmentBarChart
             labels={MONTHS}
             values={monthlyTotals}
@@ -260,7 +259,7 @@ bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.18),transparent_55%),radial-
 
         {/* Chart */}
         <div
-          className="mt-6 h-64 w-full rounded-xl bg-[#0f172a] 
+          className="mt-6  ring-red-500 ring-1  h-64 w-full rounded-xl bg-[#0f172a] 
 border border-white/10 p-4 overflow-y-auto"
         >
           <TopCoursesProgress data={TopCategories?.TopCoursesData} />

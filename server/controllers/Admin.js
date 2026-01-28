@@ -226,7 +226,7 @@ exports.UserMangment = async (req, res) => {
     //Pagination
 
     const page = req.query.page || 1;
-    const limit = req.query.limit || 20;
+    const limit = req.query.limit || 20000;
     const skip = (page - 1) * limit;
     // student Filter Student and Instrcuor
     const search = req?.query?.search?.trim() || "";
@@ -267,9 +267,9 @@ exports.UserMangment = async (req, res) => {
 exports.CourseManagment = async (req, res) => {
   //serach  -> Pagination
   try {
-    const search = Number(req?.query?.search?.trim() || "");
-    const page = req?.query?.page || 1;
-    const limit = req?.query?.limit || 10;
+    const search = req?.query?.search?.trim() || "";
+    const page = Number(req?.query?.page) || 1;
+    const limit = Number(req?.query?.limit) || 10;
     const skip = (page - 1) * limit;
     //Instructor -> category -> Emailaddress -> CoruseName -> Image -> status-> Visisbilty
     const filter = {
@@ -278,17 +278,18 @@ exports.CourseManagment = async (req, res) => {
     // console.log(Course.find*());
     const [Data, total] = await Promise.all([
       Course.find(filter)
-        .select("-course")
         .select(
-          "courseName  status -course  studentEnrolled  thumbnail createdAt",
+          "courseName status thumbnail studentEnrolled thumbnail createdAt",
         )
-        .populate("category", { select: "name description -course" })
-
+        .populate({
+          path: "category",
+          select: "name description",
+        })
         .limit(limit)
         .skip(skip)
         .sort({ createdAt: -1 }),
 
-      Course.countDocuments(filter || []),
+      Course.countDocuments(filter),
     ]);
     const FinalData = Data.map((c) => ({
       ...c.toObject(),
@@ -321,7 +322,7 @@ exports.chartMangment = async (req, res) => {
     // Later We Can DO Chart Analysis
     //first Set 12 Months Data Atleast
     const StartDate = new Date();
-    StartDate.setMonth(StartDate.getMonth() - 12  );
+    StartDate.setMonth(StartDate.getMonth() - 12);
     StartDate.setDate(1);
     StartDate.setHours(0, 0, 0, 0);
 
@@ -373,49 +374,57 @@ exports.getTopCourses = async (req, res) => {
     const limit = Number(req.query.limit) || 4;
     const TopCoursesData = await Course.aggregate([
       { $match: { status: "PUBLISHED" } },
+
       {
         $project: {
           category: 1,
+          year: { $year: "$createdAt" },
+          month: { $month: "$createdAt" },
           enrollments: {
             $size: { $ifNull: ["$studentEnrolled", []] },
           },
         },
       },
+
       {
         $group: {
-          _id: "$category",
-
+          _id: {
+            category: "$category",
+            year: "$year",
+            month: "$month",
+          },
           totalEnrollments: { $sum: "$enrollments" },
         },
       },
-      {
-        $sort: { totalEnrollments: -1 },
-      },
-      {
-        $limit: limit,
-      },
+
+      { $sort: { totalEnrollments: -1 } },
+      { $limit: limit },
+
       {
         $lookup: {
           from: "categories",
-          localField: "_id",
+          localField: "_id.category",
           foreignField: "_id",
           as: "CategoryData",
         },
       },
-      {
-        $unwind: "$CategoryData",
-      },
+
+      { $unwind: "$CategoryData" },
+
       {
         $project: {
           _id: 0,
           categoryId: "$CategoryData._id",
           categoryName: "$CategoryData.name",
+          year: "$_id.year",
+          month: "$_id.month",
           totalEnrollments: 1,
         },
       },
     ]);
     res.json({ success: true, TopCoursesData });
   } catch (err) {
+    console.log(err);
     res.status(500).json({
       success: false,
       message: "Failed To Fetch",

@@ -22,7 +22,7 @@ const AdminLayout = () => {
         {!open && (
           <button
             onClick={() => setOpen(true)}
-            className="fixed top-18 left-0   text-white p-2 rounded-md cursor-pointer"
+            className="fixed top-18 left-0    text-white p-2 rounded-md cursor-pointer"
           >
             <FiSidebar size={22} />
           </button>

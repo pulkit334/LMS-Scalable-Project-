@@ -16,15 +16,13 @@ export const AdminInsightApi = async () => {
 
 export const InstrctorApi = async (page,limit) => {
   const response = await adminApi.get(Admin.InstructorPath,{params :{page,limit}});
-  console.log("the instrcutor Data Insight is1", response);
-  console.log("the instrcutor Data Insight is2", response);
   return response?.data;
 };
 //User Path Data 
 export const UserApi = async () => {
   const response = await adminApi.get(Admin.UserPath);
-  console.log("the User Data Insight is", response);
-  return response?.data;
+  console.log("the User Data Insight is", response?.data);
+    return response?.data;
 };
 //Course Path Data 
 export const CourseApi= async () => {
