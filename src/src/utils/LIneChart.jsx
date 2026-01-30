@@ -68,6 +68,6 @@ const CourseTrendLineChart = ({ data = [] }) => {
       <Line data={chartData} />
     </div>
   );
-};
+};  
 
 export default CourseTrendLineChart;

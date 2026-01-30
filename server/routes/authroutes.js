@@ -159,7 +159,9 @@ router.get(
   getFullCourseDetails,
 );
 // routes/course.js
-router.delete("/course/:courseId", auth, isinstructor, deleteCourse);
+// add validation in it
+
+router.delete("/course/:courseId", auth, deleteCourse);
 
 //COurse progress
 router.post(

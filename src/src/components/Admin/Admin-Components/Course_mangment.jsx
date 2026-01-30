@@ -21,6 +21,8 @@ import {
 
 import { Line } from "react-chartjs-2";
 import CourseTrendLineChart from "../../../utils/LIneChart";
+import { CourseDelete } from "../../../services/auth";
+import toast from "react-hot-toast";
 
 ChartJS.register(
   CategoryScale,
@@ -40,6 +42,41 @@ const Course_mangment = () => {
     (state) => state.admin,
   );
   const CourseTableData = CourseData?.data?.CourseData;
+  // Pagination Logic Would Be
+  const paginationdata = CourseData?.data?.pagination;
+  const totalPage = paginationdata?.pages || 1;
+  const hasNextPage = paginationdata?.hasNextPage || false;
+  const hasPrevPage = paginationdata?.hasPrevpage || false; //
+  const currentPage = paginationdata?.page || 1;
+
+  console.log("the course Management data would be", paginationdata);
+  // Current Pages
+  const getPages = () => {
+    const pages = [];
+    const chunkSize = 10;
+
+    const currentChunk = Math.floor((currentPage - 1) / chunkSize);
+    const startPage = currentChunk * chunkSize + 1;
+    const endPage = Math.min(startPage + chunkSize - 1, totalPage);
+
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+
+    if (endPage < totalPage) {
+      pages.push("...");
+      pages.push(totalPage);
+    }
+
+    return pages;
+  };
+
+  const goToPage = (page) => {
+    if (page < 1 || page > totalPage) return;
+    if (page === currentPage) return;
+
+    dispatch(fetchCourseInsight({ page, limit: 5 }));
+  };
 
   //state compontnent
   const getStatus = (status) => {
@@ -48,8 +85,21 @@ const Course_mangment = () => {
       : "bg-red-500/10 text-red-400";
   };
 
+  const deleteCourse = async (courseId) => {
+    const response = await CourseDelete(courseId);
+    let toastId
+
+
+    if (response?.success) {
+      setTimeout(() => {
+        toast.success(`${response?.message}`, toastId);
+      }, 1000);
+      dispatch(fetchCourseInsight({page : 1,limit : 5}))
+      toast.dismiss(toastId);
+    }
+  };
   useEffect(() => {
-    dispatch(fetchCourseInsight());
+    dispatch(fetchCourseInsight({ page: 1, limit: 5 }));
     dispatch(fetchcategoriesTrend());
   }, [dispatch]);
   console.log("the course table data would be ", CourseTableData);
@@ -90,7 +140,7 @@ const Course_mangment = () => {
 
               {/* Table Body */}
               <tbody>
-                {CourseTableData.slice(0, 5).map((course) => {
+                {CourseTableData.map((course) => {
                   return (
                     <tr
                       key={course._id}
@@ -144,16 +194,19 @@ const Course_mangment = () => {
                       {/* Actions */}
                       <td className="py-4 text-right">
                         <div className="flex justify-end gap-2">
-                          <button
+                          {/* <button
                             onClick={() =>
                               navigate(`/admin/course/${course._id}`)
                             }
                             className="rounded-md bg-white/5 px-3 py-1.5 text-xs text-gray-300 hover:bg-white/10"
                           >
                             Edit
-                          </button>
+                          </button> */}
 
-                          <button className="rounded-md bg-white/5 px-3 py-1.5 text-xs text-gray-300 hover:bg-red-500/20 hover:text-red-400">
+                          <button
+                            onClick={() => deleteCourse(course?._id)}
+                            className="rounded-md bg-white/5 px-3 py-1.5 text-xs text-gray-300 hover:bg-red-500/20 hover:text-red-400"
+                          >
                             Remove
                           </button>
                         </div>
@@ -172,12 +225,59 @@ const Course_mangment = () => {
         )}
       </div>
 
-   <div className="w-full flex justify-center px-6">
-  <div className="w-full max-w-6xl">
-    <CourseTrendLineChart data={TopCategories?.TopCoursesData} />
-  </div>
-</div>
+      <div className="h-16 m-2  flex items-center justify-center gap-1 text-gray-400">
+        {!hasPrevPage ? (
+          <button
+            disabled
+            className="px-3 py-1 hover:bg-gray-700 rounded"
+            onClick={() => goToPage(currentPage - 1)}
+          >
+            Prev Page
+          </button>
+        ) : (
+          <button
+            className="px-3 py-1 hover:bg-gray-700 rounded"
+            onClick={() => goToPage(currentPage - 1)}
+          >
+            Prev Page
+          </button>
+        )}
 
+        {getPages().map((c, idx) =>
+          c === "..." ? (
+            <span key={idx} className="px-3">
+              ...
+            </span>
+          ) : (
+            <button
+              key={c}
+              onClick={() => goToPage(c)}
+              className={`px-4 py-2  rounded-md ${
+                c === currentPage
+                  ? "bg-blue-600 text-white"
+                  : "hover:bg-gray-700"
+              }`}
+            >
+              {c}
+            </button>
+          ),
+        )}
+
+        {hasNextPage && (
+          <button
+            onClick={() => goToPage(currentPage + 1)}
+            className="px-3 py-1 hover:bg-gray-700 rounded"
+          >
+            Next Page
+          </button>
+        )}
+      </div>
+
+      <div className="w-full flex justify-center px-6">
+        <div className="w-full max-w-6xl">
+          <CourseTrendLineChart data={TopCategories?.TopCoursesData} />
+        </div>
+      </div>
     </div>
   );
 };

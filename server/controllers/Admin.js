@@ -226,7 +226,7 @@ exports.UserMangment = async (req, res) => {
     //Pagination
 
     const page = req.query.page || 1;
-    const limit = req.query.limit || 20000;
+    const limit = req.query.limit || 7;
     const skip = (page - 1) * limit;
     // student Filter Student and Instrcuor
     const search = req?.query?.search?.trim() || "";
@@ -243,15 +243,17 @@ exports.UserMangment = async (req, res) => {
         .sort({ createdAt: -1 }),
       User.countDocuments(filter),
     ]);
-
+    const totalPages = Math.ceil(total / limit);
     return res.status(202).json({
       data: {
         AllData,
         pagination: {
-          pages: Math.ceil(total / limit),
+          pages: totalPages,
           page,
           skip,
           limit,
+          hasNextPage: page < totalPages,
+          hasPrevPage: page > 1,
         },
       },
     });
@@ -263,7 +265,57 @@ exports.UserMangment = async (req, res) => {
     });
   }
 };
+// exports.CourseManagment = async (req, res) => {
+//   try {
+//     const search = req.query.search?.trim();
+//     const page = Number(req.query.page) || 1;
+//     const limit = Number(req.query.limit) || 10;
+//     const skip = (page - 1) * limit;
 
+//     const filter = search
+//       ? {
+//           courseName: { $regex: /pattern/search, $options: "i" },
+//         }
+//       : {};
+
+//     const [Data, total] = await Promise.all([
+//       Course.find(filter)
+//         .select("courseName status thumbnail studentEnrolled createdAt")
+//         .populate("category", "name description")
+//         .sort({ createdAt: -1 })
+//         .skip(skip)
+//         .limit(limit),
+
+//       Course.countDocuments(filter),
+//     ]);
+
+//     const FinalData = Data.map((c) => ({
+//       ...c.toObject(),
+//       enrollments: c.studentEnrolled?.length || 0,
+//     }));
+
+//     const totalPages = Math.ceil(total / limit);
+
+//     res.status(200).json({
+//       success: true,
+//       data: {
+//         CourseData: FinalData,
+//         pagination: {
+//           page,
+//           limit,
+//           totalPages,
+//           hasNextPage: page < totalPages,
+//           hasPrevPage: page > 1,
+//         },
+//       },
+//     });
+//   } catch (err) {
+//     res.status(500).json({
+//       success: false,
+//       message: "Failed To Fetch",
+//     });
+//   }
+// };
 exports.CourseManagment = async (req, res) => {
   //serach  -> Pagination
   try {
@@ -295,7 +347,7 @@ exports.CourseManagment = async (req, res) => {
       ...c.toObject(),
       enrollments: c.studentEnrolled?.length || 0,
     }));
-
+ const totalPages =  Math.ceil(total / limit);
     res.status(202).json({
       success: true,
       message: "Data is",
@@ -304,7 +356,10 @@ exports.CourseManagment = async (req, res) => {
         pagination: {
           limit,
           skip,
-          page: Math.ceil(total / limit),
+          pages : totalPages,
+          page,
+          hasNextPage  : page < totalPages,
+          hasPrevpage : page>1,
         },
       },
     });

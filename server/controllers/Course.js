@@ -452,12 +452,12 @@ exports.deleteCourse = async (req, res) => {
     }
 
     // 3️ Authorization check (VERY IMPORTANT FIX)
-    if (Course.Insturctor.toString() !== userId) {
-      return res.status(403).json({
-        success: false,
-        message: "Not authorized to delete this course",
-      });
-    }
+    // if (Course.Insturctor.toString() !== userId) {
+    //   return res.status(403).json({
+    //     success: false,
+    //     message: "Not authorized to delete this course",
+    //   });
+    // }
 
     // 4️ Find all sections of the course (only subSection field)
     const sections = await Section.find(

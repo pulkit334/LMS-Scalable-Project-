@@ -23,9 +23,10 @@ export const fetchDataInsight = createAsyncThunk(
 
 export const fetchInstructorInsight = createAsyncThunk(
   "Admin/fetchInstructorInsight",
-  async ({ page = 1, limit = 5 }, { rejectWithValue }) => {
+  async ({ page = 1, limit = 5,search = "" }, { rejectWithValue }) => {
     try {
-      const res = await InstrctorApi(page, limit);
+      console.log(search)
+      const res = await InstrctorApi(page, limit,search);
       return res;
     } catch (err) {
       return rejectWithValue(err);
@@ -35,10 +36,10 @@ export const fetchInstructorInsight = createAsyncThunk(
 //fetch the user Insight
 export const fetchUserInsight = createAsyncThunk(
   "Admin/fetchUserInsight",
-  async (_, { rejectWithValue }) => {
+  async ({page = 1 ,limit = 5,search}, { rejectWithValue }) => {
     try {
-      const res = await UserApi();
-      return res?.data?.AllData;
+      const res = await UserApi(page,limit,search);
+      return res?.data;
     } catch (err) {
       return rejectWithValue(err);
     }
@@ -48,9 +49,9 @@ export const fetchUserInsight = createAsyncThunk(
 //fetch Course Path
 export const fetchCourseInsight = createAsyncThunk(
   "Admin/fetchCourseInsight",
-  async (_, { rejectWithValue }) => {
+  async ({ page, limit= 5 }, { rejectWithValue }) => {
     try {
-      const res = await CourseApi();
+      const res = await CourseApi(page,limit);
       return res;
     } catch (err) {
       return rejectWithValue(err);

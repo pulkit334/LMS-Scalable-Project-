@@ -71,3 +71,10 @@ courseSchema.index({ Insturctor: 1 });
 courseSchema.index({ status: 1 });
 courseSchema.index({courseName : "text",  description: "text",})
 module.exports = mongoose.model("Courses", courseSchema);
+// courseSchema.index({ Insturctor: 1 });
+// courseSchema.index({ status: 1 });
+// courseSchema.index({
+//   courseName: "text",
+//   courseDescription: "text",
+//   tag: "text",
+// // });
