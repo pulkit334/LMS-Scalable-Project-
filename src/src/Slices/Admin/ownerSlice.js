@@ -7,6 +7,7 @@ import {
   InstrctorApi,
   UserApi,
   ToptrendingData,
+  StatusPath,
 } from "../../services/Admin/adminapi's";
 
 export const fetchDataInsight = createAsyncThunk(
@@ -23,10 +24,10 @@ export const fetchDataInsight = createAsyncThunk(
 
 export const fetchInstructorInsight = createAsyncThunk(
   "Admin/fetchInstructorInsight",
-  async ({ page = 1, limit = 5,search = "" }, { rejectWithValue }) => {
+  async ({ page = 1, limit = 5, search = "" }, { rejectWithValue }) => {
     try {
-      console.log(search)
-      const res = await InstrctorApi(page, limit,search);
+      console.log(search);
+      const res = await InstrctorApi(page, limit, search);
       return res;
     } catch (err) {
       return rejectWithValue(err);
@@ -36,9 +37,9 @@ export const fetchInstructorInsight = createAsyncThunk(
 //fetch the user Insight
 export const fetchUserInsight = createAsyncThunk(
   "Admin/fetchUserInsight",
-  async ({page = 1 ,limit = 5,search}, { rejectWithValue }) => {
+  async ({ page = 1, limit = 5, search }, { rejectWithValue }) => {
     try {
-      const res = await UserApi(page,limit,search);
+      const res = await UserApi(page, limit, search);
       return res?.data;
     } catch (err) {
       return rejectWithValue(err);
@@ -49,9 +50,9 @@ export const fetchUserInsight = createAsyncThunk(
 //fetch Course Path
 export const fetchCourseInsight = createAsyncThunk(
   "Admin/fetchCourseInsight",
-  async ({ page, limit= 5 }, { rejectWithValue }) => {
+  async ({ page, limit = 5 }, { rejectWithValue }) => {
     try {
-      const res = await CourseApi(page,limit);
+      const res = await CourseApi(page, limit);
       return res;
     } catch (err) {
       return rejectWithValue(err);
@@ -83,10 +84,24 @@ export const fetchcategoriesTrend = createAsyncThunk(
   },
 );
 
+export const fetchUserState = createAsyncThunk(
+  "Admin/InstructorStatus",
+  async ({ id, status }, { rejectWithValue }) => {
+    try {
+      const res = await StatusPath({ id, status });
+      console.log("the fecthuser state Data would be", res);
+      return res?.data;
+    } catch (err) {
+      return rejectWithValue(err);
+    }
+  },
+);
+
 const OwnerSlice = createSlice({
   name: "admin",
   initialState: {
     loading: false,
+    actionLoadingId: null,
     error: null,
     Data: [],
     InstructorData: [],
@@ -94,6 +109,7 @@ const OwnerSlice = createSlice({
     CourseData: [],
     Coursetrend: [],
     TopCategories: [],
+    InstructorState: [],
   },
   reducers: {},
   extraReducers: (builder) => {
@@ -177,6 +193,27 @@ const OwnerSlice = createSlice({
       })
       .addCase(fetchcategoriesTrend.rejected, (state, action) => {
         state.loading = false;
+        state.error = action.payload;
+      })
+      //Instrcutor State
+      .addCase(fetchUserState.pending, (state, action) => {
+        ((state.actionLoadingId = action.meta.arg.id), (state.error = null));
+      })
+      .addCase(fetchUserState.fulfilled, (state, action) => {
+        const updated = action.payload; // one instructor
+
+        const list = state.InstructorData?.data?.instructors;
+        if (!Array.isArray(list)) return;
+
+        const idx = list.findIndex((i) => i._id === updated._id);
+        if (idx !== -1) {
+          list[idx].status = updated.status;
+        }
+     state.actionLoadingId = null;
+      })
+
+      .addCase(fetchUserState.rejected, (state, action) => {
+         state.actionLoadingId = null;
         state.error = action.payload;
       });
   },

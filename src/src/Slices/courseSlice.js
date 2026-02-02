@@ -1,5 +1,5 @@
-// redux/slices/courseSlice.js
-import { createSlice } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { CategoryResponse } from "../services/auth";
 
 const initialState = {
   step: 1,
@@ -10,7 +10,22 @@ const initialState = {
   course: null, // ADD
   isEdit: false,
   isPaymentLoading: false,
+  categorydata: [],
+  loading: false,
+  error: null,
 };
+export const CoursecategoryData = createAsyncThunk(
+  "Admin/fetchCourseCategory",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await CategoryResponse();
+      console.log("the repsosne is ", res);
+      return res?.AllCategory;
+    } catch (err) {
+      return rejectWithValue(err);
+    }
+  },
+);
 
 const courseSlice = createSlice({
   name: "course",
@@ -45,6 +60,20 @@ const courseSlice = createSlice({
     },
     resetCourse: () => initialState,
   },
+  extraReducers: (builder) => {
+    builder
+      .addCase(CoursecategoryData.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(CoursecategoryData.fulfilled, (state, action) => {
+        state.loading = false;
+        state.categorydata = action.payload;
+      })
+      .addCase(CoursecategoryData.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
+  },
 });
 
 export const {
@@ -56,7 +85,7 @@ export const {
   setIsPublic,
   setCourse,
   setEditCourse,
-  setPaymentLoading
+  setPaymentLoading,
 } = courseSlice.actions;
 
 export default courseSlice.reducer;

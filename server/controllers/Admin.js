@@ -3,6 +3,7 @@ const Course = require("../models/course");
 const User = require("../models/User");
 const Payment = require("../models/payment");
 const category = require("../models/category");
+const { default: mongoose } = require("mongoose");
 
 exports.InsightData = async (req, res) => {
   try {
@@ -131,11 +132,21 @@ exports.InstructorData = async (req, res) => {
     const skip = (page - 1) * limit;
 
     const search = req.query.search || "";
+
     //Sirf Only Take Instuctor Info Other Then Nothing I Want
     const filter = {
       accountType: "instructor",
-      ...(search ? { $text: { $search: search } } : {}),
+      ...(search
+        ? {
+            $or: [
+              { firstName: { $regex: search, $options: "i" } },
+              { lastName: { $regex: search, $options: "i" } },
+              { email: { $regex: search, $options: "i" } },
+            ],
+          }
+        : {}),
     };
+
     const [InstructorData, total] = await Promise.all([
       User.find(filter)
         .select("firstName lastName  status  image createdAt email")
@@ -195,6 +206,8 @@ exports.InstructorData = async (req, res) => {
     }));
     const totalPages = Math.ceil(total / limit);
     // abh Merge Kar dete hai Codes Ko As Insturtor wiht firtsName LastName and _id->Count Merge
+    console.log("FINAL DATA LENGTH:", FinalData.length);
+
     return res.status(202).json({
       success: true,
       message: "All instructors fetched",
@@ -225,15 +238,24 @@ exports.UserMangment = async (req, res) => {
   try {
     //Pagination
 
-    const page = req.query.page || 1;
-    const limit = req.query.limit || 7;
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 7;
+
     const skip = (page - 1) * limit;
     // student Filter Student and Instrcuor
-    const search = req?.query?.search?.trim() || "";
+    const search = req?.query?.search.trim() || "";
     //  only student + instructor
     const filter = {
       accountType: { $in: ["instructor", "student"] },
-      ...(search ? { $text: { $search: search } } : {}),
+      ...(search
+        ? {
+            $or: [
+              { firstName: { $regex: search, $options: "i" } },
+              { lastName: { $regex: search, $options: "i" } },
+              { email: { $regex: search, $options: "i" } },
+            ],
+          }
+        : {}),
     };
     const [AllData, total] = await Promise.all([
       User.find(filter)
@@ -258,6 +280,7 @@ exports.UserMangment = async (req, res) => {
       },
     });
   } catch (err) {
+    console.log("The error is ", err);
     return res.status(500).json({
       success: false,
       message: "Failed To Fetch",
@@ -347,7 +370,7 @@ exports.CourseManagment = async (req, res) => {
       ...c.toObject(),
       enrollments: c.studentEnrolled?.length || 0,
     }));
- const totalPages =  Math.ceil(total / limit);
+    const totalPages = Math.ceil(total / limit);
     res.status(202).json({
       success: true,
       message: "Data is",
@@ -356,10 +379,10 @@ exports.CourseManagment = async (req, res) => {
         pagination: {
           limit,
           skip,
-          pages : totalPages,
+          pages: totalPages,
           page,
-          hasNextPage  : page < totalPages,
-          hasPrevpage : page>1,
+          hasNextPage: page < totalPages,
+          hasPrevpage: page > 1,
         },
       },
     });
@@ -488,3 +511,50 @@ exports.getTopCourses = async (req, res) => {
 };
 
 // Toggle For Status Active / Course -> draft or Published
+
+
+exports.statusUpgrade = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid instructor id",
+      });
+    }
+
+    if (!["Active", "InActive", "Blocked"].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid status",
+      });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      id,
+      { status },
+      { new: true }
+    ).select("firstName lastName email status");
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "Instructor not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: user,
+    });
+  } catch (error) {
+    console.error("Status update error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update status. Please try again.",
+    });
+  }
+};
+

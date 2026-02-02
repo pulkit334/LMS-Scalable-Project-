@@ -19,7 +19,7 @@ export const AUTH = {
   EmailVerification: "/recover-account",
   RefreshVerification: "/refresh",
 };
-` `
+` `;
 export const Course = {
   CreateCourse: "/course/create",
   categories: "/category/all",
@@ -289,6 +289,11 @@ export const RefreshVerification = async (data) => {
   const response = await api.post(AUTH.RefreshVerification);
   // const token = response.data?.token || [];
   // localStorage.setItem("token", token);
-  console.log("The Token is ",response)
+  console.log("The Token is ", response);
+  return response?.data;
+};
+export const CategoryResponse = async (data) => {
+  const response = await api.get(categories.GET_ALL);
+  console.log("the categouyr respons eis theese s",response)
   return response?.data;
 };

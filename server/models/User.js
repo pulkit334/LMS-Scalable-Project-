@@ -19,7 +19,6 @@ const userSchema = new mongoose.Schema(
       required: true,
       unique: true,
       trim: true,
-      lowercase: true,
     },
 
     password: {
@@ -44,7 +43,7 @@ const userSchema = new mongoose.Schema(
     ],
     status: {
       type: String,
-      enum: ["Active", "InActive"],
+      enum: ["Active", "InActive","Blocked"],
       default: "Active",
     },
     image: {
@@ -66,6 +65,7 @@ const userSchema = new mongoose.Schema(
     token: {
       type: String,
     },
+
     resetPasswordExpires: {
       type: Date,
     },
@@ -98,9 +98,7 @@ const userSchema = new mongoose.Schema(
   },
 );
 userSchema.index({ email: 1 }, { unique: true });
-userSchema.index({
-  firstName: "text",
-  lastName: "text",
-  email: "text",
-});
+userSchema.index({ firstName: 1 });
+userSchema.index({ lastName: 1 });
+
 module.exports = mongoose.model("User", userSchema);

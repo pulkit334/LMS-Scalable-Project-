@@ -1,9 +1,12 @@
-import React from "react";
+import React, { useState } from "react";
 import { ChevronDown } from "lucide-react";
+import { ProfileMenu } from "../components/core/Auth_frontend/ProfileBar_modal/ProfilePopup"; 
 
 const AdminNavbar = () => {
+  const [open, setOpen] = useState(false);
+
   return (
-    <header className="h-16 w-full  flex border-b border-slate-800 text-white">
+    <header className="h-16 w-full flex border-b border-slate-800 text-white relative">
       
       {/* LEFT */}
       <div className="w-65 bg-[#20212d] flex items-center gap-3 px-6">
@@ -33,17 +36,27 @@ const AdminNavbar = () => {
       </div>
 
       {/* RIGHT */}
-      <div className="w-65 bg-[#020617] flex items-center justify-end gap-3 px-6">
-        <img
-          src="https://i.pravatar.cc/40"
-          alt="Admin"
-          className="w-9 h-9 rounded-full border border-slate-700"
-        />
-        <span className="text-sm text-slate-200">Admin</span>
-        <ChevronDown size={16} className="text-slate-400" />
+      <div className="w-65 bg-[#020617] flex items-center justify-end gap-3 px-6 relative">
+        <div
+          onClick={() => setOpen(!open)}
+          className="flex items-center text-black gap-3 cursor-pointer"
+        >
+          <img
+            src="https://i.pravatar.cc/40"
+            alt="Admin"
+            className="w-9 h-9 rounded-full border border-slate-700"
+          />
+          <span className="text-sm text-slate-200">Admin</span>
+          <ChevronDown size={16} className="text-slate-400" />
+        </div>
+
+        {/* PROFILE MENU */}
+        <div className="relative left-1">
+        {open && <ProfileMenu />}
+        </div>
       </div>
 
-    </header>
+    </header> 
   );
 };
 

@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { Route, Routes } from "react-router-dom";
+import { Route, Routes, Navigate } from "react-router-dom"; // 
 import Home from "./pages/Home";
 import { Login } from "./components/core/Auth_frontend/Login";
 import MainLayout from "./pages/MainLayout";
@@ -43,11 +43,13 @@ import AdminInsights from "./components/Admin/Admin-Components/AdminInsightPage"
 import Instructormangment from "./components/Admin/Admin-Components/Instructormangment";
 import Admin_usermangemt from "./components/Admin/Admin-Components/Admin_usermangemt";
 import Course_mangment from "./components/Admin/Admin-Components/Course_mangment";
+
 function App() {
   const dispatch = useDispatch();
   const token = useSelector((state) => state.auth.token);
   const user = useSelector((state) => state.profile.user);
   const status = useSelector((state) => state.profile.status);
+  const role = user?.accountType?.trim()?.toLowerCase();
 
   useEffect(() => {
     if (token && !user) {
@@ -70,7 +72,17 @@ function App() {
       <Routes>
         {/* PUBLIC LAYOUT */}
         <Route element={<MainLayout />}>
-          <Route path="/" element={<Home />} />
+
+          {/* ADMIN REDIRECT HANDLED HERE */}
+          <Route
+            path="/"
+            element={
+              role === ACCOUNT_TYPE.ADMIN
+                ? <Navigate to="/admin/insight" replace />
+                : <Home />
+            }
+          />
+
           <Route path="/signup" element={<Signup />} />
           <Route path="/catalog/:catalogName" element={<Catalog />} />
 
@@ -193,7 +205,7 @@ function App() {
             <Route path="insight" element={<AdminInsights />} />
             <Route path="instructors" element={<Instructormangment />} />
             <Route path="users" element={<Admin_usermangemt />} />
-            <Route  path="courses" element={<Course_mangment/>}/>
+            <Route path="courses" element={<Course_mangment />} />
           </Route>
         </Route>
       </Routes>

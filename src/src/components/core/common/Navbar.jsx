@@ -1,17 +1,20 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { Link, useLocation, matchPath } from "react-router-dom";
 import { ProfileDropDown } from "../Auth_frontend/ProfileDropDown";
 import { FiSearch, FiShoppingCart } from "react-icons/fi";
 import { FaAngleDown } from "react-icons/fa";
 import { NavbarLinks } from "../../../pages/data/navbar-links"; // adjust path if needed
-import { useSelector } from "react-redux";
-import { api } from "../../../services/apiconnnector";
-import { categories } from "../../../services/auth";
+import { useDispatch, useSelector } from "react-redux";
+import { CoursecategoryData } from "../../../Slices/courseSlice";
 
 const Navbar = () => {
+  const dispatch = useDispatch();
+
   const { token } = useSelector((state) => state.auth);
   const { user } = useSelector((state) => state.profile);
   const { totalItems } = useSelector((state) => state.cart);
+  const { categorydata, loading, error } = useSelector((state) => state.course);
+
   //  1. Get current route
   const location = useLocation();
 
@@ -19,23 +22,14 @@ const Navbar = () => {
   const matchRoute = (route) => {
     return matchPath({ path: route }, location.pathname);
   };
-  const fetchSublinks = async () => {
-    try {
-      const response = await api.get(categories.GET_ALL);
 
-      setsublinks(response?.data?.AllCategory || []);
-
-      // return response.data;
-    } catch (error) {
-      console.error("ACTUAL ERROR ", error);
-    }
-  };
-  const [sublinks, setsublinks] = useState([]);
+  //  3. Fetch categories only once (Redux)
   useEffect(() => {
-    if (sublinks.length === 0) {
-      fetchSublinks();
+    if (!categorydata || categorydata.length === 0) {
+      dispatch(CoursecategoryData());
     }
-  }, []);
+  }, [dispatch, categorydata]);
+
   return (
     <div className="w-full bg-[#1e2a3b] border-b z-50 border-[#1e2a3b]">
       <div className="mx-auto flex h-14 max-w-maxContent items-center justify-between px-6">
@@ -49,46 +43,60 @@ const Navbar = () => {
         </Link>
 
         {/* ---------------- NAV LINKS ---------------- */}
-        <div className="flex  items-center  gap-8 text-sm">
+        <div className="flex items-center gap-8 text-sm">
           {NavbarLinks.map((link, index) => {
             // ====== CATALOG DROPDOWN ======
             if (link.title === "Catalog") {
               return (
                 <div key={index} className="relative group">
-                  <p className="cursor-pointer text-white gap-1 items-center flex  hover:text-yellow-300 group">
+                  <p className="cursor-pointer text-white gap-1 items-center flex hover:text-yellow-300 group">
                     {link.title}
                     <FaAngleDown />
                     <div
                       className="invisible absolute left-1/2 top-full z-50 mt-3 
-  -translate-x-1/2 
-  flex flex-col rounded-md bg-white p-4 
-  text-black opacity-0 
-  transition-all duration-200 
-  group-hover:visible group-hover:opacity-100 
-  lg:w-75"
+                      -translate-x-1/2 
+                      flex flex-col rounded-lg bg-white p-4 
+                      text-black opacity-0 
+                      transition-all duration-200   
+                      group-hover:visible group-hover:opacity-100 
+                      lg:w-75"
                     >
                       {/* Triangle */}
                       <div
                         className="absolute -top-2 left-1/2 
-    h-4 w-7 
-    -translate-x-[-10%] 
-    rotate-45 
-    bg-white"
+                        h-4 w-4
+                        -translate-x-[-10%] 
+                        rotate-45 
+                        bg-white"
                       ></div>
 
                       {/* Content */}
-                      {sublinks?.map((category) => (
-                        <Link
-                          key={category._id}
-                          to={`/catalog/${category.name.toLowerCase()}`}
-                          className="block px-3 py-1 text-sm hover:text-yellow-400"
-                        >
-                          {category.name}
-                        </Link>
-                      ))}
+                      {/* Content */}
+                      {loading && (
+                        <p className="px-3 py-1 text-sm text-gray-500">
+                          Loading.....
+                        </p>
+                      )}
+
+                      {error && (
+                        <p className="px-3 py-1 text-sm text-red-500">
+                          {error?.message || "Failed to load categories"}
+                        </p>
+                      )}
+
+                      {!loading &&
+                        !error &&
+                        categorydata?.map((category) => (
+                          <Link
+                            key={category._id}
+                            to={`/catalog/${category.name}`}
+                            className="block px-3 py-1 text-sm hover:text-yellow-400"
+                          >
+                            {category.name}
+                          </Link>
+                        ))}
                     </div>
                   </p>
-                  {/* dropdown content can go here */}
                 </div>
               );
             }
@@ -132,7 +140,6 @@ const Navbar = () => {
           {/* AUTH BUTTONS */}
           {token === null && (
             <>
-              {" "}
               <Link to="/signup">
                 <button className="rounded-md border border-[#98ADBD] px-4 py-1.5 text-sm text-white hover:bg-[#98ADBD] hover:text-black transition">
                   Signup
@@ -146,7 +153,7 @@ const Navbar = () => {
             </>
           )}
 
-          {token !== null  && <ProfileDropDown/>}
+          {token !== null && <ProfileDropDown />}
         </div>
       </div>
     </div>

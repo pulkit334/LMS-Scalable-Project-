@@ -4,12 +4,13 @@ import { persistor } from "../../../../store/store";
 import { logout } from "../../../../Slices/authslice";
 import { useEffect } from "react";
 import { clearUser } from "../../../../Slices/profile";
-// import { useEffect } from "react";
-// import { clearUser } from "../../../../Slices/profile";
+import { ACCOUNT_TYPE } from "../../../../utils/constants";
+
 export const ProfileMenu = () => {
   const { user } = useSelector((state) => state?.profile);
-
   const dispatch = useDispatch();
+
+  const isAdmin = user?.accountType === ACCOUNT_TYPE.ADMIN;
 
   useEffect(() => {
     if (!user) {
@@ -20,8 +21,11 @@ export const ProfileMenu = () => {
 
   return (
     <div className="absolute right-0 top-12 z-50 w-[320px] rounded-2xl bg-white shadow-2xl border border-gray-200">
-      <div className="px-4 pt-4 pb-2 text-sm text-gray-500">Currently in</div>
+      <div className="px-4 pt-4 pb-2 text-sm text-gray-500">
+        Currently in
+      </div>
 
+      {/* USER INFO */}
       <div className="mx-2 flex items-center justify-between rounded-xl p-3 hover:bg-gray-100">
         <div className="flex items-center gap-3">
           <img
@@ -41,21 +45,27 @@ export const ProfileMenu = () => {
       </div>
 
       <div className="my-2 border-t" />
-      <Link to="/dashboard/my-profile">
-        <button className="w-full px-6 py-3 text-left hover:bg-gray-100">
-          Go to profile
-        </button>
-      </Link>
 
-      <button className="w-full px-6 py-3 text-left hover:bg-gray-100">
-        Convert to business
-      </button>
 
+      {!isAdmin && (
+        <>
+          <Link to="/dashboard/my-profile">
+            <button className="w-full px-6 py-3 text-left hover:bg-gray-100">
+              Go to profile
+            </button>
+          </Link>
+
+          <button className="w-full px-6 py-3 text-left hover:bg-gray-100">
+            Convert to business
+          </button>
+        </>
+      )}
+
+      {/* LOGOUT (FOR EVERYONE) */}
       <button
         onClick={() => {
           localStorage.removeItem("token");
           persistor.purge();
-
           dispatch(logout());
         }}
         className="w-full px-6 py-3 text-left text-red-600 hover:bg-red-50"

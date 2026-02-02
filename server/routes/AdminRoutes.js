@@ -4,7 +4,8 @@ const {
   UserMangment,
   CourseManagment,
   chartMangment,
-  getTopCourses 
+  getTopCourses,
+  statusUpgrade,
 } = require("../controllers/Admin");
 const express = require("express");
 const { admin, auth } = require("../middlewares/auth");
@@ -16,16 +17,13 @@ router.get("/auth/admin/insight", auth, admin, InsightData);
 //Instrcutor Data
 router.get(
   "/auth/admin/instructors",
-  cacheMiddleware(
-    (req) => {
-      const page = req.query.page || 1;
-      const limit = req.query.limit || 5;
-      const search = req.query.search || "";
+  cacheMiddleware((req) => {
+    const page = req.query.page || 1;
+    const limit = req.query.limit || 5;
+    const search = req.query.search || "";
 
-      return `Cache:CourseInstructor:page=${page}:limit=${limit}:search=${search}`;
-    },
-    100,
-  ),
+    return `Cache:CourseInstructor:page=${page}:limit=${limit}:search=${search}`;
+  }, 100),
   auth,
   admin,
   InstructorData,
@@ -37,9 +35,9 @@ router.get("/auth/admin/user-mangment", auth, admin, UserMangment);
 router.get("/auth/admin/course-mangment", auth, admin, CourseManagment);
 //Course Mangement Data
 router.get("/auth/admin/course-mangment-trend", auth, admin, chartMangment);
-//admin  top categories 
-router.get("/admin/charts/top-categories", auth,admin,getTopCourses )
-
-
+//admin  top categories
+router.get("/admin/charts/top-categories", auth, admin, getTopCourses);
+// Status APi
+router.patch("/admin/instructors/:id/status", auth, admin, statusUpgrade);
 
 module.exports = router;

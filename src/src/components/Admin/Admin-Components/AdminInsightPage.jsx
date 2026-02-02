@@ -75,7 +75,7 @@ const AdminInsights = () => {
         tension: 0.4,
         fill: true,
         pointRadius: 4,
-      },
+      },7
     ],
   };
 

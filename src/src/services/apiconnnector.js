@@ -27,6 +27,15 @@ api.interceptors.response.use(
     if (status == 400 && code === "USER_NOT_FOUND") {
       throw new Error("User Does Not Exist");
     }
+    if (
+      status === 403 &&
+      code === "Account Have Been Blocked Kindly Connect To Company"
+    ) {
+      toast.error("Your account has been blocked. Please contact support.");
+
+      return Promise.reject(error);
+    }
+
     if (status == 500 && code === "INTERNAL_SERVER_ERROR") {
       throw new Error("Something went wrong. Please try again later.");
     }
@@ -81,26 +90,3 @@ adminApi.interceptors.request.use((config) => {
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
-export const apiConnector = (method, url, bodydata, headers, params) => {
-  return api({
-    method: `${method}`,
-    url: `${url}`,
-    data: bodydata ? bodydata : null,
-    headers: {
-      ...headers,
-    },
-    params: params ? params : null,
-  });
-};
-
-export const apiConnector2 = (method, url, bodydata, headers, params) => {
-  return adminApi({
-    method: `${method}`,
-    url: `${url}`,
-    data: bodydata ? bodydata : null,
-    headers: {
-      ...headers,
-    },
-    params: params ? params : null,
-  });
-};

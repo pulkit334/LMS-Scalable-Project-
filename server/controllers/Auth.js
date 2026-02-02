@@ -159,7 +159,7 @@ exports.login = async (req, res) => {
     //check user exist or not
 
     const user = await User.findOne({ email });
-
+     
     if (!user) {
       return res.status(400).json({
         success: false,
@@ -168,6 +168,13 @@ exports.login = async (req, res) => {
       });
     }
 
+    if(user.status==="Blocked"){
+      return res.status(403).json({
+        success : false,
+        code : "Account Have Been Blocked Kindly Connect To Company",
+        message : "Account Blocked"
+      })
+    }
     // check deleted
     if (user.isdeleted) {
       return res.status(403).json({

@@ -24,6 +24,7 @@ export const SubmitHandle = async (data, dispatch, navigate) => {
     localStorage.setItem("token", token);
 
     const role = user?.accountType?.trim()?.toLowerCase();
+    console.log("the role here is",role)
     if (role === "admin") {
       console.log("Navigating to admin...");
       navigate("/admin/insight", { replace: true });
@@ -38,7 +39,7 @@ export const SubmitHandle = async (data, dispatch, navigate) => {
   } catch (error) {
     const message =
       error?.response?.data?.message || error?.message || "Invalid credentials";
-
+if(!message ==="Account Blocked")
     toast.error(message);
   }
 };
