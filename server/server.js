@@ -7,6 +7,7 @@ import helmet from "helmet";
 import cookieParser from "cookie-parser";
 import { xss } from "express-xss-sanitizer";
 import fileUpload from "express-fileupload";
+
 // import requestIp from "request-ip"
 // ---- LOCAL IMPORTS ----
 import "./schedular/cronejob.js";
@@ -14,6 +15,7 @@ import authRoutes from "./routes/authroutes.js";
 import connect from "./config/db.js";
 import "./config/passport.js";
 import adminRoutes from "./routes/AdminRoutes.js";
+import firebaseRoute from "./routes/firebaseroutes.js"
 // ---- APP INIT ----
 const app = express();
 
@@ -52,7 +54,8 @@ app.use(morgan("dev"));
 
 // ---------- ROUTES ----------
 app.use("/api/v1", authRoutes);
-app.use("/api/v2",adminRoutes)
+app.use("/api/v2",adminRoutes);
+app.use("/api/firebase", firebaseRoute);
 // ---------- ERROR HANDLER ----------
 app.use((err, req, res, next) => {
   console.error(err.stack);

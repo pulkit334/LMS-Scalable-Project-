@@ -10,6 +10,7 @@ const {
   courseEnrollmentEmail,
 } = require("../mail template/courseEnrollmentEmail");
 const { PaymentSuccessEmail } = require("../mail template/paymentSuccessEmail");
+const payment = require("../models/payment");
 
 exports.CapturePayment = async (req, res) => {
   try {
@@ -69,6 +70,7 @@ exports.CapturePayment = async (req, res) => {
       currency: paymentResponse.currency,
       amount: paymentResponse.amount,
       data: paymentResponse,
+      initiatedAt: new Date(),
     });
   } catch (error) {
     console.error("CapturePayment Error:", error);
@@ -79,76 +81,7 @@ exports.CapturePayment = async (req, res) => {
   }
 };
 // /payment Verifciaiton
-// exports.VerifyPayment = async (req, res) => {
-//   console.log(req.body);
-//   try {
-//     const razorpay_order_id = req.body.razorpay_order_id;
-//     const razorpay_payment_id = req.body.razorpay_payment_id;
-//     const razorpay_signature = req.body.razorpay_signature;
-//     const courses = req.body.courses;
-//     const userId = req.user.id;
 
-//     console.log("VerifyPayment details:", {
-//       razorpay_order_id,
-//       razorpay_payment_id,
-//       razorpay_signature,
-//       courses,
-//       userId,
-//     });
-
-//     if (
-//       !razorpay_order_id ||
-//       !razorpay_payment_id ||
-//       !razorpay_signature ||
-//       !courses?.length ||
-//       !userId
-//     ) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "Payment failed",
-//       });
-//     }
-
-//     const body = razorpay_order_id + "|" + razorpay_payment_id;
-//     const expectedSignature = crypto
-//       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-//       .update(body)
-//       .digest("hex");
-
-//     if (expectedSignature === razorpay_signature) {
-//       // Lets Verify the Payment Giive me all Course documents whose _id is inside this array courses”
-//       const CourseDoc = await Course.find({ _id: { $in: courses } })
-//         .select("price")
-//         .lean();
-
-//       const PriceMap = new Map(CourseDoc.map((c) => [String(c._id), c.price]));
-//       // Create payment docs for each course
-//       const ResponseData =  courses.map((courseId) => ({
-//         user: userId,
-//         course: courseId,
-//         price: PriceMap.get(String(courseId)) || 0,
-//         paymentid: razorpay_payment_id,
-//         orderid: razorpay_order_id,
-//         status: "success",
-//       }));
-//       await payment.insertMany(ResponseData)
-
-//       await enrolledStudent(courses, userId, razorpay_order_id);
-
-//       return res.status(200).json({
-//         success: true,
-//         message: "Payment verified & user enrolled",
-//       });
-//     }
-//   } catch (err) {
-//     console.error("VerifyPayment error:", err);
-//     return res.status(500).json({
-//       success: false,
-//       message: "Internal server error",
-//     });
-//   }
-// };
-//
 exports.VerifyPayment = async (req, res) => {
   try {
     const {
@@ -189,7 +122,7 @@ exports.VerifyPayment = async (req, res) => {
     const CourseDoc = await Course.find({ _id: { $in: courses } })
       .select("price")
       .lean();
-    // .select("_id price")
+
     const PriceMap = new Map(CourseDoc.map((c) => [String(c._id), c.price]));
 
     const ResponseData = courses.map((courseId) => ({
@@ -205,7 +138,17 @@ exports.VerifyPayment = async (req, res) => {
     await Payment.insertMany(ResponseData);
 
     await enrolledStudent(courses, userId, razorpay_order_id);
-
+    //check whteher the user came after the notficaiton we order
+    //it is not always possible that user came and checkout the product on behalf of the notifcaiton only  -> let it be unporcessed For now?
+    const paymentTwentyFourHourago = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    if (
+      Payment.reminderSent &&
+      Payment.reminderSent < paymentTwentyFourHourago
+    ) {
+      Payment.completedAfterReminder = true;
+    }
+    await Payment.save();
+  
     return res.status(200).json({
       success: true,
       message: "Payment verified & user enrolled",
@@ -322,10 +265,9 @@ exports.sendPaymentSuccessEmail = async (req, res) => {
 exports.Paymenthistory = async (req, res) => {
   try {
     const userid = req.user.id;
-    const history = await Payment.find({ user: userid }).populate(
-      "course",
-      "courseName thumbnail price",
-    ).lean()
+    const history = await Payment.find({ user: userid })
+      .populate("course", "courseName thumbnail price")
+      .lean();
     if (!history) {
       return res.status(202).json({
         success: true,

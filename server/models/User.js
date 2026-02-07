@@ -31,21 +31,25 @@ const userSchema = new mongoose.Schema(
       enum: ["admin", "student", "instructor"],
       required: true,
     },
+
     additionalDetails: {
       type: mongoose.Schema.ObjectId,
       ref: "Profile",
     },
+
     courses: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Courses", // must match your model name in Course.js
+        ref: "Courses",
       },
     ],
+
     status: {
       type: String,
-      enum: ["Active", "InActive","Blocked"],
+      enum: ["Active", "InActive", "Blocked"],
       default: "Active",
     },
+
     image: {
       url: {
         type: String,
@@ -56,12 +60,15 @@ const userSchema = new mongoose.Schema(
         default: "",
       },
     },
+
     recoveryToken: {
       type: String,
     },
+
     recoveryTokenExpires: {
       type: Date,
     },
+
     token: {
       type: String,
     },
@@ -69,6 +76,7 @@ const userSchema = new mongoose.Schema(
     resetPasswordExpires: {
       type: Date,
     },
+
     courseProgress: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -86,19 +94,41 @@ const userSchema = new mongoose.Schema(
       default: null,
     },
 
-    // optional fields you may need later
+    // NEW: FCM token for push notifications
+    fcmToken: {
+      type: String,
+      default: null,
+    },
+
+    notificationPreferences: {
+      broadcastAll: {
+        type: Boolean,
+        default: true,
+      },
+      purchaseOnly: {
+        type: Boolean,
+        default: false,
+      },
+      paymentReminders: {
+        type: Boolean,
+        default: true,
+      },
+    },
+
     createdAt: {
       type: Date,
       default: Date.now,
     },
- 
   },
   {
     timestamps: true,
   },
 );
+
 userSchema.index({ email: 1 }, { unique: true });
 userSchema.index({ firstName: 1 });
 userSchema.index({ lastName: 1 });
+userSchema.index({ fcmToken: 1 });
+userSchema.index({ "notificationPreferences.broadcastAll": 1 });
 
 module.exports = mongoose.model("User", userSchema);

@@ -132,7 +132,7 @@ router.get(
 router.get(
   "/enrolled-courses",
   auth,
-  // cacheMiddleware((req) => "Enrolled-Course", 60),
+  cacheMiddleware((req) => "Enrolled-Course", 60),
   getEnrolledCourses,
 );
 
