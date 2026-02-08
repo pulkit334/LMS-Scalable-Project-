@@ -11,7 +11,8 @@ const {
 } = require("../mail template/courseEnrollmentEmail");
 const { PaymentSuccessEmail } = require("../mail template/paymentSuccessEmail");
 const payment = require("../models/payment");
-
+const NotificationService = require("../service/notifcaitonservice");
+const Notification = require("../models/notification");
 exports.CapturePayment = async (req, res) => {
   try {
     const { courses } = req.body; // expect array of courseIds
@@ -140,15 +141,43 @@ exports.VerifyPayment = async (req, res) => {
     await enrolledStudent(courses, userId, razorpay_order_id);
     //check whteher the user came after the notficaiton we order
     //it is not always possible that user came and checkout the product on behalf of the notifcaiton only  -> let it be unporcessed For now?
+  const paymentDoc =  await Payment.findOne({
+    user  : userId,
+    orderid : razorpay_order_id
+  })
+
+
+
     const paymentTwentyFourHourago = new Date(Date.now() - 24 * 60 * 60 * 1000);
     if (
-      Payment.reminderSent &&
-      Payment.reminderSent < paymentTwentyFourHourago
+      paymentDoc.reminderSent &&
+      paymentDoc.reminderSent < paymentTwentyFourHourago
     ) {
-      Payment.completedAfterReminder = true;
+      paymentDoc.completedAfterReminder = true;
     }
-    await Payment.save();
-  
+    await paymentDoc.save();
+    const user = await User.findById(userId);
+    console.log("🔔 Sending payment notification to user:", userId);
+console.log("FCM Token:", user?.fcmToken);
+
+    if (user?.fcmToken) {
+      await NotificationService.sendNotification(
+        "Course Purchased 🎉",
+        "You are successfully enrolled in your course. Happy learning!",
+        user.fcmToken,
+      );
+    }
+
+
+  //Now Save  the Notoificaiton to DB 
+    await Notification.create({
+      user : userId,
+      title : "Course Purchased 🎉",
+      body : "You are successfully enrolled in your course. Happy learning!",
+      type : "COURSE",
+      expiresat : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+
+    })
     return res.status(200).json({
       success: true,
       message: "Payment verified & user enrolled",

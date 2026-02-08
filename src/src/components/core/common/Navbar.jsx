@@ -1,4 +1,5 @@
-import React, { useEffect } from "react";
+/* eslint-disable no-unused-vars */
+import React, { useEffect, useState } from "react";
 import { Link, useLocation, matchPath } from "react-router-dom";
 import { ProfileDropDown } from "../Auth_frontend/ProfileDropDown";
 import { FiSearch, FiShoppingCart } from "react-icons/fi";
@@ -6,6 +7,8 @@ import { FaAngleDown } from "react-icons/fa";
 import { NavbarLinks } from "../../../pages/data/navbar-links"; // adjust path if needed
 import { useDispatch, useSelector } from "react-redux";
 import { CoursecategoryData } from "../../../Slices/courseSlice";
+import { IoIosNotifications } from "react-icons/io";
+import NotificationModal from "../../../utils/NotificationModal";
 
 const Navbar = () => {
   const dispatch = useDispatch();
@@ -14,6 +17,9 @@ const Navbar = () => {
   const { user } = useSelector((state) => state.profile);
   const { totalItems } = useSelector((state) => state.cart);
   const { categorydata, loading, error } = useSelector((state) => state.course);
+
+  // State for notification hover
+  const [showNotification, setShowNotification] = useState(false);
 
   //  1. Get current route
   const location = useLocation();
@@ -71,7 +77,6 @@ const Navbar = () => {
                       ></div>
 
                       {/* Content */}
-                      {/* Content */}
                       {loading && (
                         <p className="px-3 py-1 text-sm text-gray-500">
                           Loading.....
@@ -109,7 +114,7 @@ const Navbar = () => {
                 className={`transition ${
                   matchRoute(link.path)
                     ? "text-yellow-300"
-                    : "text-white hover:text-yellow-300"
+                    : "text-white hover:tex t-yellow-300"
                 }`}
               >
                 {link.title}
@@ -119,8 +124,35 @@ const Navbar = () => {
         </div>
 
         {/* ---------------- RIGHT SECTION ---------------- */}
-        <div className="flex items-center gap-4">
-          <FiSearch className="cursor-pointer text-white" size={18} />
+           <div className="flex items-center gap-4">
+  {/* Notification Bell with Hover */}
+  <div
+    className="relative"
+    onMouseEnter={() => setShowNotification(true)}
+    onMouseLeave={() => setShowNotification(false)}
+  >
+    {
+      token && 
+       <Link to="/user/view-notifications">
+      <IoIosNotifications
+        className="cursor-pointer text-white hover:text-yellow-300 transition"
+        size={24}
+      />
+    </Link>
+    }
+   
+
+    {/* Notification Modal */}
+    <div
+      className={`absolute right-1 top-full pt-5 z-[100] transition-opacity duration-200 ${
+        showNotification ? "opacity-100 visible" : "opacity-0 invisible"
+      }`}
+    >
+      <NotificationModal />
+    </div>
+  </div>
+
+
 
           {/* CART (only if user exists and not Instructor) */}
           {user && user.accountType !== "instructor" && (

@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { Route, Routes, Navigate } from "react-router-dom"; // 
+import { Route, Routes, Navigate } from "react-router-dom"; //
 import Home from "./pages/Home";
 import { Login } from "./components/core/Auth_frontend/Login";
 import MainLayout from "./pages/MainLayout";
@@ -43,6 +43,10 @@ import AdminInsights from "./components/Admin/Admin-Components/AdminInsightPage"
 import Instructormangment from "./components/Admin/Admin-Components/Instructormangment";
 import Admin_usermangemt from "./components/Admin/Admin-Components/Admin_usermangemt";
 import Course_mangment from "./components/Admin/Admin-Components/Course_mangment";
+import UserNotification from "./components/core/Notification/userNotification";
+import { requestFCMToken, onMessageListner } from "./utils/firebaseutlis";
+import { toast } from "react-toastify";
+import { NotificationAuth } from "./services/Notificaiton/Notificaitonservice";
 
 function App() {
   const dispatch = useDispatch();
@@ -67,25 +71,62 @@ function App() {
     hydrateAuth(dispatch);
   }, [dispatch]);
 
+  //Notification usefffect
+  useEffect(() => {
+    onMessageListner((payload) => {
+      console.log("Foreground notification:", payload);
+
+      toast(
+        <div>
+          <strong>{payload?.notification?.title}</strong>
+          <p>{payload?.notification?.body}</p>
+        </div>,
+      );
+    });
+  }, []);
+
+  useEffect(() => {
+    const setupFCM = async () => {
+      try {
+        if (!token || !user) return;
+
+        const fcmToken = await requestFCMToken();
+        if (!fcmToken) return;
+
+        console.log("🔥 FCM Token:", fcmToken);
+
+        await NotificationAuth(fcmToken);
+      } catch (err) {
+        console.error("FCM setup failed:", err);
+      }
+    };
+
+    setupFCM();
+  }, [token, user]);
+
   return (
     <div className="w-screen min-h-screen flex flex-col font-inter">
       <Routes>
         {/* PUBLIC LAYOUT */}
         <Route element={<MainLayout />}>
-
           {/* ADMIN REDIRECT HANDLED HERE */}
           <Route
             path="/"
             element={
-              role === ACCOUNT_TYPE.ADMIN
-                ? <Navigate to="/admin/insight" replace />
-                : <Home />
+              role === ACCOUNT_TYPE.ADMIN ? (
+                <Navigate to="/admin/insight" replace />
+              ) : (
+                <Home />
+              )
             }
           />
 
           <Route path="/signup" element={<Signup />} />
           <Route path="/catalog/:catalogName" element={<Catalog />} />
-
+          <Route
+            path="/user/view-notifications"
+            element={<UserNotification />}
+          />
           <Route
             path="/login"
             element={

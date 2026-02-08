@@ -24,7 +24,7 @@ const ReviewSlider = () => {
   }, [dispatch, reviews.length]);
 
   if (loading) {
-    return <Result loading={loading} text="Loading reviews..." />;
+    return <Result loading={loading} text="Loading reviews..." />; 
   }
 
   if (reviews.length === 0)

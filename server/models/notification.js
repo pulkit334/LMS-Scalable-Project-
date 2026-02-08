@@ -17,7 +17,7 @@ const NotificaitonSchema = new mongoose.Schema({
     type: String,
   },
 
-  paymentid: {
+ type: {
     type: String,
     enum: ["PAYMENT", "COURSE", "SYSTEM"],
     default: "SYSTEM",

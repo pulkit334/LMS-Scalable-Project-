@@ -18,6 +18,10 @@ server/filepath/tmp-*
 /crone/s2.json
 /crone/s3.json
 
+/queue
+
+
+
 /crone/*.json
 !/crone/package.json
 !/crone/package-lock.json

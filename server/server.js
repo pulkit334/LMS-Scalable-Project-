@@ -15,7 +15,7 @@ import authRoutes from "./routes/authroutes.js";
 import connect from "./config/db.js";
 import "./config/passport.js";
 import adminRoutes from "./routes/AdminRoutes.js";
-import firebaseRoute from "./routes/firebaseroutes.js"
+import firebaseRoute from "./routes/NotificationRoute.js"
 // ---- APP INIT ----
 const app = express();
 
@@ -55,7 +55,7 @@ app.use(morgan("dev"));
 // ---------- ROUTES ----------
 app.use("/api/v1", authRoutes);
 app.use("/api/v2",adminRoutes);
-app.use("/api/firebase", firebaseRoute);
+app.use("/api/v1", firebaseRoute);
 // ---------- ERROR HANDLER ----------
 app.use((err, req, res, next) => {
   console.error(err.stack);
