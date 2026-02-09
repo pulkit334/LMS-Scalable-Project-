@@ -17,10 +17,10 @@ const Navbar = () => {
   const { user } = useSelector((state) => state.profile);
   const { totalItems } = useSelector((state) => state.cart);
   const { categorydata, loading, error } = useSelector((state) => state.course);
-
+  const { UserNotification } = useSelector((state) => state.usernotification);
   // State for notification hover
   const [showNotification, setShowNotification] = useState(false);
-
+console.log("the user Notificaiton would be ",UserNotification)
   //  1. Get current route
   const location = useLocation();
 
@@ -124,35 +124,36 @@ const Navbar = () => {
         </div>
 
         {/* ---------------- RIGHT SECTION ---------------- */}
-           <div className="flex items-center gap-4">
-  {/* Notification Bell with Hover */}
-  <div
-    className="relative"
-    onMouseEnter={() => setShowNotification(true)}
-    onMouseLeave={() => setShowNotification(false)}
-  >
-    {
-      token && 
-       <Link to="/user/view-notifications">
-      <IoIosNotifications
-        className="cursor-pointer text-white hover:text-yellow-300 transition"
-        size={24}
-      />
-    </Link>
-    }
-   
+        <div className="flex items-center gap-4">
+          {/* Notification Bell with Hover */}
+          <div
+            className="relative"
+            onMouseEnter={() => setShowNotification(true)}
+            onMouseLeave={() => setShowNotification(false)}
+          >
+            {token && (
+              <Link to="/user/view-notifications">
+                <IoIosNotifications
+                  className="cursor-pointer text-white hover:text-yellow-300 transition"
+                  size={24}
+                />
+                {UserNotification?.unreadCount> 0 && (
+                  <span className="absolute -top-2 -right-2 text-xs bg-red-500 text-white rounded-full px-1">
+                    {UserNotification?.unreadCount || 0}
+                  </span>
+                )}
+              </Link>
+            )}
 
-    {/* Notification Modal */}
-    <div
-      className={`absolute right-1 top-full pt-5 z-[100] transition-opacity duration-200 ${
-        showNotification ? "opacity-100 visible" : "opacity-0 invisible"
-      }`}
-    >
-      <NotificationModal />
-    </div>
-  </div>
-
-
+            {/* Notification Modal */}
+            <div
+              className={`absolute right-1 top-full pt-5 z-[100] transition-opacity duration-200 ${
+                showNotification ? "opacity-100 visible" : "opacity-0 invisible"
+              }`}
+            >
+              <NotificationModal />
+            </div>
+          </div>
 
           {/* CART (only if user exists and not Instructor) */}
           {user && user.accountType !== "instructor" && (

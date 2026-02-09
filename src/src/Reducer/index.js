@@ -9,6 +9,7 @@ import CourseReducerSlice from "../Slices/ViewCourseSlics";
 import RatingReducesSlice from "../Slices/RatingSlice";
 import InstructorSlice from "../services/operations/insturctor";
 import AdminReducer from "../Slices/Admin/ownerSlice"
+import UserNotificationReducer from "../services/ThunkApi/NotificationThunk/notificaitonthunk"
 const rootReducers = combineReducers({
   auth: authReducer,
   profile: profileReducer, //
@@ -19,7 +20,8 @@ const rootReducers = combineReducers({
   viewCourse: CourseReducerSlice,
   ratingSlice: RatingReducesSlice,
   instructor: InstructorSlice,
-  admin : AdminReducer
+  admin : AdminReducer,
+  usernotification : UserNotificationReducer
 });
 
 export default rootReducers;
