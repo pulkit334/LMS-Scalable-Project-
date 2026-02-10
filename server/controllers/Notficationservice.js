@@ -69,8 +69,9 @@ exports.fetchNotification = async (req, res) => {
       });
     }
 
-    const notifications = await Notification.find({ user: userId })
-      .sort({ createdAt: -1 });
+    const notifications = await Notification.find({ user: userId }).sort({
+      createdAt: -1,
+    });
 
     const unreadCount = await Notification.countDocuments({
       user: userId,
@@ -82,12 +83,108 @@ exports.fetchNotification = async (req, res) => {
       data: notifications,
       unreadCount,
     });
-
   } catch (err) {
     console.error("[fetchNotification]", err);
     return res.status(500).json({
       success: false,
       message: "Internal server error",
+    });
+  }
+};
+
+//Mark Read Operation's
+exports.MarkReadOperations = async (req, res) => {
+  try {
+    let user;
+    const keys = Object.keys(req.body);
+    if (keys.length > 0) {
+      user = keys[0];
+    }
+    console.log("the user id would be in the backend would be", user);
+    const updatedData = await Notification.findByIdAndUpdate(
+      user,
+      {
+        read: true,
+      },
+      { new: true },
+    );
+    console.log("the updated Data would be ", updatedData);
+    return res.status(202).json({
+      success: true,
+      message: "Updated successfully",
+      data: updatedData,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error ",
+    });
+  }
+};
+//Mark delete Operation's
+exports.MarkDeleteOperations = async (req, res) => {
+  try {
+    let user;
+    const keys = Object.keys(req.body);
+    if (keys.length > 0) {
+      user = keys[0];
+    }
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "Notification ID is required",
+      });
+    }
+    const deletedData = await Notification.findByIdAndDelete(user);
+    if (!deletedData) {
+      return res.status(404).json({
+        success: false,
+        message: "Notification not found",
+      });
+    }
+    return res.status(200).json({
+      success: true,
+      message: "Deleted successfully",
+      data: deletedData,
+    });
+  } catch (err) {
+    console.log("the error would be ", err);
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
+// Backend controller
+exports.MarkAllReadOperations = async (req, res) => {
+  try {
+    const { notificationIds } = req.body;
+
+    if (
+      !notificationIds ||
+      !Array.isArray(notificationIds) ||
+      notificationIds.length === 0
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Notification IDs array is required",
+      });
+    }
+    const result = await Notification.updateMany(
+      { _id: { $in: notificationIds } },
+      { $set: { read: true } },
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: `${result.modifiedCount} notifications marked as read`,
+      data: result,
+    });
+  } catch (err) {
+    console.error("Error marking all as read:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
     });
   }
 };

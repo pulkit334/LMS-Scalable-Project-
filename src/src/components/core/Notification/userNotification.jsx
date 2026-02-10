@@ -1,14 +1,19 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { FetchNotification } from "../../../services/ThunkApi/NotificationThunk/notificaitonthunk";
+import {
+  MarkAllReadOperations,
+  MarkdeletionOperations,
+  MarkReadOperations,
+} from "../../../services/Notificaiton/Notificaitonservice";
 
 const UserNotification = () => {
   const dispatch = useDispatch();
   const { loading, error, UserNotification } = useSelector(
-    (state) => state.usernotification
+    (state) => state.usernotification,
   );
   const [filter, setFilter] = useState("all");
-   const UserNotificationData = UserNotification?.data
+  const UserNotificationData = UserNotification?.data;
   useEffect(() => {
     dispatch(FetchNotification());
   }, [dispatch]);
@@ -49,8 +54,40 @@ const UserNotification = () => {
     if (filter === "read") return notif.read;
     return true;
   });
-
+  console.log("the user notificaiotn would be ", UserNotification);
   const unreadCount = UserNotificationData?.filter((n) => !n.read)?.length || 0;
+const handleMarkAll = useCallback(async () => {
+  try {
+    // Get all unread notification IDs
+    const unreadIds = UserNotificationData
+      ?.filter((notif) => !notif.read)
+      ?.map((notif) => notif._id);
+    
+    if (unreadIds && unreadIds.length > 0) {
+      // Single API call with all IDs
+      await MarkAllReadOperations(unreadIds);
+      
+      // Refresh notifications
+      dispatch(FetchNotification());
+    }
+  } catch (error) {
+    console.error("Failed to mark all notifications as read:", error);
+  }
+}, [UserNotificationData, dispatch]);
+  const handleSubmit = useCallback(
+    async (notificationId, deletion) => {
+      try {
+        deletion
+          ? await MarkdeletionOperations(notificationId)
+          : await MarkReadOperations(notificationId);
+
+        dispatch(FetchNotification());
+      } catch (error) {
+        console.error("Failed to mark notification as read:", error);
+      }
+    },
+    [dispatch],
+  );
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -59,7 +96,9 @@ const UserNotification = () => {
         <div className="max-w-6xl mx-auto px-6 py-6">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Notifications</h1>
+              <h1 className="text-2xl font-bold text-gray-900">
+                Notifications
+              </h1>
               <p className="text-sm text-gray-500 mt-1">
                 {unreadCount > 0
                   ? `You have ${unreadCount} unread notification${unreadCount > 1 ? "s" : ""}`
@@ -67,7 +106,10 @@ const UserNotification = () => {
               </p>
             </div>
             {unreadCount > 0 && (
-              <button className="text-sm font-semibold text-purple-600 hover:text-purple-700 transition-colors cursor-pointer">
+              <button
+                onClick={() => handleMarkAll({})}
+                className="text-sm font-semibold text-purple-600 hover:text-purple-700 transition-colors cursor-pointer"
+              >
                 Mark all as read
               </button>
             )}
@@ -114,12 +156,16 @@ const UserNotification = () => {
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20">
             <div className="h-10 w-10 animate-spin rounded-full border-4 border-purple-600 border-r-transparent"></div>
-            <p className="mt-4 text-sm text-gray-500">Loading notifications...</p>
+            <p className="mt-4 text-sm text-gray-500">
+              Loading notifications...
+            </p>
           </div>
         ) : error ? (
           <div className="flex flex-col items-center justify-center py-20">
             <div className="text-5xl mb-4">⚠️</div>
-            <p className="text-sm text-red-500 font-medium">Failed to load notifications</p>
+            <p className="text-sm text-red-500 font-medium">
+              Failed to load notifications
+            </p>
             <button
               onClick={() => dispatch(FetchNotification())}
               className="mt-4 px-6 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors cursor-pointer"
@@ -136,8 +182,8 @@ const UserNotification = () => {
               {filter === "unread"
                 ? "No unread notifications"
                 : filter === "read"
-                ? "No read notifications"
-                : "No notifications yet"}
+                  ? "No read notifications"
+                  : "No notifications yet"}
             </p>
             <p className="text-sm text-gray-500 mt-2">
               {filter === "all" && "We'll notify you when something arrives"}
@@ -183,11 +229,20 @@ const UserNotification = () => {
                     {/* Action Buttons */}
                     <div className="flex items-center gap-4">
                       {!notification.read && (
-                        <button className="text-sm font-semibold text-purple-600 hover:text-purple-700 transition-colors cursor-pointer">
+                        // In your component
+
+                        // Update the button onClick
+                        <button
+                          onClick={() => handleSubmit(notification._id, false)}
+                          className="text-sm font-semibold text-purple-600 hover:text-purple-700 transition-colors cursor-pointer"
+                        >
                           Mark as read
                         </button>
                       )}
-                      <button className="text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors cursor-pointer">
+                      <button
+                        onClick={() => handleSubmit(notification._id, true)}
+                        className="text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors cursor-pointer"
+                      >
                         Delete
                       </button>
                     </div>

@@ -25,6 +25,7 @@ const NotificaitonSchema = new mongoose.Schema({
   read: {
     type: Boolean,
     default: false,
+    enum : ["all","unread","read"],
     index: true,
   },
 
