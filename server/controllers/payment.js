@@ -195,7 +195,7 @@ exports.VerifyPayment = async (req, res) => {
     //  Send notification with course thumbnail
     if (user?.fcmToken) {
       try {
-        const notificationResult = await NotificationService.sendNotification(
+        const notificationResult = await NotificationService.sendMultipleNotification(
           notificationTitle,
           notificationBody,
           user.fcmToken,

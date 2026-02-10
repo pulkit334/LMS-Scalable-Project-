@@ -27,3 +27,5 @@ server/filepath/tmp-*
 !/crone/package-lock.json
 /src/clonesrc
 /SinglePayment
+/README.md
+/VISUAL_FLOW_GUIDE.md

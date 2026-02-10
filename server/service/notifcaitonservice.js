@@ -3,7 +3,7 @@ const admin = require("../utils/utlis/firebase");
 class NotificationService {
   // single device
   static async sendNotification(title, body, deviceToken,image) {
-      console.log("📤 Firebase send called");
+
   console.log({ title, body, deviceToken });
     const message = {
       notification: { title, body,image },
