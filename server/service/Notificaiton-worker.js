@@ -6,7 +6,7 @@ const connection = new IORedis({
   maxRetriesPerRequest: null,
 });
 
-// create worker
+// worker creating 
 const worker = new Worker(
   "Notification-Queue",
   async (job) => {

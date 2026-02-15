@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { FetchNotification } from "../../../services/ThunkApi/NotificationThunk/notificaitonthunk";
 import {
@@ -7,19 +7,92 @@ import {
   MarkReadOperations,
 } from "../../../services/Notificaiton/Notificaitonservice";
 
+
+const NotificationItem = React.memo(({ 
+  notification, 
+  onMarkRead, 
+  onDelete, 
+  getTimeAgo, 
+  getNotificationIcon 
+}) => {
+
+  const handleMarkRead = useCallback(() => {
+    onMarkRead(notification._id);
+  }, [notification._id, onMarkRead]);
+
+  const handleDelete = useCallback(() => {
+    onDelete(notification._id);
+  }, [notification._id, onDelete]);
+
+  return (
+    <div
+      key={notification._id}
+      className="bg-white rounded-lg px-6 py-5 border border-gray-200 hover:shadow-md transition-all cursor-pointer"
+    >
+      <div className="flex items-start gap-4">
+        {/* Icon */}
+        <div className="flex-shrink-0">
+          <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center text-xl">
+            {getNotificationIcon(notification.type)}
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-3 mb-1">
+            <h3 className="text-base font-bold text-gray-900 flex-1">
+              {notification.title}
+            </h3>
+            {!notification.read && (
+              <span className="flex-shrink-0 w-2 h-2 bg-purple-600 rounded-full mt-2"></span>
+            )}
+          </div>
+
+          <p className="text-sm text-gray-600 leading-relaxed mb-2">
+            {notification.body}
+          </p>
+
+          <p className="text-xs text-gray-400 mb-3">
+            {getTimeAgo(notification.createdAt)}
+          </p>
+
+          <div className="flex items-center gap-4">
+            {!notification.read && (
+              <button
+                onClick={handleMarkRead}
+                className="text-sm font-semibold text-purple-600 hover:text-purple-700 transition-colors cursor-pointer"
+              >
+                Mark as read
+              </button>
+            )}
+            <button
+              onClick={handleDelete}
+              className="text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors cursor-pointer"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+});
+
 const UserNotification = () => {
   const dispatch = useDispatch();
   const { loading, error, UserNotification } = useSelector(
-    (state) => state.usernotification,
+    (state) => state.usernotification
   );
   const [filter, setFilter] = useState("all");
+  
   const UserNotificationData = UserNotification?.data;
+
   useEffect(() => {
     dispatch(FetchNotification());
   }, [dispatch]);
 
-  // Format time ago
-  const getTimeAgo = (dateString) => {
+
+  const getTimeAgo = useCallback((dateString) => {
     const date = new Date(dateString);
     const now = new Date();
     const seconds = Math.floor((now - date) / 1000);
@@ -33,10 +106,9 @@ const UserNotification = () => {
       day: "numeric",
       year: "numeric",
     });
-  };
+  }, []);
 
-  // Get notification icon
-  const getNotificationIcon = (type) => {
+  const getNotificationIcon = useCallback((type) => {
     const icons = {
       COURSE: "🎓",
       ASSIGNMENT: "📝",
@@ -45,48 +117,63 @@ const UserNotification = () => {
       SYSTEM: "⚙️",
     };
     return icons[type] || "🔔";
-  };
+  }, []);
 
-  // Filter notifications
-  const filteredNotifications = UserNotificationData?.filter((notif) => {
-    if (filter === "all") return true;
-    if (filter === "unread") return !notif.read;
-    if (filter === "read") return notif.read;
-    return true;
-  });
-  console.log("the user notificaiotn would be ", UserNotification);
-  const unreadCount = UserNotificationData?.filter((n) => !n.read)?.length || 0;
-const handleMarkAll = useCallback(async () => {
-  try {
-    // Get all unread notification IDs
-    const unreadIds = UserNotificationData
-      ?.filter((notif) => !notif.read)
-      ?.map((notif) => notif._id);
+  ///
+  const filteredNotifications = useMemo(() => {
+    if (!UserNotificationData) return [];
     
-    if (unreadIds && unreadIds.length > 0) {
-      // Single API call with all IDs
-      await MarkAllReadOperations(unreadIds);
-      
-      // Refresh notifications
-      dispatch(FetchNotification());
-    }
-  } catch (error) {
-    console.error("Failed to mark all notifications as read:", error);
-  }
-}, [UserNotificationData, dispatch]);
-  const handleSubmit = useCallback(
-    async (notificationId, deletion) => {
-      try {
-        deletion
-          ? await MarkdeletionOperations(notificationId)
-          : await MarkReadOperations(notificationId);
+    return UserNotificationData.filter((notif) => {
+      if (filter === "all") return true;
+      if (filter === "unread") return !notif.read;
+      if (filter === "read") return notif.read;
+      return true;
+    });
+  }, [UserNotificationData, filter]);//
 
+  //
+  const unreadCount = useMemo(() => {
+    return UserNotificationData?.filter((n) => !n.read)?.length || 0;
+  }, [UserNotificationData]);
+
+  //
+  const handleMarkAll = useCallback(async () => {
+    try {
+      const unreadIds = UserNotificationData?.filter(
+        (notif) => !notif.read
+      )?.map((notif) => notif._id);
+
+      if (unreadIds && unreadIds.length > 0) {
+        await MarkAllReadOperations(unreadIds);
+        dispatch(FetchNotification());
+      }
+    } catch (error) {
+      console.error("Failed to mark all notifications as read:", error);
+    }
+  }, [UserNotificationData, dispatch]);
+
+  const handleMarkRead = useCallback(
+    async (notificationId) => {
+      try {
+        await MarkReadOperations(notificationId);
         dispatch(FetchNotification());
       } catch (error) {
         console.error("Failed to mark notification as read:", error);
       }
     },
-    [dispatch],
+    [dispatch]
+  );
+
+  const handleDelete = useCallback(
+    async (notificationId) => {
+      try {
+        await MarkdeletionOperations(notificationId);
+        dispatch(FetchNotification());
+      } catch (error) {
+        console.error("Failed to delete notification:", error);
+      }
+    },
+    [dispatch]
   );
 
   return (
@@ -107,7 +194,7 @@ const handleMarkAll = useCallback(async () => {
             </div>
             {unreadCount > 0 && (
               <button
-                onClick={() => handleMarkAll({})}
+                onClick={handleMarkAll}
                 className="text-sm font-semibold text-purple-600 hover:text-purple-700 transition-colors cursor-pointer"
               >
                 Mark all as read
@@ -192,68 +279,18 @@ const handleMarkAll = useCallback(async () => {
         ) : (
           <div className="space-y-3">
             {filteredNotifications.map((notification) => (
-              <div
+              <NotificationItem
                 key={notification._id}
-                className="bg-white rounded-lg px-6 py-5 border border-gray-200 hover:shadow-md transition-all cursor-pointer"
-              >
-                <div className="flex items-start gap-4">
-                  {/* Icon */}
-                  <div className="flex-shrink-0">
-                    <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center text-xl">
-                      {getNotificationIcon(notification.type)}
-                    </div>
-                  </div>
-
-                  {/* Content - Takes full width */}
-                  <div className="flex-1 min-w-0">
-                    {/* Title and Unread Indicator */}
-                    <div className="flex items-start justify-between gap-3 mb-1">
-                      <h3 className="text-base font-bold text-gray-900 flex-1">
-                        {notification.title}
-                      </h3>
-                      {!notification.read && (
-                        <span className="flex-shrink-0 w-2 h-2 bg-purple-600 rounded-full mt-2"></span>
-                      )}
-                    </div>
-
-                    {/* Body */}
-                    <p className="text-sm text-gray-600 leading-relaxed mb-2">
-                      {notification.body}
-                    </p>
-
-                    {/* Timestamp */}
-                    <p className="text-xs text-gray-400 mb-3">
-                      {getTimeAgo(notification.createdAt)}
-                    </p>
-
-                    {/* Action Buttons */}
-                    <div className="flex items-center gap-4">
-                      {!notification.read && (
-                        // In your component
-
-                        // Update the button onClick
-                        <button
-                          onClick={() => handleSubmit(notification._id, false)}
-                          className="text-sm font-semibold text-purple-600 hover:text-purple-700 transition-colors cursor-pointer"
-                        >
-                          Mark as read
-                        </button>
-                      )}
-                      <button
-                        onClick={() => handleSubmit(notification._id, true)}
-                        className="text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors cursor-pointer"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                notification={notification}
+                onMarkRead={handleMarkRead}
+                onDelete={handleDelete}
+                getTimeAgo={getTimeAgo}
+                getNotificationIcon={getNotificationIcon}
+              />
             ))}
           </div>
         )}
 
-        {/* Load More Button - If many notifications */}
         {filteredNotifications && filteredNotifications.length >= 20 && (
           <div className="flex justify-center mt-6 mb-8">
             <button className="px-6 py-2 text-sm font-medium text-purple-600 border border-purple-600 rounded-lg hover:bg-purple-50 transition-colors cursor-pointer">

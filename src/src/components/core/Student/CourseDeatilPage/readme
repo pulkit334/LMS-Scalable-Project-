@@ -1,0 +1,27 @@
+// In cartSlice.js
+
+export const addToCartAndSync = (course, userId) => {
+  return async (dispatch, getState) => {
+    
+    // ========== STEP 1: Add to Redux ==========
+    dispatch(addToCart(course));
+    // This triggers your existing reducer:
+    // - Adds course to state.cart array
+    // - Updates totalItems and total
+    // - Saves to localStorage
+    
+    
+    // ========== STEP 2: Get Updated Cart State ==========
+    const { cart, total, totalItems } = getState().cart;
+    // After adding, get the fresh data:
+    // cart = [{course1}, {course2}, ...]
+    // total = 1999
+    // totalItems = 2 
+    
+    
+    // ========== STEP 3: Sync to Database ==========
+    dispatch(syncCartToDB(userId, cart, total, totalItems));
+    // Calls another thunk that makes API call
+    
+  };
+};

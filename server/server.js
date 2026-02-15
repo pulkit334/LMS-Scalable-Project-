@@ -11,11 +11,14 @@ import fileUpload from "express-fileupload";
 // import requestIp from "request-ip"
 // ---- LOCAL IMPORTS ----
 import "./schedular/cronejob.js";
+import "./schedular/cart-schedular-service.js"
 import authRoutes from "./routes/authroutes.js";
 import connect from "./config/db.js";
 import "./config/passport.js";
 import adminRoutes from "./routes/AdminRoutes.js";
 import firebaseRoute from "./routes/NotificationRoute.js"
+import { checkAbandonedCarts } from "./schedular/cart-schedular-service.js";
+
 // ---- APP INIT ----
 const app = express();
 
@@ -56,6 +59,11 @@ app.use(morgan("dev"));
 app.use("/api/v1", authRoutes);
 app.use("/api/v2",adminRoutes);
 app.use("/api/v1", firebaseRoute);
+app.get('/test-cron', async (req, res) => {
+  console.log(' Testing cart reminder...');
+  await checkAbandonedCarts();
+  res.send('Check server console for logs');
+});
 // ---------- ERROR HANDLER ----------
 app.use((err, req, res, next) => {
   console.error(err.stack);

@@ -107,6 +107,7 @@ const {
   sendPaymentSuccessEmail,
   Paymenthistory,
 } = require("../controllers/payment");
+const { saveCartItems, getcartitems } = require("../controllers/cart");
 
 // ================= PUBLIC AUTH ROUTES =================
 router.post("/auth/send-otp", sendOtp);
@@ -258,4 +259,8 @@ router.post("/aboutus/submit-form", submitContactForm);
 //============Rating Api's==================//
 router.post("/courses/:courseId/ratings", auth, isstudent, createRating);
 
+//cart routes
+router.post("/user/add-to-cart", auth, isstudent, saveCartItems);
+router.get("/user/get-cart", auth, isstudent, getcartitems);
+router.get("/test-notification",auth,isstudent)
 module.exports = router;

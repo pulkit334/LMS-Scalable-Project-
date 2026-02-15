@@ -1,6 +1,8 @@
-
+/* eslint-disable no-unused-vars */
 import { createSlice } from "@reduxjs/toolkit";
+import axios from "axios";
 import toast from "react-hot-toast";
+import { api } from "../services/apiconnnector";
 
 const initialState = {
   cart: localStorage.getItem("cart")
@@ -15,7 +17,9 @@ const initialState = {
     ? JSON.parse(localStorage.getItem("totalItems"))
     : 0,
 };
-
+const CartAPi = {
+  addToCart: "/user/add-to-cart",
+};
 const cartSlice = createSlice({
   name: "cart",
   initialState,
@@ -23,9 +27,7 @@ const cartSlice = createSlice({
     addToCart(state, action) {
       const course = action.payload;
 
-      const index = state.cart.findIndex(
-        (item) => item._id === course._id
-      );
+      const index = state.cart.findIndex((item) => item._id === course._id);
 
       if (index >= 0) {
         toast.error("Course already in cart");
@@ -46,13 +48,11 @@ const cartSlice = createSlice({
     removeFromCart(state, action) {
       const courseId = action.payload;
 
-      const index = state.cart.findIndex(
-        (item) => item._id === courseId
-      );
+      const index = state.cart.findIndex((item) => item._id === courseId);
 
       if (index >= 0) {
         state.totalItems -= 1;
-       state.total -= state.cart[index].price 
+        state.total -= state.cart[index].price;
         state.cart.splice(index, 1);
 
         localStorage.setItem("cart", JSON.stringify(state.cart));
@@ -75,3 +75,22 @@ const cartSlice = createSlice({
 
 export const { addToCart, removeFromCart, resetCart } = cartSlice.actions;
 export default cartSlice.reducer;
+
+export const syncCartToDB = (userId, cart, total, totalItems) => {
+  return async () => {
+    const response = await api.post(CartAPi.addToCart, {
+      userId,
+      items: cart,
+      totalPrice: total,
+      itemCount: totalItems,
+    });
+  };
+};
+
+export const addToCartAndSync = (course, userId) => {
+  return async (dispatch, getState) => {
+    dispatch(addToCart(course));
+    const { cart, total, totalItems } = getState().cart;
+    dispatch(syncCartToDB(userId, cart, total, totalItems));
+  };
+};

@@ -93,7 +93,7 @@ function App() {
         const fcmToken = await requestFCMToken();
         if (!fcmToken) return;
 
-        console.log("🔥 FCM Token:", fcmToken);
+   
 
         await NotificationAuth(fcmToken);
       } catch (err) {

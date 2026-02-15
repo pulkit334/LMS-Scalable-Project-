@@ -19,7 +19,7 @@ const NotificaitonSchema = new mongoose.Schema({
 
  type: {
     type: String,
-    enum: ["PAYMENT", "COURSE", "SYSTEM"],
+    enum: ["PAYMENT", "COURSE", "SYSTEM","cart_reminder"],
     default: "SYSTEM",
   },
   read: {

@@ -10,7 +10,7 @@ const deletion = async () => {
   try {
     const thresholdTime = new Date(Date.now() - TWO_HOURS);
 
-    // 1️ Fetch only required fields (lean = faster, less memory)
+   
     const users = await User.find(
       {
         isdeleted: true,
@@ -30,24 +30,24 @@ const deletion = async () => {
     const userIds = users.map((u) => u._id);
     const profileIds = users.map((u) => u.additionalDetails).filter(Boolean);
 
-    // 3️Remove users from enrolled courses (single bulk op)
+    // 3️Remove users from enrolled courses 
     await course.updateMany(
       { studentEnrolled: { $in: userIds } },
       { $pull: { studentEnrolled: { $in: userIds } } }
     );
-    // 4️ Parallel deletions (FAST)
+  
     await Promise.all([
       Profile.deleteMany({ _id: { $in: profileIds } }),
       User.deleteMany({ _id: { $in: userIds } }),
     ]);
 
-    // 5️ Fire-and-forget emails (non-blocking)
+
     users.forEach((user) => {
       mailsender(
         user.email,
-        "Account Deleted - StudyNotion",
+        "Account Deleted - Notion-X",
         "Your account has been permanently deleted."
-      ).catch(() => {}); // avoid cron crash
+      ).catch(() => {}); // avoiding the cron Crash 
     });
 
     console.log(` Deleted ${users.length} users successfully`);

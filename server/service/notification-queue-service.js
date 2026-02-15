@@ -7,9 +7,11 @@ const notificationQueue = new Queue("notification-queue", { connection });
 const Thershold_Value = 100;
 
 async function sendNotifications(title, body, deviceTokens, image = null) {
+  console.log("the queue notification send data would be ",title,body,deviceTokens,image)
   if (deviceTokens.length < Thershold_Value) {
     //direct send to the Users
-    const response = NotificationService.sendMultipleNotification(
+    console.log("the device token would be ",deviceTokens)
+    const response =await NotificationService.sendMultipleNotification(
       title,
       body,
       deviceTokens,
@@ -18,8 +20,9 @@ async function sendNotifications(title, body, deviceTokens, image = null) {
 
     return {
       method: "direct",
-      successCount: (await response).successCount,
-      failureCOunt: (await response).failureCount,
+      successCount: response.successCount,
+      failureCount: response.failureCount,
+
     };
   }
 

@@ -5,13 +5,16 @@ import Footer from "../components/core/Homepage/footer";
 import getCatalogData from "../services/pageComponentdata";
 import { Course, GetCategorires } from "../services/auth";
 import Course_Card from "../components/core/catalog/Course_Card";
-import CourseSlider from "../components/core/catalog/CourseSlider";
+import CourseSlider from "../components/core/catalog/CourseSlider"
+import CatalogSpinner from "../utils/catalogSpinner";
+
 
 const Catalog = () => {
   const { catalogName } = useParams();
 
   const [catalogPageData, setCatalogPageData] = useState(null);
   const [categoryID, setCategoryId] = useState("");
+  const [loading, setLoading] = useState(true); // 
 
   // Fetch all categories & match slug
   useEffect(() => {
@@ -33,16 +36,21 @@ const Catalog = () => {
 
     const fetchCatalogData = async () => {
       try {
+        setLoading(true); // 
         const res = await getCatalogData({ categoryId: categoryID });
         setCatalogPageData(res);
       } catch (error) {
         console.log("Catalog API error:", error);
+      } finally {
+        setLoading(false); // 
       }
     };
 
     fetchCatalogData();
   }, [categoryID]);
+
   console.log("The Data in catalog", catalogPageData?.mostSellingCourses);
+
   return (
     <div className="bg-[#000814] text-[#F1F2FF] min-h-screen">
       {/* ================= HERO ================= */}
@@ -79,10 +87,17 @@ const Catalog = () => {
           </button>
         </div>
 
-        {/*  FIXED SLIDER CONTAINER */}
-        <div className="relative  overflow-hidden">
-          <CourseSlider Courses={catalogPageData?.selectedCategory?.course} />
-        </div>
+         {loading ? (
+          <div className="flex justify-center items-center py-20">
+            <CatalogSpinner/>
+          </div>
+        ) : catalogPageData?.selectedCategory?.course?.length > 0 ? (
+          <div className="relative overflow-hidden">
+            <CourseSlider Courses={catalogPageData?.selectedCategory?.course} />
+          </div>
+        ) : (
+          <p className="text-center text-[#AFB2BF] py-10">No courses found</p>
+        )}
       </section>
 
       {/* ================= TOP COURSES ================= */}
@@ -94,9 +109,18 @@ const Catalog = () => {
           </span>
         </h2>
 
-        <div className="relative overflow-hidden">
-          <CourseSlider Courses={catalogPageData?.mostSellingCourses} />
-        </div>
+    
+        {loading ? (
+          <div className="flex justify-center items-center py-20">
+            <CatalogSpinner />
+          </div>
+        ) : catalogPageData?.mostSellingCourses?.length > 0 ? (
+          <div className="relative overflow-hidden">
+            <CourseSlider Courses={catalogPageData?.mostSellingCourses} />
+          </div>
+        ) : (
+          <p className="text-center text-[#AFB2BF] py-10">No courses found</p>
+        )}
       </section>
 
       {/* ================= FREQUENTLY BOUGHT ================= */}
@@ -105,17 +129,26 @@ const Catalog = () => {
           Frequently bought together
         </h2>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-          {catalogPageData?.mostSellingCourses
-            ?.slice(0, 4)
-            .map((course, index) => (
-              <Course_Card
-                key={course._id || index}
-                course={course}
-                heihgt="h-[220px]"
-              />
-            ))}
-        </div>
+ 
+        {loading ? (
+          <div className="flex justify-center items-center py-20">
+            <CatalogSpinner />
+          </div>
+        ) : catalogPageData?.mostSellingCourses?.length > 0 ? (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+            {catalogPageData?.mostSellingCourses
+              ?.slice(0, 4)
+              .map((course, index) => (
+                <Course_Card
+                  key={course._id || index}
+                  course={course}
+                  heihgt="h-[220px]"
+                />
+              ))}
+          </div>
+        ) : (
+          <p className="text-center text-[#AFB2BF] py-10">No courses found</p>
+        )}
       </section>
 
       <Footer />

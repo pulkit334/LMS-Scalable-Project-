@@ -1,4 +1,3 @@
-
 const { instance } = require("../config/razerpay");
 const Course = require("../models/course");
 const User = require("../models/User");
@@ -18,7 +17,7 @@ exports.CapturePayment = async (req, res) => {
   try {
     const { courses } = req.body; // expect array of courseIds
     const userId = req.user.id;
-    
+
     // Validation
     if (!courses || courses.length === 0) {
       return res.status(400).json({
@@ -35,7 +34,7 @@ exports.CapturePayment = async (req, res) => {
     // Loop through courses
     for (const courseId of courses) {
       const course = await Course.findById(courseId);
-      
+
       if (!course) {
         return res.status(404).json({
           success: false,
@@ -52,17 +51,17 @@ exports.CapturePayment = async (req, res) => {
       }
 
       totalAmount += course.price;
-      
+
       //  Collect course thumbnails and details
       if (course.thumbnail) {
         courseThumbnails.push(course.thumbnail);
       }
-      
+
       courseDetails.push({
         id: course._id,
         name: course.courseName,
         thumbnail: course.thumbnail,
-        price: course.price
+        price: course.price,
       });
     }
 
@@ -78,13 +77,13 @@ exports.CapturePayment = async (req, res) => {
         courses: courses.join(","),
         userId,
         //  Store first course thumbnail (Razorpay notes have size limits)
-        thumbnail: courseThumbnails[0] || ""
+        thumbnail: courseThumbnails[0] || "",
       },
     };
 
     const paymentResponse = await instance.orders.create(options);
     console.log(" Payment Response:", paymentResponse);
-    
+
     return res.status(200).json({
       success: true,
       orderId: paymentResponse.id,
@@ -162,9 +161,9 @@ exports.VerifyPayment = async (req, res) => {
     }));
 
     await Payment.insertMany(ResponseData);
-    
+
     await enrolledStudent(courses, userId, razorpay_order_id);
-    
+
     // Check reminder completion
     const paymentDoc = await Payment.findOne({
       user: userId,
@@ -181,36 +180,38 @@ exports.VerifyPayment = async (req, res) => {
     }
 
     const user = await User.findById(userId);
-    
-    //  Prepare notification details
-    const courseNames = CourseDoc.map(c => c.courseName).join(", ");
-    const courseThumbnail = CourseDoc[0]?.thumbnail || null; //  Use first course thumbnail
-    
-    const notificationTitle = "Course Purchased 🎉";
-    const notificationBody = courses.length > 1
-      ? `You are successfully enrolled in ${courses.length} courses. Happy learning!`
-      : `You are successfully enrolled in ${courseNames}. Happy learning!`;
 
+    //  Prepare notification details
+    const courseNames = CourseDoc.map((c) => c.courseName).join(", ");
+    const courseThumbnail = CourseDoc[0]?.thumbnail || null; //  Use first course thumbnail
+
+    const notificationTitle = "Course Purchased 🎉";
+    const notificationBody =
+      courses.length > 1
+        ? `You are successfully enrolled in ${courses.length} courses. Happy learning!`
+        : `You are successfully enrolled in ${courseNames}. Happy learning!`;
 
     //  Send notification with course thumbnail
     if (user?.fcmToken) {
       try {
-        const notificationResult = await NotificationService.sendMultipleNotification(
-          notificationTitle,
-          notificationBody,
-          user.fcmToken,
-          courseThumbnail //  Pass course thumbnail, not user thumbnail
-        );
+        const notificationResult =
+          await NotificationService.sendMultipleNotification(
+            notificationTitle,
+            notificationBody,
+            user.fcmToken,
+            courseThumbnail, //  Pass course thumbnail, not user thumbnail
+          );
 
         // Handle invalid token
         if (notificationResult?.shouldRemoveToken) {
           await User.findByIdAndUpdate(userId, { $unset: { fcmToken: 1 } });
-        } 
+        }
       } catch (notificationError) {
         // Remove invalid token
         if (
-          notificationError.code === 'messaging/registration-token-not-registered' ||
-          notificationError.code === 'messaging/invalid-registration-token'
+          notificationError.code ===
+            "messaging/registration-token-not-registered" ||
+          notificationError.code === "messaging/invalid-registration-token"
         ) {
           await User.findByIdAndUpdate(userId, { $unset: { fcmToken: 1 } });
         }
@@ -222,11 +223,11 @@ exports.VerifyPayment = async (req, res) => {
       title: notificationTitle,
       body: notificationBody,
       type: "COURSE",
-      image: courseThumbnail, // 
+      image: courseThumbnail, //
       metadata: {
         courses: courses,
         orderId: razorpay_order_id,
-        paymentId: razorpay_payment_id
+        paymentId: razorpay_payment_id,
       },
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     });
@@ -235,12 +236,12 @@ exports.VerifyPayment = async (req, res) => {
       success: true,
       message: "Payment verified & user enrolled",
       data: {
-        courses: CourseDoc.map(c => ({
+        courses: CourseDoc.map((c) => ({
           id: c._id,
           name: c.courseName,
-          thumbnail: c.thumbnail
-        }))
-      }
+          thumbnail: c.thumbnail,
+        })),
+      },
     });
   } catch (err) {
     return res.status(500).json({
@@ -264,13 +265,13 @@ const enrolledStudent = async (courses, userId, razorpay_order_id) => {
     for (const courseId of courses) {
       const enrolledCourse = await Course.findByIdAndUpdate(
         courseId,
-        { 
-          $addToSet: { 
+        {
+          $addToSet: {
             studentEnrolled: userId,
-            OrderId: razorpay_order_id 
-          } 
+            OrderId: razorpay_order_id,
+          },
         },
-        { new: true, session }
+        { new: true, session },
       );
 
       if (!enrolledCourse) {
@@ -280,7 +281,7 @@ const enrolledStudent = async (courses, userId, razorpay_order_id) => {
       const enrolledUser = await User.findByIdAndUpdate(
         userId,
         { $addToSet: { courses: courseId } },
-        { new: true, session }
+        { new: true, session },
       );
 
       if (!enrolledUser) {
@@ -300,13 +301,15 @@ const enrolledStudent = async (courses, userId, razorpay_order_id) => {
     session.endSession();
 
     // SEND EMAILS AFTER COMMIT
-    for (const data of emailQueue) {
-      await mailsender(
-        data.email,
-        `Successfully enrolled in ${data.courseName}`,
-        courseEnrollmentEmail(data.courseName, data.firstName)
-      );
-    }
+    const emailResult = await Promise.allSettled(
+      emailQueue.map((data) =>
+        mailsender(
+          data.email,
+          `Successfully enrolled in ${data.courseName}`,
+          courseEnrollmentEmail(data.courseName, data.firstName),
+        ),
+      ),
+    );
 
     return true;
   } catch (error) {
@@ -321,14 +324,14 @@ const enrolledStudent = async (courses, userId, razorpay_order_id) => {
 exports.sendPaymentSuccessEmail = async (req, res) => {
   const { orderId, paymentId, amount } = req.body;
   const userId = req.user.id;
-  
+
   if (!orderId || !paymentId || !amount || !userId) {
     return res.status(400).json({
       success: false,
       message: "Please provide All the Fields",
     });
   }
-  
+
   try {
     const enrolledStudent = await User.findById(userId);
     await mailsender(
@@ -338,8 +341,8 @@ exports.sendPaymentSuccessEmail = async (req, res) => {
         enrolledStudent.firstName,
         amount / 100,
         orderId,
-        paymentId
-      )
+        paymentId,
+      ),
     );
 
     return res.status(200).json({
@@ -361,17 +364,17 @@ exports.Paymenthistory = async (req, res) => {
     const history = await Payment.find({ user: userid })
       .populate("course", "courseName thumbnail price")
       .lean();
-      
+
     if (!history || history.length === 0) {
       return res.status(200).json({
         success: true,
         message: "No Course Found",
-        data: []
+        data: [],
       });
     }
-    
+
     return res.status(200).json({
-      success: true, 
+      success: true,
       data: history,
     });
   } catch (error) {
