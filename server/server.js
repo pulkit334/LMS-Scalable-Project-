@@ -18,6 +18,7 @@ import "./config/passport.js";
 import adminRoutes from "./routes/AdminRoutes.js";
 import firebaseRoute from "./routes/NotificationRoute.js"
 import { checkAbandonedCarts } from "./schedular/cart-schedular-service.js";
+import client from "./Reddis/client.js";
 
 // ---- APP INIT ----
 const app = express();
@@ -64,7 +65,14 @@ app.get('/test-cron', async (req, res) => {
   await checkAbandonedCarts();
   res.send('Check server console for logs');
 });
-// ---------- ERROR HANDLER ----------
+app.get("/redis-test", async (req, res) => {
+  await client.set("testKey", "HelloRedis");
+  const value = await client.get("testKey");
+  res.send(value);
+});
+
+// ---------- ERROR HANDLER ------
+// ----
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(err.status || 500).json({
