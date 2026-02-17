@@ -1,5 +1,4 @@
 // models/Cart.js
-const { boolean } = require("joi");
 const mongoose = require("mongoose");
 
 const CartSchema = new mongoose.Schema({
