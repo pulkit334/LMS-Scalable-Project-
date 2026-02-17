@@ -34,7 +34,7 @@
     "framer-motion": "^12.23.25",
     "helmet": "^8.1.0",
     "hpp": "^0.2.3",
-    "ioredis": "^5.9.2",
+    "ioredis": "^5.9.3",
     "joi": "^18.0.2",
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^0.344.0",
