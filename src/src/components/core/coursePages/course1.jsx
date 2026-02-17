@@ -33,7 +33,7 @@ const CourseInformation = () => {
     },
   });
   const { course, isEdit, resetCourse, courseId } = useSelector(
-    (state) => state.course
+    (state) => state.course,
   );
 
   useEffect(() => {
@@ -51,17 +51,15 @@ const CourseInformation = () => {
         file: course.thumbnail,
         // category is an OBJECT in backend
         category: course.category?._id ?? "",
-
         tag: course.tag ?? "",
         whatyouwilllearn: course.whatyouwilllearn ?? "",
-
         //  backend key is "requirement"
         requirements: course.requirement ?? "",
-
-        // benefits DOES NOT exist separately in backend
-        // it is embedded inside whatyouwilllearn text
         benefits: "",
       });
+      if(course.thumbnail){
+        setPreview(course?.thumbnail)
+      }
     }
   }, [course, isEdit, reset]);
   let toastId;
@@ -97,10 +95,10 @@ const CourseInformation = () => {
       }
       console.log(
         "The responsdczxcxzxczczzxzczxczxczxczxxzxzczxxzczxxcxe is",
-        response
+        response,
       );
 
-      if (response?.courseId) {
+      if (response?.courseId || response?.course?._id) {
         // ONLY CHANGE (Redux instead of prop)
         dispatch(setCourseId(response.courseId));
         dispatch(setStep(2));
@@ -249,11 +247,13 @@ const CourseInformation = () => {
             </label>
 
             <label
-              className={`flex flex-col items-center justify-center border border-dashed border-slate-600 rounded-lg cursor-pointer ${
+              className={`flex flex-col items-center justify-center border border-dashed border-slate-600 round@!ed-lg cursor-pointer ${
                 preview ? "p-2" : "p-20"
               }`}
             >
-              {!preview && (
+              {preview ? (
+                <img src={preview || course?.thumbnail} />
+              ) : (
                 <>
                   <Upload className="text-yellow-400 mb-2" />
                   <p className="text-sm text-slate-400">
@@ -262,25 +262,20 @@ const CourseInformation = () => {
                   </p>
                 </>
               )}
-
               <input
                 type="file"
                 accept="image/*"
                 hidden
                 {...register("thumbnail", {
-                  required: true,
+                  required: !isEdit,
                   onChange: (e) => {
                     const file = e.target.files[0];
                     if (file) {
                       setPreview(URL.createObjectURL(file));
-                    } else {
-                      setPreview(URL.createObjectURL(file));
-                    }
+                    } 
                   },
                 })}
               />
-
-              <img src={preview || course?.thumbnail} />
             </label>
           </div>
 

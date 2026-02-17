@@ -207,11 +207,8 @@ export const deleteSection = async (sectionId) => {
     Course_Section.deleteSection.replace(":sectionId", sectionId),
   );
 };
-
-export const createSubsection = async (formData) => {
-  console.log("The Creation of Subsetion would be", formData);
-  const response = await api.post(Subsection.CreateSubsection, formData);
-  console.log("The Creation of Subsetion would be", response);
+export const createSubsection = async (formData, config = {}) => {
+  const response = await api.post(Subsection.CreateSubsection, formData, config);
   return response;
 };
 
@@ -232,14 +229,13 @@ export const CoursePublication = async (courseId, isPublic) => {
   return response.data;
 };
 
-export const UpdateSubsection = async (subSectionId, formData) => {
-  console.log("Sending:", subSectionId, formData);
-
+export const UpdateSubsection = async (subSectionId, formData, config = {}) => {
   const response = await api.patch(
     Subsection.UpdateSubsection.replace(":subSectionId", subSectionId),
     formData,
+    config,
   );
-  console.log("Hi the data is ", response);
+
   return response;
 };
 
@@ -294,6 +290,6 @@ export const RefreshVerification = async (data) => {
 };
 export const CategoryResponse = async (data) => {
   const response = await api.get(categories.GET_ALL);
-  console.log("the categouyr respons eis theese s",response)
+  console.log("the categouyr respons eis theese s", response);
   return response?.data;
 };

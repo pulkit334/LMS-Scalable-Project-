@@ -29,7 +29,7 @@ exports.createSubsection = async (req, res) => {
     // upload video to cloudinary
     const uploadDetails = await uploadImageToCloudinary(
       video,
-      process.env.FolderName
+      process.env.FolderName,
     );
 
     // create subsection
@@ -46,7 +46,7 @@ exports.createSubsection = async (req, res) => {
       {
         $push: { subsection: subsection._id },
       },
-      { new: true }
+      { new: true },
     ).populate("subsection");
 
     /* ================= COURSE DURATION UPDATE ================= */
@@ -92,7 +92,7 @@ exports.subsection = async (req, res) => {
     // MISTAKE #5: WRONG .select() SYNTAX (COMMAS)
     // FIX: USE SPACES ONLY
     const data = await SubSection.findById(subSectionId).select(
-      "tittle timeduration description vediourl"
+      "tittle timeduration description vediourl",
     );
 
     if (!data) {
@@ -117,6 +117,47 @@ exports.subsection = async (req, res) => {
 };
 
 //Subsection Update
+// Helper function - OUTSIDE the main function
+const deleteCloudinaryVideo = async (videoUrl) => {
+  if (!videoUrl) return;
+  
+  try {
+    const parts = videoUrl.split("/upload/")[1];
+    if (!parts) {
+      console.warn(" Invalid Cloudinary URL format:", videoUrl);
+      return;
+    }
+    
+    const pathSegments = parts.split("/");
+    const publicId = pathSegments
+      .slice(1)
+      .join("/")
+      .replace(/\.[^/.]+$/, "");
+    
+    if (!publicId) {
+      console.warn(" Could not extract public_id");
+      return;
+    }
+    
+    const result = await cloudinary.uploader.destroy(publicId, {
+      resource_type: "video",
+    });
+    
+    if (result.result === "ok") {
+      console.log(" Video deleted:", publicId);
+    } else {
+      console.warn(" Deletion result:", result);
+    }
+    
+  } catch (error) {
+    console.error(" Cloudinary deletion failed:", {
+      error: error.message,
+      url: videoUrl
+    });
+  }
+};
+
+// Main function
 exports.UpdateSubsection = async (req, res) => {
   try {
     const SubsectionId = req.params.subSectionId;
@@ -128,33 +169,56 @@ exports.UpdateSubsection = async (req, res) => {
         message: "Subsection Don't Exist",
       });
     }
+
     const { tittle, description } = req.body;
-    if (!tittle && !description) {
-      return res.status(403).json({
-        success: true,
-        message: "Kindly Enter something in the Feild",
+    let uploadDetails = null;
+
+    if (req.files && req.files.videoFile) {
+      const oldVideoUrl = subsection.videoUrl;
+      const vedio = req.files.videoFile;
+      
+      console.log("the vedio details would be", vedio);
+
+      uploadDetails = await uploadImageToCloudinary(
+        vedio,
+        process.env.FolderName,
+      );
+
+      // Update video URL and delete old video
+      if (uploadDetails) {
+        subsection.videoUrl = uploadDetails.secure_url;
+        await deleteCloudinaryVideo(oldVideoUrl);
+      }
+    }
+
+    if (!tittle && !description && !uploadDetails) {
+      return res.status(400).json({
+        success: false,
+        message: "Kindly Enter something in the Field",
       });
     }
 
-    subsection.tittle = tittle;
-    subsection.description = description;
+    if (tittle) subsection.tittle = tittle;
+    if (description) subsection.description = description;
+
     await subsection.save();
-    //
+
     const UpdatedData = await Section.findOne({
-      subsection : SubsectionId
+      subsection: SubsectionId,
     }).populate("subsection");
-    console.log("The updation data is ",UpdatedData)
-    return res.status(201).json({
+
+    console.log("The updation data is ", UpdatedData);
+
+    return res.status(200).json({
       success: true,
-      message: "Succesfully Updated The data",
-      UpdatedData,
+      message: "Successfully Updated The data",
+      updatedSection: UpdatedData,
     });
+    
   } catch (error) {
-    return res.status(400).json({
-      success: true,
+    return res.status(500).json({
+      success: false,
       message: error.message,
-    subsection
     });
   }
 };
-

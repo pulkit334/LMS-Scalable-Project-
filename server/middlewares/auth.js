@@ -2,37 +2,7 @@ const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const User = require("../models/User");
 
-//   try {
-//     //extract token
-//     const token = req.cookies.token;
 
-//     //if token is missing
-//     if (!token) {
-//       return res.status(401).json({
-//         success: false,
-//         message: "Access denied check auth",
-//       });
-//     }
-//     //vefiy the token
-//     try {
-//       const decode = jwt.verify(token, process.env.JWT_SECRET);
-//       console.log("DECODE RESULT:", decode);
-
-//       req.user = decode;
-//     } catch (err) {
-//       return res.status(401).json({
-//         success: false,
-//         message: "failed to Login auth",
-//       });
-//     }
-//     next();
-//   } catch (err) {
-//     return res.status(401).json({
-//       success: false,
-//       message: "Something Hell Happend in token",
-//     });
-//   }
-// };
 exports.auth = async (req, res, next) => {
   try {
 let token = null;

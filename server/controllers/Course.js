@@ -475,7 +475,7 @@ exports.deleteCourse = async (req, res) => {
       });
     }
 
-    // 7️ Delete all sections
+    // 7️ Delete all sections 
     await Section.deleteMany({
       _id: { $in: Course.courseContent },
     });
@@ -729,3 +729,17 @@ exports.markLectureComplete = async (req, res) => {
     });
   }
 };
+
+//Vedio Reupload Api
+exports.Updatevedio = async (req,res)=>{
+  try {
+    //Vedio Url Comes , Subsection Ko Bhi update Karna hoga use Course ke id-> Section-> Subsection ke ander 
+  
+  }
+  catch(err){
+    return res.status(500).json({
+      success : false,
+      message : "Internal Server Error"
+    })
+  }
+}

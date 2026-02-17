@@ -7,7 +7,7 @@ const connection = new IORedis({
 });
 
 // worker creating 
-const worker = new Worker(
+const worker = new likeWorker(
   "Notification-Queue",
   async (job) => {
     const response =
