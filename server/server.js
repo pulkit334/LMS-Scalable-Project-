@@ -11,14 +11,14 @@ import fileUpload from "express-fileupload";
 // import requestIp from "request-ip"
 // ---- LOCAL IMPORTS ----
 import "./schedular/cronejob.js";
-import "./schedular/cart-schedular-service.js"
+import "./schedular/cart-schedular-service.js";
 import authRoutes from "./routes/authroutes.js";
 import connect from "./config/db.js";
 import "./config/passport.js";
 import adminRoutes from "./routes/AdminRoutes.js";
-import firebaseRoute from "./routes/NotificationRoute.js"
+import firebaseRoute from "./routes/NotificationRoute.js";
+import WebHookRoute from "./routes/WebhookRoutes.js"
 import { checkAbandonedCarts } from "./schedular/cart-schedular-service.js";
-import client from "./Reddis/client.js";
 
 // ---- APP INIT ----
 const app = express();
@@ -58,21 +58,24 @@ app.use(morgan("dev"));
 
 // ---------- ROUTES ----------
 app.use("/api/v1", authRoutes);
-app.use("/api/v2",adminRoutes);
 app.use("/api/v1", firebaseRoute);
-app.get('/test-cron', async (req, res) => {
-  console.log(' Testing cart reminder...');
+app.use("/api/v2", adminRoutes);
+app.use("/api/v3",WebHookRoute);
+app.get("/test-cron", async (req, res) => {
+  console.log(" Testing cart reminder...");
   await checkAbandonedCarts();
-  res.send('Check server console for logs');
+  res.send("Che ck server console for logs");
 });
-app.get("/redis-test", async (req, res) => {
-  await client.set("testKey", "HelloRedis");
-  const value = await client.get("testKey");
-  res.send(value);
+app.get("/", async (req, res) => {
+  console.log(" Testing ngrok...");
+  res.send("Check server console for logs");
 });
 
-// ---------- ERROR HANDLER ------
-// ----
+
+// ---- WORKERS ----
+import "./service/questionGen-worker.js"
+import "./service/transcription-worker.js"
+// ---------- ERROR HANDLER ----------
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(err.status || 500).json({

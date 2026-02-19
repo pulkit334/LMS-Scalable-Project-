@@ -28,7 +28,6 @@ async function sendNotifications(title, body, deviceTokens, image = null) {
 
   // Value
 
-  console.log(" Adding to queue (>= 100 users)");
   //batches bane ge
   const batches = [];
   for (let i = 0; i < deviceTokens.length; i += 500) {
@@ -49,7 +48,6 @@ async function sendNotifications(title, body, deviceTokens, image = null) {
       ` Batch ${i + 1}/${batches.length} queued (${batches[i].length} tokens)`,
     );
   }
-  //then push through the produces then
   return {
     method: "queued",
     totalUsers: deviceTokens.length,

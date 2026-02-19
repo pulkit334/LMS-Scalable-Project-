@@ -37,6 +37,8 @@ exports.createSubsection = async (req, res) => {
       tittle,
       timeduration: timeDuration,
       description,
+      cloudinaryId: uploadDetails.public_id,
+      status: "UPLOADED",
       videoUrl: uploadDetails.secure_url,
     });
 
@@ -120,39 +122,38 @@ exports.subsection = async (req, res) => {
 // Helper function - OUTSIDE the main function
 const deleteCloudinaryVideo = async (videoUrl) => {
   if (!videoUrl) return;
-  
+
   try {
     const parts = videoUrl.split("/upload/")[1];
     if (!parts) {
       console.warn(" Invalid Cloudinary URL format:", videoUrl);
       return;
     }
-    
+
     const pathSegments = parts.split("/");
     const publicId = pathSegments
       .slice(1)
       .join("/")
       .replace(/\.[^/.]+$/, "");
-    
+
     if (!publicId) {
       console.warn(" Could not extract public_id");
       return;
     }
-    
+
     const result = await cloudinary.uploader.destroy(publicId, {
       resource_type: "video",
     });
-    
+
     if (result.result === "ok") {
       console.log(" Video deleted:", publicId);
     } else {
       console.warn(" Deletion result:", result);
     }
-    
   } catch (error) {
     console.error(" Cloudinary deletion failed:", {
       error: error.message,
-      url: videoUrl
+      url: videoUrl,
     });
   }
 };
@@ -176,7 +177,7 @@ exports.UpdateSubsection = async (req, res) => {
     if (req.files && req.files.videoFile) {
       const oldVideoUrl = subsection.videoUrl;
       const vedio = req.files.videoFile;
-      
+
       console.log("the vedio details would be", vedio);
 
       uploadDetails = await uploadImageToCloudinary(
@@ -214,7 +215,6 @@ exports.UpdateSubsection = async (req, res) => {
       message: "Successfully Updated The data",
       updatedSection: UpdatedData,
     });
-    
   } catch (error) {
     return res.status(500).json({
       success: false,
