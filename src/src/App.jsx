@@ -102,7 +102,7 @@ function App() {
     };
 
     setupFCM();
-  }, [token, user]);
+  }, [token, user]);Routes
 
   return (
     <div className="w-screen min-h-screen flex flex-col font-inter">

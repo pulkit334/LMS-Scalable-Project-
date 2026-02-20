@@ -17,9 +17,9 @@ import connect from "./config/db.js";
 import "./config/passport.js";
 import adminRoutes from "./routes/AdminRoutes.js";
 import firebaseRoute from "./routes/NotificationRoute.js";
-import WebHookRoute from "./routes/WebhookRoutes.js"
+import WebHookRoute from "./routes/WebhookRoutes.js";
 import { checkAbandonedCarts } from "./schedular/cart-schedular-service.js";
-
+import AIRoutes from "./routes/ai-routes.js";
 // ---- APP INIT ----
 const app = express();
 
@@ -60,7 +60,8 @@ app.use(morgan("dev"));
 app.use("/api/v1", authRoutes);
 app.use("/api/v1", firebaseRoute);
 app.use("/api/v2", adminRoutes);
-app.use("/api/v3",WebHookRoute);
+app.use("/api/v3", WebHookRoute);
+app.use("/api/v4", AIRoutes);
 app.get("/test-cron", async (req, res) => {
   console.log(" Testing cart reminder...");
   await checkAbandonedCarts();
@@ -71,10 +72,10 @@ app.get("/", async (req, res) => {
   res.send("Check server console for logs");
 });
 
-
 // ---- WORKERS ----
-import "./service/questionGen-worker.js"
-import "./service/transcription-worker.js"
+import "./service/questionGen-worker.js";
+import "./service/transcription-worker.js";
+import "./service/Notificaiton-worker.js";
 // ---------- ERROR HANDLER ----------
 app.use((err, req, res, next) => {
   console.error(err.stack);
@@ -91,6 +92,7 @@ app.listen(PORT, async () => {
   connect();
   console.log(` Server running on port ${PORT}`);
 });
+
 // import cluster from "cluster";
 // import os from "os";
 // import dotenv from "dotenv";

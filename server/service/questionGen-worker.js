@@ -46,12 +46,12 @@ Format:
     "options": ["A","B","C","D"],
     "answer": "...",
     "explanation": "...",
-    "difficulty": "EASY"
+    "difficulty": "EASY || MEDIUM || HARD"
   }
 ]
 
 Transcript:
-${transcript.rawText.slice(0, 3000)}
+${transcript.rawText }
 `;
 
       const response = await fetch(`http://localhost:11434/api/chat`, {

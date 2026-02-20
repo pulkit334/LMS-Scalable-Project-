@@ -11,6 +11,10 @@ export const adminApi = axios.create({
   baseURL: import.meta.env.VITE_ADMIN_BASE_URL,
   withCredentials: true,
 });
+export const AiApi = axios.create({
+  baseURL: import.meta.env.VITE_AI_BASE_URL,
+  withCredentials: true,
+});
 let isRefreshing = false;
 let refreshPromise = null;
 api.interceptors.response.use(
@@ -86,6 +90,12 @@ api.interceptors.request.use((config) => {
 
 //Admin APi
 adminApi.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
+//Ai Api
+AiApi.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;

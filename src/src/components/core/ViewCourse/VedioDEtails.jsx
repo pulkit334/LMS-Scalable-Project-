@@ -11,6 +11,7 @@ import {
 } from "../../../Slices/RatingSlice";
 import { Edit } from "lucide-react";
 import CourseReviewModal from "./CourseReviewModal";
+import AIQuizButton from "../Ai/AIQuizButton";
 const VedioDetails = () => {
   const [reviewModal, setReviewModal] = useState({
     open: false,
@@ -280,6 +281,7 @@ const VedioDetails = () => {
           </>
         )}
       </div>
+    <AIQuizButton subsectionId={subSectionId}/>
     </div>
   );
 };
