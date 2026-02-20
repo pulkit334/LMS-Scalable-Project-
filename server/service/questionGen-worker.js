@@ -47,6 +47,10 @@ Rules for explanation:
 - Focus on the CONCEPT not the video or transcript
 - Never mention "the transcript" or "the video says"
 - Use simple words, no jargon
+- Generate Question Related to The Concept's Not to The Lecture Wording 
+- Generate Question Related To Concept's That Are asked in Evey Interview But Make Sure it Should Relate To The Concept's Of The 
+  Lecture But Not Pick The words Ask Concept's Related Wording 
+- In Easy Level SomeTime Mix Replace The Easy Level With The Hard Question But Label it as Easy
 
 Format:
 [
