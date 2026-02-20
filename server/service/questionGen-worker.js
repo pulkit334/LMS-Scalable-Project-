@@ -33,11 +33,20 @@ const worker = new Worker(
       if (!transcript?.rawText) {
         throw new Error("Transcript not found or empty");
       }
-
-      const prompt = `
+const prompt = `
 You are an LMS question generator.
 Generate EXACTLY 5 multiple-choice questions from the transcript.
 Return ONLY a valid JSON array, no markdown, no extra text.
+
+Rules for explanation:
+- Explain like a teacher to a beginner student
+- Structure EVERY explanation exactly like this:
+  "[correct answer] is correct because [explain the concept simply].
+   [wrong option 1] is wrong because [specific reason].
+   [wrong option 2] is wrong because [specific reason]."
+- Focus on the CONCEPT not the video or transcript
+- Never mention "the transcript" or "the video says"
+- Use simple words, no jargon
 
 Format:
 [
@@ -51,7 +60,7 @@ Format:
 ]
 
 Transcript:
-${transcript.rawText }
+${transcript.rawText}
 `;
 
       const response = await fetch(`http://localhost:11434/api/chat`, {
