@@ -1,5 +1,5 @@
   import { useState, useEffect } from "react";
-  import { GetAiQuestions } from "../../../services/ai-services/service-ai.js";
+  import { GetAiQuestions,DownloadAiNotes } from "../../../services/ai-services/service-ai.js";
 
   const DIFF_STYLE = {
     EASY:   "bg-green-900 text-green-400 border border-green-800",

@@ -76,6 +76,7 @@ app.get("/", async (req, res) => {
 import "./service/questionGen-worker.js";
 import "./service/transcription-worker.js";
 import "./service/Notificaiton-worker.js";
+import "./service/Notes-Gn-Worker.js"
 // ---------- ERROR HANDLER ----------
 app.use((err, req, res, next) => {
   console.error(err.stack);

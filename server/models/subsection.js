@@ -31,6 +31,12 @@ const subSchema = new mongoose.Schema(
         "FAILED",
       ],
     },
+    notesStatus: {
+      type: String,
+      enum: ["pending", "done", "failed", null],
+      default: null,
+    },
+    notesUrl: { type: String, default: null },
     cloudinaryId: {
       type: String,
     },

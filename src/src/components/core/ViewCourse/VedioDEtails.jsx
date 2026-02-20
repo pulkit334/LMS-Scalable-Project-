@@ -12,6 +12,7 @@ import {
 import { Edit } from "lucide-react";
 import CourseReviewModal from "./CourseReviewModal";
 import AIQuizButton from "../Ai/AIQuizButton";
+import AINotesButton from "../Ai/AiNotesDownloader";
 const VedioDetails = () => {
   const [reviewModal, setReviewModal] = useState({
     open: false,
@@ -28,11 +29,11 @@ const VedioDetails = () => {
     dispatch(fetchHomeReviews());
   }, [location.pathname, dispatch]);
   const { reviewsByCourse, courseLoadingById } = useSelector(
-    (state) => state.ratingSlice
+    (state) => state.ratingSlice,
   );
 
   const { courseSectionData, completedLectures = [] } = useSelector(
-    (state) => state.viewCourse
+    (state) => state.viewCourse,
   );
   useEffect(() => {
     if (courseId) {
@@ -65,11 +66,11 @@ const VedioDetails = () => {
   }
 
   const sectionIndex = courseSectionData.findIndex(
-    (sec) => sec._id === sectionId
+    (sec) => sec._id === sectionId,
   );
 
   const subIndex = courseSectionData?.[sectionIndex]?.subsection.findIndex(
-    (sub) => sub._id === subSectionId
+    (sub) => sub._id === subSectionId,
   );
 
   let nextLecture = null;
@@ -102,7 +103,7 @@ const VedioDetails = () => {
       }
 
       navigate(
-        `/view-course/${courseId}/section/${nextSectionId}/sub-section/${nextLecture._id}`
+        `/view-course/${courseId}/section/${nextSectionId}/sub-section/${nextLecture._id}`,
       );
 
       setVideoActive(false);
@@ -265,23 +266,23 @@ const VedioDetails = () => {
                   >
                     <Edit size={18} />
                   </button>
-                
                 </div>
-              ))} 
-               {reviewModal.open && (
-                    <CourseReviewModal
-                      setReviewModal={(val) =>
-                        setReviewModal((prev) => ({ ...prev, open: val }))
-                      }
-                      isEdit={reviewModal.isEdit}
-                      defaultData={reviewModal.defaultData}
-                    />
-                  )}
+              ))}
+              {reviewModal.open && (
+                <CourseReviewModal
+                  setReviewModal={(val) =>
+                    setReviewModal((prev) => ({ ...prev, open: val }))
+                  }
+                  isEdit={reviewModal.isEdit}
+                  defaultData={reviewModal.defaultData}
+                />
+              )}
             </div>
           </>
         )}
       </div>
-    <AIQuizButton subsectionId={subSectionId}/>
+      <AIQuizButton subsectionId={subSectionId} />
+      <AINotesButton subsectionId={subSectionId} />
     </div>
   );
 };

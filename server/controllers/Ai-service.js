@@ -1,5 +1,6 @@
 const Question = require("../models/questionModal");
-
+const Subsection = require("../models/subsection");
+const Transcript = require("../models/transcription");
 exports.GetAiRoute = async (req, res) => {
   try {
     const { lectureId } = req.params;
@@ -30,5 +31,114 @@ exports.GetAiRoute = async (req, res) => {
       success: false,
       message: "Internal Server Error",
     });
+  }
+};
+
+
+exports.GetAiNotesRoute = async (req, res) => {
+  try {
+    const { subsectionId } = req.params;
+
+    const subsection = await Subsection.findById(subsectionId).lean();
+    if (!subsection) {
+      return res.status(404).json({ success: false, message: "Lecture not found" });
+    }
+
+    // Case 1: Notes ready
+    if (subsection.notesStatus === "done" && subsection.notesUrl) {
+      return res.status(200).json({
+        success:  true,
+        status:   "done",
+        notesUrl: subsection.notesUrl,
+      });
+    }
+
+    // Case 2: Still processing
+    if (subsection.notesStatus === "pending") {
+      return res.status(200).json({
+        success: true,
+        status:  "pending",
+        message: "Notes are being generated...",
+      });
+    }
+
+    // Case 3: Failed or not started
+    return res.status(200).json({
+      success: false,
+      status:  "failed",
+      message: "Notes not available for this lecture yet.",
+    });
+
+  } catch (err) {
+    return res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+
+
+
+exports.DownloadNotes = async (req, res) => {
+  try {
+    const { subsectionId } = req.params;
+
+    const transcript = await Transcript.findOne({ subsectionId }).lean();
+    if (!transcript?.rawText) {
+      return res.status(404).json({ success: false, message: "Transcript not found" });
+    }
+
+    // ✅ Same prompt as your worker
+    const prompt = `
+You are an LMS notes generator.
+Generate full detailed study notes from this transcript.
+Return ONLY valid JSON, no markdown, no extra text.
+
+Format:
+{
+  "title": "Lecture title here",
+  "overview": "2-3 sentence summary",
+  "sections": [
+    {
+      "heading": "Section name",
+      "content": "Detailed explanation",
+      "keyPoints": ["point 1", "point 2"],
+      "code": null
+    }
+  ],
+  "keyTakeaways": ["takeaway 1", "takeaway 2"]
+}
+
+Transcript:
+${transcript.rawText}
+`;
+
+    const response = await fetch("http://localhost:11434/api/chat", {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model:    process.env.OLLAMA_MODEL,
+        messages: [{ role: "user", content: prompt }],
+        stream:   false,
+        options:  { temperature: 0.2 },
+      }),
+    });
+
+    const data = await response.json();
+    
+    // ✅ Same parse as worker
+    const clean = data.message.content
+      .replace(/```json|```/g, "")
+      .trim();
+    
+    const notes = JSON.parse(clean);
+
+    const generatePDF = require("../utils/GeneratePdf");
+    const pdfBuffer   = await generatePDF(notes);
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename="lecture-notes.pdf"`);
+    return res.send(pdfBuffer);
+
+  } catch (err) {
+    console.error("Error:", err);
+    return res.status(500).json({ success: false, message: "Server Error" });
   }
 };
