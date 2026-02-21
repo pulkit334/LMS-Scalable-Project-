@@ -1,15 +1,16 @@
 const Question = require("../models/questionModal");
 const Subsection = require("../models/subsection");
 const Transcript = require("../models/transcription");
+const IORedis = require("ioredis");
+const redis = new IORedis();
 exports.GetAiRoute = async (req, res) => {
   try {
     const { lectureId } = req.params;
-    console.log("subsectionId:", lectureId); // 
+    console.log("subsectionId:", lectureId); //
 
     const allQuestions = await Question.find({}).lean();
     console.log("Total questions in DB:", allQuestions.length);
     console.log("Sample subsectionId from DB:", allQuestions[0]?.subsectionId);
-
 
     const questions = await Question.find({ subsectionId: lectureId }).lean();
 
@@ -24,7 +25,6 @@ exports.GetAiRoute = async (req, res) => {
       success: true,
       data: questions,
     });
-
   } catch (err) {
     console.log("Error fetching AI questions", err);
     return res.status(500).json({
@@ -34,58 +34,68 @@ exports.GetAiRoute = async (req, res) => {
   }
 };
 
-
 exports.GetAiNotesRoute = async (req, res) => {
   try {
     const { subsectionId } = req.params;
 
     const subsection = await Subsection.findById(subsectionId).lean();
     if (!subsection) {
-      return res.status(404).json({ success: false, message: "Lecture not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Lecture not found" });
     }
 
-    // Case 1: Notes ready
-    if (subsection.notesStatus === "done" && subsection.notesUrl) {
+    //  Only check notesStatus — no notesUrl needed
+    if (subsection.notesStatus === "done") {
       return res.status(200).json({
-        success:  true,
-        status:   "done",
-        notesUrl: subsection.notesUrl,
+        success: true,
+        status: "done",
       });
     }
 
-    // Case 2: Still processing
     if (subsection.notesStatus === "pending") {
       return res.status(200).json({
         success: true,
-        status:  "pending",
+        status: "pending",
         message: "Notes are being generated...",
       });
     }
 
-    // Case 3: Failed or not started
     return res.status(200).json({
       success: false,
-      status:  "failed",
-      message: "Notes not available for this lecture yet.",
+      status: "failed",
+      message: "Notes not available yet.",
     });
-
   } catch (err) {
     return res.status(500).json({ success: false, message: "Server Error" });
   }
 };
-
-
+// DownloadNotes controller
 
 exports.DownloadNotes = async (req, res) => {
   try {
     const { subsectionId } = req.params;
 
-    const transcript = await Transcript.findOne({ subsectionId }).lean();
-    if (!transcript?.rawText) {
-      return res.status(404).json({ success: false, message: "Transcript not found" });
+    //  Check Redis cache first
+    const cached = await redis.getBuffer(`notes:${subsectionId}`);
+    if (cached) {
+      console.log(" Serving from Redis cache");
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="lecture-notes.pdf"`,
+      );
+      return res.send(cached);
     }
 
-    // ✅ Same prompt as your worker
+    //  Not cached — generate fresh
+    const transcript = await Transcript.findOne({ subsectionId }).lean();
+    if (!transcript?.rawText) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Transcript not found" });
+    }
+
     const prompt = `
 You are an LMS notes generator.
 Generate full detailed study notes from this transcript.
@@ -111,32 +121,33 @@ ${transcript.rawText}
 `;
 
     const response = await fetch("http://localhost:11434/api/chat", {
-      method:  "POST",
+      method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model:    process.env.OLLAMA_MODEL,
+        model: process.env.OLLAMA_MODEL,
         messages: [{ role: "user", content: prompt }],
-        stream:   false,
-        options:  { temperature: 0.2 },
+        stream: false,
+        options: { temperature: 0.2 },
       }),
     });
 
     const data = await response.json();
-    
-    // ✅ Same parse as worker
-    const clean = data.message.content
-      .replace(/```json|```/g, "")
-      .trim();
-    
+    const clean = data.message.content.replace(/```json|```/g, "").trim();
     const notes = JSON.parse(clean);
 
     const generatePDF = require("../utils/GeneratePdf");
-    const pdfBuffer   = await generatePDF(notes);
+    const pdfBuffer = await generatePDF(notes);
+
+    //  Save to Redis with 24hr expiry
+    await redis.setex(`notes:${subsectionId}`, 86400, pdfBuffer);
+    console.log(" PDF cached in Redis for 24hrs");
 
     res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", `attachment; filename="lecture-notes.pdf"`);
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="lecture-notes.pdf"`,
+    );
     return res.send(pdfBuffer);
-
   } catch (err) {
     console.error("Error:", err);
     return res.status(500).json({ success: false, message: "Server Error" });

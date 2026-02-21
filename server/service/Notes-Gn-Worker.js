@@ -23,7 +23,7 @@ const worker = new Worker(
       });
 
       console.log(" Notes marked as ready!");
-
+ 
     } catch (err) {
       await Subsection.findByIdAndUpdate(subsectionId, {
         notesStatus: "failed",
