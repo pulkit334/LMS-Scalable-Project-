@@ -8,6 +8,7 @@ import { CreateRating, UpdationApi } from "../../../services/operations/Rating";
 import toast from "react-hot-toast";
 import { useParams } from "react-router-dom";
 import { fetchCourseReviews } from "../../../Slices/RatingSlice";
+import { X } from "lucide-react";
 
 // Minimalist Star Icon
 const StarIcon = ({ filled, onClick, className = "" }) => (
@@ -35,6 +36,7 @@ const CourseReviewModal = ({
   const { token } = useSelector((state) => state.auth);
   const { courseEntireData } = useSelector((state) => state.viewCourse);
   const [currentRating, setCurrentRating] = useState(0);
+  const [hoveredRating, setHoveredRating] = useState(0);
   let UpdationResponse;
   
   const disptach = useDispatch();
@@ -52,6 +54,7 @@ const CourseReviewModal = ({
       courseExperince: "",
     },
   });
+
   useEffect(() => {
     if (isEdit && defaultData) {
       setCurrentRating(defaultData.courseRating || 0);
@@ -63,6 +66,7 @@ const CourseReviewModal = ({
       setValue("courseExperince", "");
     }
   }, [isEdit, defaultData, setValue]);
+
   const onSubmit = async (data) => {
     let toastid;
     try {
@@ -121,94 +125,197 @@ const CourseReviewModal = ({
     setCurrentRating(0);
   }, [setValue]);
 
+  const ratingLabels = ["", "Poor", "Fair", "Good", "Great", "Excellent"];
+  const activeRating = hoveredRating || currentRating;
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-      <div className="w-full max-w-125 rounded-xl border border-slate-700 bg-slate-900 shadow-2xl">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: "rgba(2,6,23,0.85)", backdropFilter: "blur(12px)" }}
+    >
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap');
+
+        .modal-card {
+          background: linear-gradient(135deg, #0d1526 0%, #080f1e 100%);
+          border: 1px solid rgba(255,255,255,0.08);
+          box-shadow: 0 40px 120px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.04);
+          font-family: 'DM Sans', sans-serif;
+        }
+
+        .star-item {
+          transition: transform 0.15s ease, filter 0.15s ease;
+        }
+        .star-item:hover { transform: scale(1.15); }
+
+        .review-textarea {
+          background: rgba(255,255,255,0.03);
+          border: 1px solid rgba(255,255,255,0.08);
+          color: rgba(255,255,255,0.85);
+          font-family: 'DM Sans', sans-serif;
+          font-size: 14px;
+          transition: border-color 0.2s ease, background 0.2s ease;
+          resize: none;
+          outline: none;
+        }
+        .review-textarea::placeholder { color: rgba(255,255,255,0.2); }
+        .review-textarea:focus {
+          border-color: rgba(251,191,36,0.4);
+          background: rgba(255,255,255,0.05);
+        }
+
+        .cancel-btn {
+          background: rgba(255,255,255,0.04);
+          border: 1px solid rgba(255,255,255,0.08);
+          color: rgba(255,255,255,0.5);
+          font-family: 'DM Sans', sans-serif;
+          transition: all 0.2s ease;
+        }
+        .cancel-btn:hover {
+          background: rgba(255,255,255,0.07);
+          color: rgba(255,255,255,0.8);
+        }
+
+        .submit-btn {
+          background: linear-gradient(135deg, #fbbf24, #f59e0b);
+          color: #000;
+          font-family: 'DM Sans', sans-serif;
+          font-weight: 700;
+          box-shadow: 0 8px 24px rgba(251,191,36,0.25);
+          transition: all 0.2s ease;
+        }
+        .submit-btn:hover:not(:disabled) {
+          box-shadow: 0 12px 32px rgba(251,191,36,0.4);
+          transform: translateY(-1px);
+        }
+        .submit-btn:disabled {
+          opacity: 0.4;
+          cursor: not-allowed;
+        }
+
+        .close-btn {
+          background: rgba(255,255,255,0.05);
+          border: 1px solid rgba(255,255,255,0.08);
+          transition: all 0.2s ease;
+        }
+        .close-btn:hover {
+          background: rgba(255,255,255,0.1);
+          color: #fff;
+        }
+      `}</style>
+
+      <div className="modal-card w-full max-w-lg rounded-2xl overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-700 px-6 py-4">
-          <h2 className="text-lg font-semibold text-slate-100">
-            Write a Review
-          </h2>
+        <div
+          className="flex items-center justify-between px-6 py-5"
+          style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+        >
+          <div>
+            <h2
+              className="text-base font-bold"
+              style={{ fontFamily: "'Syne', sans-serif", color: "#f0f4ff", letterSpacing: "-0.01em" }}
+            >
+              {isEdit ? "Update Review" : "Write a Review"}
+            </h2>
+            <p className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.3)" }}>
+              {courseEntireData?.courseName || "Share your experience"}
+            </p>
+          </div>
           <button
             onClick={() => setReviewModal(false)}
-            className="text-slate-400 hover:text-slate-100"
+            className="close-btn w-8 h-8 flex items-center justify-center rounded-lg text-slate-400"
           >
-            ✕
+            <X size={15} />
           </button>
         </div>
 
         <div className="p-6">
           {/* User */}
-          <div className="mb-6 flex items-center gap-4">
+          <div className="flex items-center gap-3 mb-6">
             <img
               src={user?.image?.url}
               alt="user"
-              className="h-10 w-10 rounded-full object-cover"
+              className="h-10 w-10 rounded-full object-cover flex-shrink-0"
+              style={{ border: "2px solid rgba(255,255,255,0.08)" }}
             />
             <div>
-              <p className="text-sm font-medium text-slate-200">
+              <p className="text-sm font-semibold" style={{ color: "#f0f4ff" }}>
                 {user?.firstName} {user?.lastName}
               </p>
-              <p className="text-xs text-slate-400">Public review</p>
+              <p className="text-xs" style={{ color: "rgba(255,255,255,0.3)" }}>Posting as public review</p>
             </div>
           </div>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             {/* Rating */}
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-300">
+              <label className="block text-xs font-semibold mb-3 uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.3)" }}>
                 Rating
               </label>
-              <div className="flex gap-2">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <StarIcon
-                    key={star}
-                    filled={star <= currentRating}
-                    onClick={() => ratingChange(star)}
-                    className={`h-8 w-8 ${
-                      star <= currentRating
-                        ? "text-yellow-500"
-                        : "text-slate-600 hover:text-slate-500"
-                    }`}
-                  />
-                ))}
+              <div className="flex items-center gap-3">
+                <div className="flex gap-1.5">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <span key={star} className="star-item">
+                      <StarIcon
+                        filled={star <= activeRating}
+                        onClick={() => ratingChange(star)}
+                        onMouseEnter={() => setHoveredRating(star)}
+                        onMouseLeave={() => setHoveredRating(0)}
+                        className={`h-8 w-8 ${
+                          star <= activeRating
+                            ? "text-yellow-400"
+                            : "text-slate-700 hover:text-slate-600"
+                        }`}
+                      />
+                    </span>
+                  ))}
+                </div>
+                {activeRating > 0 && (
+                  <span
+                    className="text-xs font-semibold px-2 py-1 rounded-md"
+                    style={{
+                      background: "rgba(251,191,36,0.1)",
+                      color: "#fbbf24",
+                    }}
+                  >
+                    {ratingLabels[activeRating]}
+                  </span>
+                )}
               </div>
             </div>
 
             {/* Review */}
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-300">
-                Your experience
+              <label className="block text-xs font-semibold mb-3 uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.3)" }}>
+                Your Experience
               </label>
               <textarea
                 {...register("courseExperince", { required: true })}
-                placeholder="Share your thoughts about the course..."
-                className="min-h-[130px] w-full resize-none rounded-lg border border-slate-700 bg-slate-950 p-3 text-sm text-slate-200 placeholder-slate-500 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30"
+                placeholder="Share what you loved, what could be improved, and who this course is best for..."
+                className="review-textarea w-full rounded-xl p-4 min-h-[130px]"
               />
               {errors.courseExperince && (
-                <p className="mt-1 text-xs text-red-500">
-                  This field is required
+                <p className="mt-1.5 text-xs" style={{ color: "#f87171" }}>
+                  Please share your experience before submitting.
                 </p>
               )}
             </div>
 
             {/* Actions */}
-            <div className="flex justify-end gap-3 pt-2">
+            <div className="flex justify-end gap-2.5 pt-1">
               <button
                 type="button"
                 onClick={() => setReviewModal(false)}
-                className="rounded-lg px-4 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800"
+                className="cancel-btn px-4 py-2.5 rounded-xl text-sm font-medium"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting || currentRating === 0}
-                className="rounded-lg bg-blue-600 px-6 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+                className="submit-btn px-6 py-2.5 rounded-xl text-sm"
               >
-                <h2 className="text-lg font-semibold text-slate-100">
-                  {isEdit ? "Update Review" : "Write a Review"}
-                </h2>
+                {isEdit ? "Update Review" : "Submit Review"}
               </button>
             </div>
           </form>

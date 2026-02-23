@@ -44,121 +44,222 @@ const Admin_usermangemt = () => {
     return Pages;
   };
 
-const goToPage = (page) => {
-  if (page < 1 || page > totalPage) return;
+  const goToPage = (page) => {
+    if (page < 1 || page > totalPage) return;
 
-  if (value.trim().length >= 2) {
-    dispatch(fetchUserInsight({ page, limit: 5, search: value.trim() }));
-  } else {
-    dispatch(fetchUserInsight({ page, limit: 5 }));
-  }
-};
+    if (value.trim().length >= 2) {
+      dispatch(fetchUserInsight({ page, limit: 5, search: value.trim() }));
+    } else {
+      dispatch(fetchUserInsight({ page, limit: 5 }));
+    }
+  };
 
   const [role, setRole] = useState("all");
-useEffect(() => {
-  const trimmed = value.trim();
 
-  
-  if (trimmed.length === 0) {
-    dispatch(fetchUserInsight({ page: 1, limit: 5 }));
-    return;
-  }
+  useEffect(() => {
+    const trimmed = value.trim();
 
-  // Prevent  spam serach 
-  if (trimmed.length < 2) return;
+    if (trimmed.length === 0) {
+      dispatch(fetchUserInsight({ page: 1, limit: 5 }));
+      return;
+    }
 
-  dispatch(fetchUserInsight({ page: 1, limit: 5, search: trimmed }));
-}, [value,role]);
+    // Prevent  spam serach
+    if (trimmed.length < 2) return;
 
-
+    dispatch(fetchUserInsight({ page: 1, limit: 5, search: trimmed }));
+  }, [value, role]);
 
   const filteredUsers = useMemo(() => {
     if (role === "all") return adminuser;
     return adminuser.filter((c) => c?.accountType === role);
-  }, [role,adminuser  ]);
+  }, [role, adminuser]);
 
   const ImgApi = () => `https://picsum.photos/400/300?random=${Date.now()}`;
 
   return (
-    <div className="flex flex-col w-full gap-5 ">
-      <div className=" w-full  flex justify-between gap-5">
-        <div className="w-80 px-4 py-3  relative flex items-center top-4 left-2  gap-2 rounded-xl bg-[#0f172a] focus-within:ring-2 focus-within:ring-indigo-500 transition">
-          <Search className="text-gray-400 w-4 h-4" />
+    <div
+      className="w-full min-h-screen p-6"
+      style={{ background: "#f8fafc", fontFamily: "'DM Sans', sans-serif" }}
+    >
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap');
+
+        .um-card {
+          background: #fff;
+          border: 1px solid #e2e8f0;
+          border-radius: 12px;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .um-search {
+          background: #fff;
+          border: 1px solid #e2e8f0;
+          border-radius: 10px;
+          transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .um-search:focus-within {
+          border-color: #3b82f6;
+          box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+        }
+
+        .um-select {
+          background: #fff;
+          border: 1px solid #e2e8f0;
+          border-radius: 8px;
+          color: #0f172a;
+          font-size: 13px;
+          font-weight: 500;
+          padding: 6px 10px;
+          outline: none;
+          cursor: pointer;
+          transition: border-color 0.2s;
+          font-family: 'DM Sans', sans-serif;
+        }
+        .um-select:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+
+        .um-th {
+          font-size: 11px; font-weight: 600;
+          text-transform: uppercase; letter-spacing: 0.06em;
+          color: #94a3b8; padding: 12px 20px;
+          background: #f8fafc; border-bottom: 1px solid #e2e8f0;
+        }
+
+        .um-tr {
+          border-bottom: 1px solid #f1f5f9;
+          transition: background 0.15s ease;
+        }
+        .um-tr:hover { background: #f8fafc; }
+        .um-tr:last-child { border-bottom: none; }
+        .um-td { padding: 14px 20px; font-size: 13px; color: #334155; }
+
+        .badge-active {
+          display: inline-flex; align-items: center; gap: 5px;
+          background: #ecfdf5; color: #10b981; border: 1px solid #a7f3d0;
+          font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 99px;
+        }
+
+        .role-badge {
+          display: inline-flex; font-size: 11px; font-weight: 600;
+          padding: 3px 10px; border-radius: 99px;
+          background: #eff6ff; color: #3b82f6; border: 1px solid #bfdbfe;
+          text-transform: capitalize;
+        }
+
+        .btn-edit {
+          font-size: 12px; font-weight: 600;
+          padding: 5px 14px; border-radius: 7px;
+          border: 1px solid #e2e8f0;
+          background: #f8fafc; color: #64748b;
+          transition: all 0.15s ease; cursor: pointer;
+        }
+        .btn-edit:hover { background: #f1f5f9; border-color: #cbd5e1; color: #0f172a; }
+
+        .pg-btn {
+          padding: 6px 12px; border-radius: 7px; font-size: 13px;
+          border: 1px solid #e2e8f0; background: #fff; color: #64748b;
+          transition: all 0.15s ease; cursor: pointer;
+        }
+        .pg-btn:hover:not(:disabled) { background: #f1f5f9; }
+        .pg-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .pg-btn.active { background: #3b82f6; color: #fff; border-color: #3b82f6; font-weight: 600; }
+      `}</style>
+
+      {/* Page header */}
+      <div className="mb-5">
+        <p className="text-xs font-semibold uppercase tracking-widest mb-0.5" style={{ color: "#94a3b8" }}>Admin</p>
+        <h1 className="text-xl font-bold" style={{ color: "#0f172a", letterSpacing: "-0.01em" }}>User Management</h1>
+      </div>
+
+      {/* TOOLBAR */}
+      <div className="flex items-center justify-between mb-4 gap-4">
+        <div className="um-search w-80 px-4 py-2.5 flex items-center gap-2">
+          <Search className="w-4 h-4 flex-shrink-0" style={{ color: "#94a3b8" }} />
           <input
             type="text"
             name="search"
-            placeholder="Search courses..."
+            placeholder="Search users..."
             onChange={(e) => setvalue(e.target.value)}
-            value = {value}
-            className="w-full bg-transparent outline-none text-white placeholder-gray-400"
+            value={value}
+            className="w-full bg-transparent outline-none text-sm"
+            style={{ color: "#0f172a" }}
           />
         </div>
 
-        <div className="flex justify-end relative top-5 mx-10">
-          <select
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-            className="w-28 h-8 px-2 rounded-md border font-semibold  border-gray-300 text-white bg-[#0f172a] text-sm text-gray-800  cursor-pointer focus:outline-none ring-2 ring-indigo-500 text-center"
-          >
-            <option value="all">All</option>
-            <option value="instructor">Instructor</option>
-            <option value="student">Student</option>
-          </select>
-        </div>
+        <select
+          value={role}
+          onChange={(e) => setRole(e.target.value)}
+          className="um-select"
+        >
+          <option value="all">All Roles</option>
+          <option value="instructor">Instructor</option>
+          <option value="student">Student</option>
+        </select>
       </div>
-      <div className="min-h-screen  w-full text-white p-6 bg-[#070b16]">
-        <div className="w-full overflow-x-auto ring-indigo-500 ring-1  rounded-xl border border-white/10 bg-[#0f172a]">
-          <table className="w-full focus:outline-none  table-auto border-collapse">
-            <thead className="border-b border-white/10">
-              <tr className="text-gray-300 text-sm">
-                <th className="text-left px-6 py-4">User</th>
-                <th className="text-center px-6 py-4">Courses</th>
-                <th className="text-center px-6 py-4">Email</th>
-                <th className="text-center px-6 py-4">Status</th>
-                <th className="text-center px-6 py-4">Actions</th>
+
+      {/* TABLE */}
+      <div className="um-card overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full table-auto border-collapse">
+            <thead>
+              <tr>
+                <th className="um-th text-left">User</th>
+                <th className="um-th text-center">Role</th>
+                <th className="um-th text-center">Email</th>
+                <th className="um-th text-center">Status</th>
+                <th className="um-th text-center">Actions</th>
               </tr>
             </thead>
 
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="5" className="text-center py-6 text-gray-400">
+                  <td colSpan="5" className="um-td text-center" style={{ padding: "40px", color: "#94a3b8" }}>
                     <Result loading={true} text="Loading Wait..." />
                   </td>
                 </tr>
               ) : filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="text-center py-6 text-gray-400">
-                    No instructors found
+                  <td colSpan="5" className="um-td text-center" style={{ padding: "40px", color: "#94a3b8" }}>
+                    No users found
                   </td>
                 </tr>
               ) : (
                 filteredUsers.map((inst) => (
-                  <tr key={inst._id} className="border-b border-white/10">
-                    <td className="px-6 py-4">
+                  <tr key={inst._id} className="um-tr">
+                    <td className="um-td">
                       <div className="flex items-center gap-3">
                         <img
                           src={inst.image?.url || ImgApi()}
-                          className="h-10 w-10 rounded-full"
+                          className="h-9 w-9 rounded-full object-cover flex-shrink-0"
+                          style={{ border: "1.5px solid #e2e8f0" }}
                         />
                         <div>
-                          <p>
+                          <p className="font-semibold text-sm" style={{ color: "#0f172a" }}>
                             {inst.firstName} {inst.lastName}
                           </p>
-                          <p className="text-xs text-gray-400">{inst.email}</p>
+                          <p className="text-xs" style={{ color: "#94a3b8" }}>{inst.email}</p>
                         </div>
                       </div>
                     </td>
 
-                    <td className="text-center">{inst.accountType || 0}</td>
-                    <td className="text-center">{inst.email}</td>
-                    <td className="text-center text-green-400">
-                      {inst.status || "Error"}
+                    <td className="um-td text-center">
+                      <span className="role-badge">{inst.accountType || "—"}</span>
                     </td>
-                    <td className="text-center">
-                      <button className="px-3 py-1 bg-white/10 rounded">
-                        Edit
-                      </button>
+
+                    <td className="um-td text-center" style={{ color: "#64748b" }}>
+                      {inst.email}
+                    </td>
+
+                    <td className="um-td text-center">
+                      <span className="badge-active">
+                        <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#10b981", display: "inline-block" }} />
+                        {inst.status || "Active"}
+                      </span>
+                    </td>
+
+                    <td className="um-td text-center">
+                      <button className="btn-edit">Edit</button>
                     </td>
                   </tr>
                 ))
@@ -166,54 +267,35 @@ useEffect(() => {
             </tbody>
           </table>
         </div>
-        {/* Pagination */}
-        <div className="h-16 m-2  flex items-center justify-center gap-1 text-gray-400">
-          {!hasPrevPage ? (
-            <button
-              disabled
-              className="px-3 py-1 hover:bg-gray-700 rounded"
-              onClick={() => goToPage(currentPage - 1)}
-            >
-              Prev Page
-            </button>
+      </div>
+
+      {/* Pagination */}
+      <div className="h-16 flex items-center justify-center gap-1.5">
+        {!hasPrevPage ? (
+          <button disabled className="pg-btn">← Prev</button>
+        ) : (
+          <button className="pg-btn" onClick={() => goToPage(currentPage - 1)}>← Prev</button>
+        )}
+
+        {getPages().map((c, idx) =>
+          c === "..." ? (
+            <span key={idx} className="px-2 text-sm" style={{ color: "#94a3b8" }}>...</span>
           ) : (
             <button
-              className="px-3 py-1 hover:bg-gray-700 rounded"
-              onClick={() => goToPage(currentPage - 1)}
+              key={c}
+              onClick={() => goToPage(c)}
+              className={`pg-btn ${c === currentPage ? "active" : ""}`}
             >
-              Prev Page
+              {c}
             </button>
-          )}
+          ),
+        )}
 
-          {getPages().map((c, idx) =>
-            c === "..." ? (
-              <span key={idx} className="px-3">
-                ...
-              </span>
-            ) : (
-              <button
-                key={c}
-                onClick={() => goToPage(c)}
-                className={`px-4 py-2  rounded-md ${
-                  c === currentPage
-                    ? "bg-blue-600 text-white"
-                    : "hover:bg-gray-700"
-                }`}
-              >
-                {c}
-              </button>
-            ),
-          )}
-
-          {hasNextPage && (
-            <button
-              onClick={() => goToPage(currentPage + 1)}
-              className="px-3 py-1 hover:bg-gray-700 rounded"
-            >
-              Next Page
-            </button>
-          )}
-        </div>
+        {hasNextPage && (
+          <button onClick={() => goToPage(currentPage + 1)} className="pg-btn">
+            Next →
+          </button>
+        )}
       </div>
     </div>
   );

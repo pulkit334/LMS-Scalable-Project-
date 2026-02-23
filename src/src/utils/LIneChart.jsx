@@ -60,7 +60,7 @@ const CourseTrendLineChart = ({ data = [] }) => {
   }, [data]);
 
   return (
-    <div className="w-full h-[320px] bg-[#0b1220] rounded-xl border border-white/5 p-4">
+    <div className="w-full h-[660px] bg-[#0b1220] rounded-xl border border-white/5 p-4">
       <h3 className="text-sm font-medium text-white mb-3">
         Monthly Course Trend
       </h3>

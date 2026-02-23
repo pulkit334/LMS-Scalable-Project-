@@ -33,7 +33,7 @@ const Instructormangment = () => {
     loading,
     Coursetrend,
     TopCategories,
-actionLoadingId
+    actionLoadingId,
   } = useSelector((state) => state.admin);
 
   const coursetrend = Coursetrend?.data || [];
@@ -60,6 +60,7 @@ actionLoadingId
     "the current status of my Instructor Dashbaord will be ",
     instructors,
   );
+
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedValue(value);
@@ -86,13 +87,12 @@ actionLoadingId
   const hanldeStatusChange = async (inst) => {
     const nextstatus = inst?.status === "Blocked" ? "Active" : "Blocked";
 
-
-      await dispatch(
-        fetchUserState({
-          id: inst._id,
-          status: nextstatus,
-        }),
-      ).unwrap();
+    await dispatch(
+      fetchUserState({
+        id: inst._id,
+        status: nextstatus,
+      }),
+    ).unwrap();
   };
 
   /* ---------------- PAGINATION LOGIC ---------------- */
@@ -129,18 +129,8 @@ actionLoadingId
 
   // ************************************************Months**************************************************//
   const MONTHS = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
   ];
 
   const monthlyTotals = useMemo(() => {
@@ -154,94 +144,197 @@ actionLoadingId
 
   return (
     <div
-      className="min-h-screen w-full text-white p-6
-bg-[#070b16]
-bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.18),transparent_55%),radial-gradient(circle_at_bottom,rgba(14,165,233,0.12),transparent_60%)]"
+      className="min-h-screen w-full p-6"
+      style={{ background: "#f8fafc", fontFamily: "'DM Sans', sans-serif" }}
     >
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap');
+
+        .im-card {
+          background: #fff;
+          border: 1px solid #e2e8f0;
+          border-radius: 12px;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .im-search {
+          background: #fff;
+          border: 1px solid #e2e8f0;
+          border-radius: 10px;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+          transition: border-color 0.2s;
+        }
+        .im-search:focus-within {
+          border-color: #3b82f6;
+          box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+        }
+
+        .im-th {
+          font-size: 11px;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+          color: #94a3b8;
+          padding: 12px 20px;
+          background: #f8fafc;
+          border-bottom: 1px solid #e2e8f0;
+        }
+
+        .im-tr {
+          border-bottom: 1px solid #f1f5f9;
+          transition: background 0.15s ease;
+        }
+        .im-tr:hover { background: #f8fafc; }
+        .im-tr:last-child { border-bottom: none; }
+
+        .im-td { padding: 14px 20px; font-size: 13px; color: #334155; }
+
+        .badge-active {
+          display: inline-flex; align-items: center; gap: 5px;
+          background: #ecfdf5; color: #10b981;
+          border: 1px solid #a7f3d0;
+          font-size: 11px; font-weight: 600;
+          padding: 3px 10px; border-radius: 99px;
+        }
+        .badge-blocked {
+          display: inline-flex; align-items: center; gap: 5px;
+          background: #fef2f2; color: #ef4444;
+          border: 1px solid #fecaca;
+          font-size: 11px; font-weight: 600;
+          padding: 3px 10px; border-radius: 99px;
+        }
+
+        .btn-block {
+          font-size: 12px; font-weight: 600;
+          padding: 5px 14px; border-radius: 7px;
+          border: 1px solid #fecaca;
+          background: #fef2f2; color: #ef4444;
+          transition: all 0.15s ease; cursor: pointer;
+        }
+        .btn-block:hover { background: #fee2e2; }
+
+        .btn-unblock {
+          font-size: 12px; font-weight: 600;
+          padding: 5px 14px; border-radius: 7px;
+          border: 1px solid #a7f3d0;
+          background: #ecfdf5; color: #10b981;
+          transition: all 0.15s ease; cursor: pointer;
+        }
+        .btn-unblock:hover { background: #d1fae5; }
+
+        .btn-unblock:disabled, .btn-block:disabled {
+          opacity: 0.5; cursor: not-allowed;
+        }
+
+        .pg-btn {
+          padding: 6px 12px; border-radius: 7px; font-size: 13px;
+          border: 1px solid #e2e8f0; background: #fff; color: #64748b;
+          transition: all 0.15s ease; cursor: pointer;
+        }
+        .pg-btn:hover:not(:disabled) { background: #f1f5f9; border-color: #cbd5e1; }
+        .pg-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .pg-btn.active { background: #3b82f6; color: #fff; border-color: #3b82f6; font-weight: 600; }
+      `}</style>
+
+      {/* Page header */}
+      <div className="mb-5">
+        <p className="text-xs font-semibold uppercase tracking-widest mb-0.5" style={{ color: "#94a3b8" }}>Admin</p>
+        <h1 className="text-xl font-bold" style={{ color: "#0f172a", letterSpacing: "-0.01em" }}>Instructor Management</h1>
+      </div>
+
       {/* SEARCH */}
-      <div className="mb-4 w-80 px-4 py-3 flex items-center gap-2 rounded-xl bg-[#0f172a] ring-1 ring-indigo-500">
-        <Search className="text-gray-400 w-4 h-4" />
+      <div className="im-search mb-4 w-80 px-4 py-2.5 flex items-center gap-2">
+        <Search className="w-4 h-4" style={{ color: "#94a3b8" }} />
         <input
           type="text"
           placeholder="Search instructors..."
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          className="w-full bg-transparent outline-none text-white placeholder-gray-400"
+          className="w-full bg-transparent outline-none text-sm"
+          style={{ color: "#0f172a" }}
         />
       </div>
 
       {/* TABLE */}
-      <div className="w-full overflow-x-auto rounded-xl border border-white/10 bg-[#0f172a]">
-        <table className="w-full table-auto border-collapse">
-          <thead className="border-b border-white/10">
-            <tr className="text-gray-300 text-sm">
-              <th className="text-left px-6 py-4 font-semibold">Instructor</th>
-              <th className="text-center px-6 py-4 font-semibold">Courses</th>
-              <th className="text-center px-6 py-4 font-semibold">Rating</th>
-              <th className="text-center px-6 py-4 font-semibold">Status</th>
-              <th className="text-center px-6 py-4 font-semibold">Actions</th>
-            </tr>
-          </thead>
+      <div className="im-card overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full table-auto border-collapse">
+            <thead>
+              <tr>
+                <th className="im-th text-left">Instructor</th>
+                <th className="im-th text-center">Courses</th>
+                <th className="im-th text-center">Rating</th>
+                <th className="im-th text-center">Status</th>
+                <th className="im-th text-center">Actions</th>
+              </tr>
+            </thead>
 
-          <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan="5" className="px-6 py-6 text-center text-gray-400">
-                  <Result loading={true} text="Loading" />
-                </td>
-              </tr>
-            ) : instructors.length === 0 ? (
-              <tr>
-                <td colSpan="5" className="px-6 py-6 text-center text-gray-400">
-                  No instructors found
-                </td>
-              </tr>
-            ) : (
-              instructors.map((inst) => (
-                <tr
-                  key={inst._id}
-                  className="border-b border-white/10 hover:bg-white/5 transition"
-                >
-                  {/* Instructor */}
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <img
-                        src={inst.image?.url || ImgApi()}
-                        className="h-10 w-10 rounded-full ring-1 ring-red-500"
-                      />
-                      <div>
-                        <p className="font-medium">
-                          {inst.firstName} {inst.lastName}
-                        </p>
-                        <p className="text-xs text-gray-400">{inst.email}</p>
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan="5" className="im-td text-center" style={{ color: "#94a3b8" }}>
+                    <Result loading={true} text="Loading" />
+                  </td>
+                </tr>
+              ) : instructors.length === 0 ? (
+                <tr>
+                  <td colSpan="5" className="im-td text-center" style={{ color: "#94a3b8", padding: "40px" }}>
+                    No instructors found
+                  </td>
+                </tr>
+              ) : (
+                instructors.map((inst) => (
+                  <tr key={inst._id} className="im-tr">
+                    {/* Instructor */}
+                    <td className="im-td">
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={inst.image?.url || ImgApi()}
+                          className="h-9 w-9 rounded-full object-cover flex-shrink-0"
+                          style={{ border: "1.5px solid #e2e8f0" }}
+                        />
+                        <div>
+                          <p className="font-semibold text-sm" style={{ color: "#0f172a" }}>
+                            {inst.firstName} {inst.lastName}
+                          </p>
+                          <p className="text-xs" style={{ color: "#94a3b8" }}>{inst.email}</p>
+                        </div>
                       </div>
-                    </div>
-                  </td>
+                    </td>
 
-                  {/* Courses */}
-                  <td className="px-6 py-4 text-center">
-                    {inst.CourseCount || 0}
-                  </td>
+                    {/* Courses */}
+                    <td className="im-td text-center font-medium" style={{ color: "#0f172a" }}>
+                      {inst.CourseCount || 0}
+                    </td>
 
-                  {/* Rating */}
-                  <td className="px-6 py-4 text-center">
-                    ★ {(inst.AvgRating || 0).toFixed(1)}
-                  </td>
+                    {/* Rating */}
+                    <td className="im-td text-center">
+                      <span className="flex items-center justify-center gap-1">
+                        <span style={{ color: "#f59e0b" }}>★</span>
+                        <span className="font-medium" style={{ color: "#0f172a" }}>
+                          {(inst.AvgRating || 0).toFixed(1)}
+                        </span>
+                      </span>
+                    </td>
 
-                  {/* Status */}
-                  <td className="px-6 py-4 text-center text-green-400">
-                    {inst.status || "Active"}
-                  </td>
+                    {/* Status */}
+                    <td className="im-td text-center">
+                      <span className={inst.status === "Blocked" ? "badge-blocked" : "badge-active"}>
+                        <span style={{
+                          width: 5, height: 5, borderRadius: "50%",
+                          background: inst.status === "Blocked" ? "#ef4444" : "#10b981",
+                          display: "inline-block"
+                        }} />
+                        {inst.status || "Active"}
+                      </span>
+                    </td>
 
-                  {/* Actions */}
-                  <td className="px-6 py-4">
-                    <div className="flex justify-center gap-3">
+                    {/* Actions */}
+                    <td className="im-td text-center">
                       <button
                         onClick={() => hanldeStatusChange(inst)}
-                        disabled={actionLoadingId=== inst._id}
-                        className={`px-4 py-1 ring-1 rounded-md bg-white/10 cursor-pointer
-    ${inst.status === "Blocked" ? "ring-green-500" : "ring-red-500"}
-  `}
+                        disabled={actionLoadingId === inst._id}
+                        className={inst.status === "Blocked" ? "btn-unblock" : "btn-block"}
                       >
                         {actionLoadingId === inst._id
                           ? "Updating..."
@@ -249,39 +342,33 @@ bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.18),transparent_55%),radial-
                             ? "Unblock"
                             : "Block"}
                       </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* PAGINATION */}
-      <div className="h-16 m-2 flex items-center justify-center gap-1 text-gray-400">
+      <div className="h-16 flex items-center justify-center gap-1.5 mt-2">
         <button
           disabled={!hasPrevPage}
-          className="px-3 py-1 hover:bg-gray-700 rounded disabled:opacity-40"
+          className="pg-btn"
           onClick={() => goToPage(currentPage - 1)}
         >
-          Prev Page
+          ← Prev
         </button>
 
         {getPages().map((c, idx) =>
           c === "..." ? (
-            <span key={idx} className="px-3">
-              ...
-            </span>
+            <span key={idx} className="px-2 text-sm" style={{ color: "#94a3b8" }}>...</span>
           ) : (
             <button
               key={c}
               onClick={() => goToPage(c)}
-              className={`px-4 py-2 rounded-md ${
-                c === currentPage
-                  ? "bg-blue-600 text-white"
-                  : "hover:bg-gray-700"
-              }`}
+              className={`pg-btn ${c === currentPage ? "active" : ""}`}
             >
               {c}
             </button>
@@ -290,16 +377,16 @@ bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.18),transparent_55%),radial-
 
         <button
           disabled={!hasNextPage}
-          className="px-3 py-1 hover:bg-gray-700 rounded disabled:opacity-40"
+          className="pg-btn"
           onClick={() => goToPage(currentPage + 1)}
         >
-          Next Page
+          Next →
         </button>
       </div>
 
       {/* CHARTS */}
-      <div className="flex gap-10">
-        <div className="mt-6 h-64 w-full rounded-xl bg-[#0f172a] ring-1 ring-indigo-500 p-4">
+      <div className="flex gap-5 mt-2">
+        <div className="im-card flex-1 p-5" style={{ height: 280 }}>
           <EnrollmentBarChart
             labels={MONTHS}
             values={monthlyTotals}
@@ -307,7 +394,7 @@ bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.18),transparent_55%),radial-
           />
         </div>
 
-        <div className="mt-6 h-64 w-full rounded-xl bg-[#0f172a] ring-1 ring-red-500 p-4 overflow-y-auto">
+        <div className="im-card flex-1 p-5 overflow-y-auto" style={{ height: 280 }}>
           <TopCoursesProgress data={TopCategories?.TopCoursesData} />
         </div>
       </div>
