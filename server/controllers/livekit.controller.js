@@ -7,9 +7,11 @@ import Class from "../models/live.js";
 import Course from "../models/course.js";
 import { roomService } from "../config/livekit.js";
 import { WebhookReceiver } from "livekit-server-sdk";
+import { getIO } from "../config/socket.js";
 //create the class
 export const createClass = async (req, res) => {
   try {
+    console.log("the course Clasa would ",req.body)
     const { title, courseId } = req.body;
     const cls = await Class.create({
       title,
@@ -17,7 +19,7 @@ export const createClass = async (req, res) => {
       course: courseId,
       state: "SCHEDULED",
     });
-    res.json({ success: true, class: cls });
+   return  res.json({ success: true, class: cls });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -46,11 +48,16 @@ export const CreateRoom = async (req, res) => {
 
     await createRoom(String(classId));
     //generate karo ek Token ko Jo  share
+
     const token = await generateToken(String(classId), String(teacherId), true);
     cls.state = "LIVE";
     cls.startedAt = new Date();
     await cls.save();
-    res.json({ token, host: process.env.LIVEKIT_URL });
+
+const io = getIO();
+io.to(`course:${cls.course}`).emit('class:live',{classId : classId, title : cls.title , course  : cls.course})
+
+   return  res.json({ token, host: process.env.LIVEKIT_URL });
   } catch (err) {
     return res.status(500).json({
       message: "Internal Error",
@@ -89,7 +96,7 @@ export const JoinRoom = async (req, res) => {
       false,
     );
 
-    res.json({ token, host: process.env.LIVEKIT_URL });
+   return  res.json({ token, host: process.env.LIVEKIT_URL });
   } catch (err) {
     console.log("the erro was", err.message);
     return res.status(500).json({
@@ -118,7 +125,7 @@ export const EndRoom = async (req, res) => {
     cls.endedAt = new Date();
     await cls.save();
 
-    res.json({ success: true, message: "Class ended" });
+ return    res.json({ success: true, message: "Class ended" });
   } catch (err) {
     return res.status(500).json({
       message: "Failed Try Again",
@@ -133,7 +140,7 @@ export const getRoomParticipants = async (req, res) => {
 
     const participants = await roomService.listParticipants(String(classId));
 
-    res.json({
+  return   res.json({
       success: true,
       count: participants.length,
       participants: participants.map((p) => ({
@@ -159,7 +166,7 @@ export const livekitWebhook = async (req, res) => {
     switch (event.event) {
       case "room_finished":
         await Class.findByIdAndUpdate(event.room.name, {
-          state: "ENDED",
+          state: "ENDED", 
           endedAt: new Date(),
         });
       case "participant_joined":
@@ -170,7 +177,7 @@ export const livekitWebhook = async (req, res) => {
         break;
     }
 
-    res.status(200).json({ received: true });
+   return  res.status(200).json({ received: true });
   } catch (err) {
     console.log("Webhook error:", err.message);
     res.status(400).json({ message: err.message });

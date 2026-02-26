@@ -1,4 +1,4 @@
-import { AccessToken } from "livekit-server-sdk"
+import { AccessToken ,TrackSource} from "livekit-server-sdk"
 import { roomService } from '../config/livekit.js'
 
 export const createRoom = async (roomName)=>{
@@ -23,7 +23,12 @@ export const generateToken = (roomName, userId, isTeacher) => {
         roomJoin: true,
         room: roomName,
         canPublish: isTeacher,
-        canSubscribe: true
+        canSubscribe: true,
+        canPublishData : isTeacher,
+     canPublishSources: isTeacher 
+            ? [TrackSource.CAMERA, TrackSource.MICROPHONE, TrackSource.SCREEN_SHARE]
+            : [TrackSource.CAMERA],
+        
     })
     return token.toJwt()
 }

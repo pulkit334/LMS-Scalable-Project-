@@ -47,7 +47,9 @@ import UserNotification from "./components/core/Notification/userNotification";
 import { requestFCMToken, onMessageListner } from "./utils/firebaseutlis";
 import { toast } from "react-toastify";
 import { NotificationAuth } from "./services/Notificaiton/Notificaitonservice";
-
+import TeacherLive from "./components/LiveClass/LiveTeacher";
+import  Warning from "./utils/Warning"
+import StudentLive from "./components/LiveClass/StudentLive";
 function App() {
   const dispatch = useDispatch();
   const token = useSelector((state) => state.auth.token);
@@ -249,6 +251,12 @@ function App() {
             <Route path="courses" element={<Course_mangment />} />
           </Route>
         </Route>
+     
+
+       {/* Live  Class APi */}
+
+       <Route path="/live/:classId/start" element = { role === ACCOUNT_TYPE.INSTRUCTOR ?    <TeacherLive/> : <Warning/>}/>
+      <Route path="/live/:classId/watch" element={<StudentLive />} />
       </Routes>
     </div>
   );

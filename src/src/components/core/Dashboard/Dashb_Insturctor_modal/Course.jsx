@@ -2,7 +2,8 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Edit2, Trash2, Plus, BookOpen } from "lucide-react";
 import Confirmation from "../../common/confirmmation";
-
+import { useState } from "react";
+import { GoLive } from "../../../../utils/Golive";
 const Course = ({
   courses,
   COURSE_STATUS,
@@ -13,12 +14,14 @@ const Course = ({
   handleConfirmDelete,
 }) => {
   const navigate = useNavigate();
+  const [GoLiveopen, setGoLiveModal] = useState("");
 
   return (
     <div
       className="min-h-screen text-white px-8 py-10"
       style={{
-        background: "linear-gradient(160deg, #020617 0%, #060d1a 60%, #020617 100%)",
+        background:
+          "linear-gradient(160deg, #020617 0%, #060d1a 60%, #020617 100%)",
         fontFamily: "'DM Sans', sans-serif",
       }}
     >
@@ -120,41 +123,91 @@ const Course = ({
       {/* HEADER */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-widest mb-1"
+          <p
+            className="text-xs font-semibold uppercase tracking-widest mb-1"
             style={{ color: "rgba(251,191,36,0.6)" }}
           >
             Instructor Dashboard
           </p>
-          <h1 className="text-2xl font-bold"
-            style={{ fontFamily: "'Syne', sans-serif", color: "#f0f4ff", letterSpacing: "-0.02em" }}
+          <h1
+            className="text-2xl font-bold"
+            style={{
+              fontFamily: "'Syne', sans-serif",
+              color: "#f0f4ff",
+              letterSpacing: "-0.02em",
+            }}
           >
             My Courses
           </h1>
         </div>
-
-        <button
-          onClick={() => navigate("/dashboard/add-course")}
-          className="add-btn"
-        >
-          <Plus size={15} /> Add Course
-        </button>
+        <div className="flex gap-4">
+          <button
+            onClick={() => navigate("/dashboard/add-course")}
+            className="add-btn"
+          >
+            <Plus size={15} /> Add Course
+          </button>
+          <button
+            onClick={() => setGoLiveModal(true)}
+            className="add-btn"
+            style={{
+              background: "linear-gradient(135deg, #ef4444, #dc2626)",
+              color: "#fff",
+            }}
+          >
+            🔴 Go Live
+          </button>
+        </div>
       </div>
 
       {/* TABLE */}
       {courses.length === 0 ? (
         <div className="empty-state">
-          <BookOpen size={36} style={{ color: "rgba(255,255,255,0.1)", marginBottom: 12 }} />
-          <p className="text-sm font-semibold" style={{ color: "rgba(255,255,255,0.3)" }}>No courses yet</p>
-          <p className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.2)" }}>Click "Add Course" to create your first one</p>
+          <BookOpen
+            size={36}
+            style={{ color: "rgba(255,255,255,0.1)", marginBottom: 12 }}
+          />
+          <p
+            className="text-sm font-semibold"
+            style={{ color: "rgba(255,255,255,0.3)" }}
+          >
+            No courses yet
+          </p>
+          <p
+            className="text-xs mt-1"
+            style={{ color: "rgba(255,255,255,0.2)" }}
+          >
+            Click "Add Course" to create your first one
+          </p>
         </div>
       ) : (
         <div className="mc-table">
           {/* Table Header */}
           <div className="mc-header-row">
-            <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.25)" }}>Course</span>
-            <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.25)" }}>Duration</span>
-            <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.25)" }}>Price</span>
-            <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.25)" }}>Actions</span>
+            <span
+              className="text-xs font-semibold uppercase tracking-widest"
+              style={{ color: "rgba(255,255,255,0.25)" }}
+            >
+              Course
+            </span>
+            <span
+              className="text-xs font-semibold uppercase tracking-widest"
+              style={{ color: "rgba(255,255,255,0.25)" }}
+            >
+              Duration
+            </span>
+            <span
+              className="text-xs font-semibold uppercase tracking-widest"
+              style={{ color: "rgba(255,255,255,0.25)" }}
+            >
+              Price
+            </span>
+            <span
+              className="text-xs font-semibold uppercase tracking-widest"
+              style={{ color: "rgba(255,255,255,0.25)" }}
+            >
+              Actions
+            </span>
           </div>
 
           <div>
@@ -174,15 +227,24 @@ const Course = ({
                       />
 
                       <div className="space-y-1.5 min-w-0">
-                        <h2 className="text-sm font-bold leading-snug" style={{ color: "#f0f4ff" }}>
+                        <h2
+                          className="text-sm font-bold leading-snug"
+                          style={{ color: "#f0f4ff" }}
+                        >
                           {course.courseName}
                         </h2>
 
-                        <p className="text-xs line-clamp-2 leading-relaxed" style={{ color: "rgba(255,255,255,0.38)" }}>
+                        <p
+                          className="text-xs line-clamp-2 leading-relaxed"
+                          style={{ color: "rgba(255,255,255,0.38)" }}
+                        >
                           {course.courseDescription}
                         </p>
 
-                        <p className="text-xs" style={{ color: "rgba(255,255,255,0.22)" }}>
+                        <p
+                          className="text-xs"
+                          style={{ color: "rgba(255,255,255,0.22)" }}
+                        >
                           Created:{" "}
                           {new Date(course.createdAt).toLocaleDateString()} |{" "}
                           {new Date(course.createdAt).toLocaleTimeString()}
@@ -190,12 +252,28 @@ const Course = ({
 
                         {isPublished ? (
                           <span className="badge-published">
-                            <span style={{ width: 5, height: 5, borderRadius: "99px", background: "#34d399", display: "inline-block" }} />
+                            <span
+                              style={{
+                                width: 5,
+                                height: 5,
+                                borderRadius: "99px",
+                                background: "#34d399",
+                                display: "inline-block",
+                              }}
+                            />
                             Published
                           </span>
                         ) : (
                           <span className="badge-draft">
-                            <span style={{ width: 5, height: 5, borderRadius: "99px", background: "#fbbf24", display: "inline-block" }} />
+                            <span
+                              style={{
+                                width: 5,
+                                height: 5,
+                                borderRadius: "99px",
+                                background: "#fbbf24",
+                                display: "inline-block",
+                              }}
+                            />
                             Draft
                           </span>
                         )}
@@ -203,12 +281,18 @@ const Course = ({
                     </div>
 
                     {/* DURATION */}
-                    <div className="text-xs pt-1" style={{ color: "rgba(255,255,255,0.5)" }}>
+                    <div
+                      className="text-xs pt-1"
+                      style={{ color: "rgba(255,255,255,0.5)" }}
+                    >
                       {course.totalDuration || "0 m 0 s"}
                     </div>
 
                     {/* PRICE */}
-                    <div className="text-sm font-bold pt-1" style={{ color: "#f0f4ff" }}>
+                    <div
+                      className="text-sm font-bold pt-1"
+                      style={{ color: "#f0f4ff" }}
+                    >
                       ₹ {course.price}
                     </div>
 
@@ -259,7 +343,14 @@ const Course = ({
           }}
         />
       )}
+
+{GoLiveopen && <GoLive  courses={courses} onClose={() => setGoLiveModal(false)} PUBLISHED  = {COURSE_STATUS} />}
     </div>
+
+
+
+
+
   );
 };
 

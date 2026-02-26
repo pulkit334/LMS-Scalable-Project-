@@ -15,6 +15,11 @@ export const AiApi = axios.create({
   baseURL: import.meta.env.VITE_AI_BASE_URL,
   withCredentials: true,
 });
+
+export const LiveClassAPI = axios.create({
+  baseURL: import.meta.env.VITE_LIVE_URL,
+  withCredentials: true,
+});
 let isRefreshing = false;
 let refreshPromise = null;
 api.interceptors.response.use(
@@ -100,3 +105,10 @@ AiApi.interceptors.request.use((config) => {
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
+//Live Class APi
+
+LiveClassAPI.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token")
+  if (token) config.headers.Authorization = `Bearer ${token}`
+  return config 
+})

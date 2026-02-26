@@ -4,6 +4,9 @@ import { fetchEnrolledCourses } from "../../../Slices/EnroilledCourseSlice";
 import ProgressBar from "@ramonak/react-progress-bar";
 import { MoreVertical, Check, Trash2 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useLiveStatus } from "../../Custom/useLiveStatus";
+import { JoinLiveClass} from "../../../services/Live/Live-Services";
+import toast from "react-hot-toast";
 
 const EnrolledCourses = () => {
   const dispatch = useDispatch();
@@ -16,10 +19,30 @@ const EnrolledCourses = () => {
 
   const [activeTab, setActiveTab] = useState("all");
   const [openMenu, setOpenMenu] = useState(null);
+  const [joining, setJoining] = useState(null)
 
   useEffect(() => {
     dispatch(fetchEnrolledCourses());
   }, [location.pathname, dispatch]);
+
+  // get all course ids
+  const courseIds = enrolledCourses?.map(c => c._id) || []
+  const liveMap = useLiveStatus(courseIds)
+
+  const handleJoin = async (e, classId) => {
+    e.stopPropagation()
+    setJoining(classId)
+    try {
+      const data = await JoinLiveClass(classId)
+      navigate(`/live/${classId}/watch`, {
+        state: { token: data.token, host: data.host }
+      })
+    } catch (err) {
+      toast.error(err.message || 'Failed to join')
+    } finally {
+      setJoining(null)
+    }
+  }
 
   if (loading || enrolledCourses === null) {
     return <div className="text-white">Loading...</div>;
@@ -34,9 +57,6 @@ const EnrolledCourses = () => {
   }
 
   const filteredCourses = enrolledCourses.filter((course) => {
-
-    console.log( course.coursePercentage);
-
     if (activeTab === "completed") return course.coursePercentage === 100;
     if (activeTab === "pending") return course.coursePercentage < 100;
     return true;
@@ -103,6 +123,18 @@ const EnrolledCourses = () => {
                 <p className="text-sm text-slate-400 line-clamp-1">
                   {course.courseDescription}
                 </p>
+
+                {/* LIVE BADGE */}
+                {liveMap[course._id] && (
+                  <button
+                    onClick={(e) => handleJoin(e, liveMap[course._id].classId)}
+                    disabled={joining === liveMap[course._id].classId}
+                    className="mt-1.5 flex items-center gap-1.5 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-xs font-bold px-3 py-1 rounded-full transition"
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
+                    {joining === liveMap[course._id].classId ? 'Joining...' : '🔴 Live'}
+                  </button>
+                )}
               </div>
             </div>
 
@@ -119,7 +151,6 @@ const EnrolledCourses = () => {
                     Progress {course?.coursePercentage || 0}%
                   </p>
                 )}
-
                 <ProgressBar
                   completed={course?.coursePercentage || 0}
                   height="6px"

@@ -7,8 +7,9 @@ import helmet from "helmet";
 import cookieParser from "cookie-parser";
 import { xss } from "express-xss-sanitizer";
 import fileUpload from "express-fileupload";
+import {initSocket} from "./config/socket.js"
+import { createServer } from "http";
 
-// import requestIp from "request-ip"
 // ---- LOCAL IMPORTS ----
 import "./schedular/cronejob.js";
 import "./schedular/cart-schedular-service.js";
@@ -41,11 +42,13 @@ app.use(cookieParser());
 // ---------- CORS ----------
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: [
+      "http://localhost:5173",
+      "https://bt792gm6-5173.inc1.devtunnels.ms"
+    ],
     credentials: true,
   }),
 );
-
 // ---------- FILE UPLOAD ----------
 app.use(
   fileUpload({
@@ -91,9 +94,10 @@ app.use((err, req, res, next) => {
 // ---------- SERVER ----------
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, async () => {
-  connect();
-  console.log(` Server running on port ${PORT}`);
+const httpServer = createServer(app);
+initSocket(httpServer);
+httpServer.listen(PORT, async () => {
+  (connect(), console.log(` Server running on port ${PORT}`));
 });
 
 // import cluster from "cluster";
