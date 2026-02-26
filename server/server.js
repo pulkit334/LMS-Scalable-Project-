@@ -20,6 +20,7 @@ import firebaseRoute from "./routes/NotificationRoute.js";
 import WebHookRoute from "./routes/WebhookRoutes.js";
 import { checkAbandonedCarts } from "./schedular/cart-schedular-service.js";
 import AIRoutes from "./routes/ai-routes.js";
+import LiveRoutes from "./routes/Live-class-Routes.js";
 // ---- APP INIT ----
 const app = express();
 
@@ -62,6 +63,7 @@ app.use("/api/v1", firebaseRoute);
 app.use("/api/v2", adminRoutes);
 app.use("/api/v3", WebHookRoute);
 app.use("/api/v4", AIRoutes);
+app.use("/api/v5", LiveRoutes);
 app.get("/test-cron", async (req, res) => {
   console.log(" Testing cart reminder...");
   await checkAbandonedCarts();
@@ -76,7 +78,7 @@ app.get("/", async (req, res) => {
 import "./service/questionGen-worker.js";
 import "./service/transcription-worker.js";
 import "./service/Notificaiton-worker.js";
-import "./service/Notes-Gn-Worker.js"
+import "./service/Notes-Gn-Worker.js";
 // ---------- ERROR HANDLER ----------
 app.use((err, req, res, next) => {
   console.error(err.stack);

@@ -243,7 +243,7 @@ exports.UserMangment = async (req, res) => {
 
     const skip = (page - 1) * limit;
     // student Filter Student and Instrcuor
-    const search = req?.query?.search.trim() || "";
+    const search = req?.query?.search || "";
     //  only student + instructor
     const filter = {
       accountType: { $in: ["instructor", "student"] },
@@ -279,7 +279,7 @@ exports.UserMangment = async (req, res) => {
         },
       },
     });
-  } catch (err) {
+  } catch (err) { 
     console.log("The error is ", err);
     return res.status(500).json({
       success: false,
@@ -288,7 +288,7 @@ exports.UserMangment = async (req, res) => {
     });
   }
 };
-// exports.CourseManagment = async (req, res) => {
+
 //   try {
 //     const search = req.query.search?.trim();
 //     const page = Number(req.query.page) || 1;
