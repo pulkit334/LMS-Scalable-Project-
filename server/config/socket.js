@@ -5,7 +5,7 @@ let io;
 export const initSocket = (server) => {
   io = new Server(server, {
     cors: {
-      origin: "https://bt792gm6-5173.inc1.devtunnels.ms",  // 
+      origin: true, 
       credentials: true,
       methods: ["GET", "POST"]
     }

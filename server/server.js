@@ -40,16 +40,13 @@ app.use(xss());
 app.use(cookieParser());
 
 // ---------- CORS ----------
+// ---------- CORS ----------
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "https://bt792gm6-5173.inc1.devtunnels.ms"
-    ],
+    origin: true, 
     credentials: true,
   }),
-);
-// ---------- FILE UPLOAD ----------
+);// ---------- FILE UPLOAD ----------
 app.use(
   fileUpload({
     useTempFiles: true,

@@ -11,7 +11,7 @@ import { getIO } from "../config/socket.js";
 //create the class
 export const createClass = async (req, res) => {
   try {
-    console.log("the course Clasa would ",req.body)
+    console.log("the course Clasa would ", req.body);
     const { title, courseId } = req.body;
     const cls = await Class.create({
       title,
@@ -19,7 +19,7 @@ export const createClass = async (req, res) => {
       course: courseId,
       state: "SCHEDULED",
     });
-   return  res.json({ success: true, class: cls });
+    return res.json({ success: true, class: cls });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -54,10 +54,14 @@ export const CreateRoom = async (req, res) => {
     cls.startedAt = new Date();
     await cls.save();
 
-const io = getIO();
-io.to(`course:${cls.course}`).emit('class:live',{classId : classId, title : cls.title , course  : cls.course})
+    const io = getIO();
+    io.to(`course:${cls.course}`).emit("class:live", {
+      classId: classId,
+      title: cls.title,
+      course: cls.course,
+    });
 
-   return  res.json({ token, host: process.env.LIVEKIT_URL });
+    return res.json({ token, host: process.env.LIVEKIT_URL });
   } catch (err) {
     return res.status(500).json({
       message: "Internal Error",
@@ -96,7 +100,7 @@ export const JoinRoom = async (req, res) => {
       false,
     );
 
-   return  res.json({ token, host: process.env.LIVEKIT_URL });
+    return res.json({ token, host: process.env.LIVEKIT_URL });
   } catch (err) {
     console.log("the erro was", err.message);
     return res.status(500).json({
@@ -125,7 +129,7 @@ export const EndRoom = async (req, res) => {
     cls.endedAt = new Date();
     await cls.save();
 
- return    res.json({ success: true, message: "Class ended" });
+    return res.json({ success: true, message: "Class ended" });
   } catch (err) {
     return res.status(500).json({
       message: "Failed Try Again",
@@ -140,7 +144,7 @@ export const getRoomParticipants = async (req, res) => {
 
     const participants = await roomService.listParticipants(String(classId));
 
-  return   res.json({
+    return res.json({
       success: true,
       count: participants.length,
       participants: participants.map((p) => ({
@@ -166,7 +170,7 @@ export const livekitWebhook = async (req, res) => {
     switch (event.event) {
       case "room_finished":
         await Class.findByIdAndUpdate(event.room.name, {
-          state: "ENDED", 
+          state: "ENDED",
           endedAt: new Date(),
         });
       case "participant_joined":
@@ -177,9 +181,43 @@ export const livekitWebhook = async (req, res) => {
         break;
     }
 
-   return  res.status(200).json({ received: true });
+    return res.status(200).json({ received: true });
   } catch (err) {
     console.log("Webhook error:", err.message);
     res.status(400).json({ message: err.message });
+  }
+};
+
+//keep pollign
+export const getLiveSignal = async (req, res) => {
+  try {
+    const { classId } = req.params;
+    console.log("hey there i am htting in the backend");
+    const liveClass = await Class.findOne({ course: classId, state: "LIVE" });
+    const anyClass = await Class.findById("69a1677f003c2a81d99c1179");
+    console.log("The live class:", anyClass);
+    if (!liveClass)
+      return res.status(404).json({
+        success: false,
+        message: "Not Found",
+      });
+
+    const rooms = await roomService.listRooms([String(classId)]); // renamed
+    const isActuallyLive = rooms.length > 0; // fixed condition
+
+    if (liveClass.state === "LIVE" && !isActuallyLive) {
+      liveClass.state = "ENDED";
+      await liveClass.save(); // await save
+    }
+
+    return res.status(200).json({
+      success: true,
+      state: liveClass.state,
+      isLive: isActuallyLive,
+      classId: liveClass._id,
+    });
+  } catch (error) {
+    console.log("the error would be ", error);
+    res.status(400).json({ message: error.message });
   }
 };

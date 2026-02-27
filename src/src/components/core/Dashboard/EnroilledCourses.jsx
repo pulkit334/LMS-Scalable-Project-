@@ -5,7 +5,7 @@ import ProgressBar from "@ramonak/react-progress-bar";
 import { MoreVertical, Check, Trash2 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useLiveStatus } from "../../Custom/useLiveStatus";
-import { JoinLiveClass} from "../../../services/Live/Live-Services";
+import { JoinLiveClass, RecheckLive} from "../../../services/Live/Live-Services";
 import toast from "react-hot-toast";
 
 const EnrolledCourses = () => {
