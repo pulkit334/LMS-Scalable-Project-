@@ -228,9 +228,64 @@ const VedioDetails = () => {
           height: 1px;
           background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06) 20%, rgba(255,255,255,0.06) 80%, transparent);
         }
+
+        /* ===== MOBILE RESPONSIVE ===== */
+        @media (max-width: 640px) {
+          .vd-container {
+            padding-left: 12px !important;
+            padding-right: 12px !important;
+            padding-top: 12px !important;
+          }
+
+          .vd-title {
+            font-size: 16px !important;
+          }
+
+          .vd-desc {
+            font-size: 13px !important;
+          }
+
+          .completion-overlay-btn {
+            padding: 8px 12px !important;
+            font-size: 12px !important;
+          }
+
+          .overlay-btns-row {
+            flex-wrap: wrap;
+            gap: 8px !important;
+            justify-content: center;
+          }
+
+          .review-card {
+            padding: 12px !important;
+          }
+
+          .review-header-row {
+            flex-direction: column;
+            align-items: flex-start !important;
+            gap: 8px !important;
+          }
+
+          .review-avatar {
+            width: 30px !important;
+            height: 30px !important;
+            font-size: 11px !important;
+          }
+
+          .reviews-heading {
+            font-size: 14px !important;
+          }
+        }
+
+        @media (max-width: 400px) {
+          .vd-container {
+            padding-left: 8px !important;
+            padding-right: 8px !important;
+          }
+        }
       `}</style>
 
-      <div className="max-w-5xl mx-auto px-6 pt-6 pb-16">
+      <div className="vd-container max-w-5xl mx-auto px-6 pt-6 pb-16">
 
         {/* VIDEO PLAYER */}
         <div
@@ -285,7 +340,7 @@ const VedioDetails = () => {
                 <p style={{ color: "rgba(255,255,255,0.7)", fontSize: 14 }}>Lecture complete!</p>
               </div>
 
-              <div className="flex gap-3">
+              <div className="overlay-btns-row flex gap-3">
                 <button
                   onClick={handleRewatch}
                   className="completion-overlay-btn flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm"
@@ -331,12 +386,12 @@ const VedioDetails = () => {
         {/* TITLE & DESCRIPTION */}
         <div className="mt-6">
           <h1
-            className="text-xl font-bold leading-snug"
+            className="vd-title text-xl font-bold leading-snug"
             style={{ fontFamily: "'Syne', sans-serif", color: "#f0f4ff", letterSpacing: "-0.02em" }}
           >
             {currentSub.tittle}
           </h1>
-          <p className="mt-2 text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.45)" }}>
+          <p className="vd-desc mt-2 text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.45)" }}>
             {currentSub.description}
           </p>
         </div>
@@ -346,9 +401,9 @@ const VedioDetails = () => {
 
         {/* ===== Course Reviews List ===== */}
         <div>
-          <div className="flex items-center justify-between mb-6">
+          <div className="review-header-row flex items-center justify-between mb-6">
             <h2
-              className="text-base font-bold"
+              className="reviews-heading text-base font-bold"
               style={{ fontFamily: "'Syne', sans-serif", color: "#f0f4ff", letterSpacing: "-0.01em" }}
             >
               Student Reviews
@@ -377,7 +432,7 @@ const VedioDetails = () => {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-3 mb-2">
                       <div
-                        className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+                        className="review-avatar w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
                         style={{
                           background: "linear-gradient(135deg, #6366f1, #4f46e5)",
                           color: "#fff",
@@ -389,7 +444,7 @@ const VedioDetails = () => {
                         <p className="text-sm font-semibold" style={{ color: "#f0f4ff" }}>
                           {rev?.user?.firstName} {rev?.user?.lastName}
                         </p>
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5 flex-wrap">
                           <div className="flex gap-0.5">{renderStars(rev?.rating)}</div>
                           <span style={{ color: "rgba(255,255,255,0.2)", fontSize: 11 }}>•</span>
                           <span style={{ color: "rgba(255,255,255,0.3)", fontSize: 11 }}>{rev?.Course?.courseName}</span>

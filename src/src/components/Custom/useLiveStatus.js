@@ -21,12 +21,13 @@ export const useLiveStatus = (courseIds = []) => {
       // 2. then recheck — if this throws, rooms are already joined
       try {
         const response = await RecheckLive(courseIds);
+        console.log("the respone for the web socket would be ",response)
         if (response) setLiveMap(response);
       } catch (error) {
         handleApiError(error); // don't let this crash anything
       }
     });
-
+    
     socket.on("class:live", (data) => {
       setLiveMap((prev) => ({
         ...prev,

@@ -1,10 +1,11 @@
+/* eslint-disable no-unused-vars */
 import React, { useState } from "react";
 import { SubmitHandle } from "../../Auth/Auth";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
+import GoogleLoginButton from "../Auth_frontend/google/googleauth";
 
 export const Login = () => {
-  // const [darkstate, setdarkstate] = useState("student");
   const dispatch = useDispatch();
   const Navigate = useNavigate();
 
@@ -12,8 +13,6 @@ export const Login = () => {
     email: "",
     password: "",
   });
-
-  // const [loading, setLoading] = useState(false);
 
   const handleFormChange = (e) => {
     setformdata({
@@ -23,14 +22,14 @@ export const Login = () => {
   };
 
   return (
-    <div className="min-h-screen overflow-y-hidden bg-[#0b1220] flex items-center justify-center">
-      <div className="w-[90%] relative overflow-hidden max-w-6xl grid grid-cols-2 gap-14 items-center">
+    <div className="min-h-screen bg-[#0b1220] flex items-center justify-center px-4 sm:px-6 overflow-y-auto">
+      <div className="w-full max-w-6xl relative overflow-hidden grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-14 items-center">
+        
         {/* ================= LEFT : LOGIN FORM ================= */}
 
-        <div className="bg-[#161d29] flex flex-col gap-1  p-10 rounded-xl text-white space-y-6">
-
+        <div className="bg-[#161d29] flex flex-col gap-1 p-6 sm:p-8 md:p-10 rounded-xl text-white space-y-6">
           <div>
-            <h1 className="text-3xl font-semibold">Welcome Back</h1>
+            <h1 className="text-2xl sm:text-3xl font-semibold">Welcome Back</h1>
             <p className="text-sm text-slate-400 mt-1">
               Discover your passion,{" "}
               <span className="text-cyan-400 font-semibold">
@@ -39,9 +38,8 @@ export const Login = () => {
             </p>
           </div>
 
-
           <div className="space-y-1">
-            <label className="text-sm text-slate-400  ">Email Address</label>
+            <label className="text-sm text-slate-400">Email Address</label>
             <input
               type="email"
               name="email"
@@ -52,6 +50,7 @@ export const Login = () => {
               className="w-full bg-[#0b1220] px-4 py-2 rounded-md outline-none border border-transparent focus:border-cyan-400"
             />
           </div>
+
           <div className="space-y-1">
             <label className="text-sm text-slate-400">Password</label>
             <input
@@ -94,27 +93,16 @@ export const Login = () => {
           </Link>
 
           {/* Google Button */}
-          <button
-            onClick={() => {
-              window.location.href = "http://localhost:5000/api/v1/auth/google";
-            }}
-            className="flex items-center justify-center gap-2 w-full border py-2 rounded"
-          >
-            <img
-              src="https://developers.google.com/identity/images/g-logo.png"
-              alt="google"
-              className="h-5"
-            />
-            Continue with Google
-          </button>
+          <GoogleLoginButton />
+
         </div>
 
         {/* ================= RIGHT : IMAGE SPACE ================= */}
-        <div className="relative h-117.5 rounded-3xl overflow-hidden flex items-center justify-center">
+        <div className="relative h-72 sm:h-96 md:h-[470px] rounded-3xl overflow-hidden flex items-center justify-center">
           <img
             src="/Images/login.webp"
             alt="Login illustration"
-            className="h-120 w-auto rounded-2xl object-cover shadow-xl"
+            className="h-full w-auto rounded-2xl object-cover shadow-xl"
           />
         </div>
       </div>

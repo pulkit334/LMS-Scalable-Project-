@@ -31,7 +31,7 @@ export const CreateRoom = async (req, res) => {
     //Id id
     const { classId } = req.params;
     const teacherId = req.user.id;
-
+console.log('🔴 CreateRoom hit', req.params, req.user.id) 
     const cls = await Class.findOne({ _id: classId, teacher: teacherId });
     if (!cls)
       return res
@@ -52,8 +52,8 @@ export const CreateRoom = async (req, res) => {
     const token = await generateToken(String(classId), String(teacherId), true);
     cls.state = "LIVE";
     cls.startedAt = new Date();
-    await cls.save();
-
+   const saved =  await cls.save();
+ console.log("the state of the live class would be ",saved.state)
     const io = getIO();
     io.to(`course:${cls.course}`).emit("class:live", {
       classId: classId,
@@ -191,30 +191,36 @@ export const livekitWebhook = async (req, res) => {
 //keep pollign
 export const getLiveSignal = async (req, res) => {
   try {
-    const { classId } = req.params;
-    console.log("hey there i am htting in the backend");
-    const liveClass = await Class.findOne({ course: classId, state: "LIVE" });
-    const anyClass = await Class.findById("69a1677f003c2a81d99c1179");
-    console.log("The live class:", anyClass);
+    const { courseId } = req.params;
+
+    const liveClass = await Class.findOne({ 
+      course: courseId,  
+      state: "LIVE" 
+    });
+
     if (!liveClass)
       return res.status(404).json({
         success: false,
         message: "Not Found",
       });
 
-    const rooms = await roomService.listRooms([String(classId)]); // renamed
-    const isActuallyLive = rooms.length > 0; // fixed condition
+    const rooms = await roomService.listRooms([String(liveClass._id)])
+    const isActuallyLive = rooms.length > 0
 
-    if (liveClass.state === "LIVE" && !isActuallyLive) {
-      liveClass.state = "ENDED";
-      await liveClass.save(); // await save
+    if (!isActuallyLive) {
+      // use updateOne instead of save() — avoids validation error
+      await Class.updateOne(
+        { _id: liveClass._id },
+        { state: "ENDED" }
+      )
     }
 
     return res.status(200).json({
       success: true,
-      state: liveClass.state,
       isLive: isActuallyLive,
       classId: liveClass._id,
+      course: courseId,
+      title: liveClass.title,
     });
   } catch (error) {
     console.log("the error would be ", error);

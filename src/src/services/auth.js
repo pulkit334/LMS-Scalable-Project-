@@ -18,8 +18,9 @@ export const AUTH = {
   Profile_Recovery: "/profile/recovery",
   EmailVerification: "/recover-account",
   RefreshVerification: "/refresh",
+  google_auth_login: "/auth/google",
 };
-` `;
+
 export const Course = {
   CreateCourse: "/course/create",
   categories: "/category/all",
@@ -208,7 +209,11 @@ export const deleteSection = async (sectionId) => {
   );
 };
 export const createSubsection = async (formData, config = {}) => {
-  const response = await api.post(Subsection.CreateSubsection, formData, config);
+  const response = await api.post(
+    Subsection.CreateSubsection,
+    formData,
+    config,
+  );
   return response;
 };
 
@@ -292,4 +297,18 @@ export const CategoryResponse = async (data) => {
   const response = await api.get(categories.GET_ALL);
   console.log("the categouyr respons eis theese s", response);
   return response?.data;
+};
+
+//for google 
+export const googleauth = async (code,accountType) => {
+  try {
+    const response = await api.get(`${AUTH.google_auth_login}?code=${code}&accountType=${accountType}`);
+    console.log("the google auth result data would be ",response)
+    return response.data;
+
+  } catch (err) {
+    console.error("Google Auth Error : ", err);
+    
+    throw err;
+  }
 };

@@ -49,6 +49,7 @@ import { toast } from "react-toastify";
 import { NotificationAuth } from "./services/Notificaiton/Notificaitonservice";
 import TeacherLive from "./components/LiveClass/LiveTeacher";
 import  Warning from "./utils/Warning"
+import { GoogleOAuthProvider } from "@react-oauth/google";
 import StudentLive from "./components/LiveClass/StudentLive";
 function App() {
   const dispatch = useDispatch();
@@ -106,7 +107,8 @@ function App() {
     setupFCM();
   }, [token, user]);Routes
 
-  return (
+ return (
+    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
     <div className="w-screen min-h-screen flex flex-col font-inter">
       <Routes>
         {/* PUBLIC LAYOUT */}
@@ -259,6 +261,7 @@ function App() {
       <Route path="/live/:classId/watch" element={<StudentLive />} />
       </Routes>
     </div>
+    </GoogleOAuthProvider>
   );
 }
 

@@ -17,6 +17,6 @@ router.post("/live/:classId/join", auth, isstudent, JoinRoom);
 router.post("/live/:classId/end", auth, isinstructor, EndRoom);
 router.get("/live/:classId/participants", auth, getRoomParticipants);
 router.get("/live/verifying-classes", auth, livekitWebhook);
-router.get("/live/:classId/re-checking", auth, getLiveSignal);
+router.get("/live/:courseId/re-checking", auth, getLiveSignal);
 module.exports = router;
 

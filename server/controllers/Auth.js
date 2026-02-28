@@ -7,6 +7,8 @@ require("dotenv").config();
 
 const Profile = require("../models/profile");
 const mailsender = require("../utils/mailpotp");
+const {client} = require("../../server/utils/googleconfig")
+
 exports.sendOtp = async (req, res) => {
   try {
     console.log(" sendOtp ROUTE HIT");
@@ -147,7 +149,7 @@ exports.sinup = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     //get the Data from Req Body
-    const { email, password} = req.body;
+    const { email, password } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({
@@ -159,7 +161,7 @@ exports.login = async (req, res) => {
     //check user exist or not
 
     const user = await User.findOne({ email });
-     
+
     if (!user) {
       return res.status(400).json({
         success: false,
@@ -168,12 +170,12 @@ exports.login = async (req, res) => {
       });
     }
 
-    if(user.status==="Blocked"){
+    if (user.status === "Blocked") {
       return res.status(403).json({
-        success : false,
-        code : "Account Have Been Blocked Kindly Connect To Company",
-        message : "Account Blocked"
-      })
+        success: false,
+        code: "Account Have Been Blocked Kindly Connect To Company",
+        message: "Account Blocked",
+      });
     }
     // check deleted
     if (user.isdeleted) {
@@ -187,7 +189,7 @@ exports.login = async (req, res) => {
     //User Check exist or not
     const isPasswordValid = bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-        return res.status(401).json({
+      return res.status(401).json({
         success: false,
         message: "Invalid password",
         code: "INVALID_PASSWORD",
@@ -226,7 +228,7 @@ exports.login = async (req, res) => {
       sameSite: "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
-    console.log(user?.accountType)
+    console.log(user?.accountType);
     return res.cookie("token", token, options).status(200).json({
       success: true,
       user,
@@ -243,103 +245,6 @@ exports.login = async (req, res) => {
     });
   }
 };
-// exports.login = async (req, res) => {
-//   try {
-//     //get the Data from Req Body
-//     const { email, password, role } = req.body;
-
-//     if (!email || !password) {
-//       return res.status(400).json({
-//         message: "All fields Are required",
-//         success: false,
-//       });
-//     }
-
-//     //check user exist or not
-
-//     const user = await User.findOne({ email });
-
-//     if (!user) {
-//       return res.status(400).json({
-//         success: false,
-//         code: "USER_NOT_FOUND",
-//         message: "User does not exist",
-//       });
-//     }
-//     if (user && user.accountType !== role) {
-//       return res.status(403).json({
-//         success: false,
-//         code: "ACCESS_DENIED",
-//         message: "You do not have permission to access this resource.",
-//       });
-//     }
-//     // check deleted
-//     if (user.isdeleted) {
-//       return res.status(403).json({
-//         success: false,
-//         code: "ACCOUNT_DELETED REQUEST IS SUBMITTED",
-//         message: "Account is disabled",
-//       });
-//     }
-
-//     //User Check exist or not
-//     const isPasswordValid = bcrypt.compare(password, user.password);
-//     if (!isPasswordValid) {
-//         return res.status(401).json({
-//         success: false,
-//         message: "Invalid password",
-//         code: "INVALID_PASSWORD",
-//       });
-//     }
-
-//     const payload = {
-//       email: user.email,
-//       id: user._id,
-//       accountType: user.accountType,
-//     };
-
-//     const token = jwt.sign(payload, process.env.JWT_SECRET, {
-//       expiresIn: "1d",
-//     });
-//     //refresh Token
-//     const Refreshtoken = jwt.sign(payload, process.env.JWT_REFRESH_SECRET, {
-//       expiresIn: "7d",
-//     });
-
-//     //attach token and remove password
-//     user.token = token;
-//     user.password = undefined;
-
-//     //create cookie
-//     const options = {
-//       httpOnly: true, // cannot access via JS
-//       secure: false,
-//       sameSite: "lax", // prevents CSRF issues
-//       expires: new Date(Date.now() + 60 * 15 * 1000), // 2 hours
-//     };
-
-//     res.cookie("refreshToken", Refreshtoken, {
-//       httpOnly: true,
-//       secure: false,
-//       sameSite: "lax",
-//       maxAge: 7 * 24 * 60 * 60 * 1000,
-//     });
-//     return res.cookie("token", token, options).status(200).json({
-//       success: true,
-//       user,
-//       token,
-//       message: "Logged in",
-//     });
-//   } catch (err) {
-//     console.log("LOGIN ERROR:", err);
-
-//     return res.status(500).json({
-//       message: "Authenticatin Failed",
-//       success: false,
-//       error: err.message,
-//     });
-//   }
-// };
 
 exports.changePassword = async (req, res) => {
   try {
@@ -404,6 +309,97 @@ exports.changePassword = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Error while changing password",
+    });
+  }
+};
+
+
+exports.googleLogin = async (req, res) => {
+    console.log("CLIENT:", client); //  add this
+  console.log("CLIENT TYPE:", typeof client); //  add this
+  try {
+    //code
+    const { code, accountType } = req.query;
+          console.log("CODE RECEIVED:", code); //  add this
+    if (!code) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Code is required" });
+    }
+    //code -> server -> Excahneg ek Token
+    const { tokens } = await client.getToken(code);
+
+    console.log("TOKENS:", tokens)
+    //Use TOken Se -> muje User Profile Details
+    const ticket = await client.verifyIdToken({
+      idToken: tokens.id_token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const { email, name, picture, sub: googleId } = ticket.getPayload();
+    const [firstName, ...lastArr] = name.split(" ");
+    const lastName = lastArr.join(" ") || "";
+    //Check If USer Exist or Not
+    let user = await User.findOne({ email });
+    //if Not-> create them
+    if (!user) {
+      const profile = await Profile.create({
+        gender: null,
+        dateofBirth: null,
+        about: null,
+        contactNumber: null,
+      });
+
+      //create the new user
+      user = await User.create({
+        firstName,
+        lastName,
+        email,
+        googleId,
+        accountType: accountType || "Student",
+        additionalDetails: profile._id,
+        image: picture,
+        password: undefined,
+      });
+    }
+//generate the tokens same as uor login
+const payload = {
+  email : user.email,
+  id : user._id,
+  accountType : user?.accountType
+}
+
+const token = jwt.sign(payload,process.env.JWT_SECRET,{expiresIn : "1d"});
+const RefreshToken = jwt.sign(payload,process.env.JWT_REFRESH_SECRET,{expiresIn : "1d"});
+user.password = undefined;
+
+const options = {
+  httpOnly : true ,
+  secure : true,
+  sameSite : "lax",
+  maxAge : 7 * 24 * 60 * 60 * 1000
+}
+
+res.cookie("refreshToken", RefreshToken, {
+  httpOnly: true,
+  secure: true,
+  sameSite: "lax",
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+});
+
+return res.cookie("token", token, options).status(200).json({
+  success: true,
+  user,
+  token,
+  message: "Google Login SuccessFull"
+});
+
+  } catch (err) {
+    console.error("Google Auth Error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Google Authentication Failed",
+      error: err.message,
     });
   }
 };

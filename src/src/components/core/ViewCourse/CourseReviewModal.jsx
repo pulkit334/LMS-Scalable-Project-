@@ -202,12 +202,63 @@ const CourseReviewModal = ({
           background: rgba(255,255,255,0.1);
           color: #fff;
         }
+
+        /* ===== MOBILE RESPONSIVE ===== */
+        @media (max-width: 640px) {
+          .modal-card {
+            width: 100% !important;
+            max-width: 100% !important;
+            border-radius: 16px !important;
+            max-height: 90vh;
+            overflow-y: auto;
+          }
+
+          .modal-inner-padding {
+            padding: 16px !important;
+          }
+
+          .modal-header-padding {
+            padding: 14px 16px !important;
+          }
+
+          .modal-actions-row {
+            flex-direction: column !important;
+            gap: 10px !important;
+          }
+
+          .modal-actions-row button {
+            width: 100% !important;
+            justify-content: center;
+          }
+
+          .star-item svg {
+            width: 28px !important;
+            height: 28px !important;
+          }
+
+          .review-textarea {
+            min-height: 100px !important;
+            font-size: 13px !important;
+          }
+
+          .modal-user-avatar {
+            width: 36px !important;
+            height: 36px !important;
+          }
+        }
+
+        @media (max-width: 380px) {
+          .star-item svg {
+            width: 24px !important;
+            height: 24px !important;
+          }
+        }
       `}</style>
 
       <div className="modal-card w-full max-w-lg rounded-2xl overflow-hidden">
         {/* Header */}
         <div
-          className="flex items-center justify-between px-6 py-5"
+          className="modal-header-padding flex items-center justify-between px-6 py-5"
           style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
         >
           <div>
@@ -229,13 +280,13 @@ const CourseReviewModal = ({
           </button>
         </div>
 
-        <div className="p-6">
+        <div className="modal-inner-padding p-6">
           {/* User */}
           <div className="flex items-center gap-3 mb-6">
             <img
               src={user?.image?.url}
               alt="user"
-              className="h-10 w-10 rounded-full object-cover flex-shrink-0"
+              className="modal-user-avatar h-10 w-10 rounded-full object-cover flex-shrink-0"
               style={{ border: "2px solid rgba(255,255,255,0.08)" }}
             />
             <div>
@@ -252,7 +303,7 @@ const CourseReviewModal = ({
               <label className="block text-xs font-semibold mb-3 uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.3)" }}>
                 Rating
               </label>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 flex-wrap">
                 <div className="flex gap-1.5">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <span key={star} className="star-item">
@@ -302,7 +353,7 @@ const CourseReviewModal = ({
             </div>
 
             {/* Actions */}
-            <div className="flex justify-end gap-2.5 pt-1">
+            <div className="modal-actions-row flex justify-end gap-2.5 pt-1">
               <button
                 type="button"
                 onClick={() => setReviewModal(false)}

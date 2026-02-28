@@ -60,7 +60,7 @@ const userSchema = new mongoose.Schema(
         default: "",
       },
     },
-
+    googleId: { type: String },
     recoveryToken: {
       type: String,
     },

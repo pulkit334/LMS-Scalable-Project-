@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { auth, isinstructor, isstudent, admin } = require("../middlewares/auth");
 const jwt = require("jsonwebtoken");
-const passport = require("passport");
+// const passport = require("passport");
 const { cacheMiddleware } = require("../middlewares/Caching");
 //************** for Authentication **************//
 const {
@@ -10,30 +10,31 @@ const {
   sinup,
   login,
   changePassword,
+  googleLogin,
 } = require("../controllers/Auth");
 
 const { resetpasswordtoken, resetPassword } = require("../controllers/reset");
 
-router.get(
-  "/auth/google",
-  passport.authenticate("google", {
-    scope: ["profile", "email"],
-  }),
-);
+// router.get(
+//   "/auth/google",
+//   passport.authenticate("google", {
+//     scope: ["profile", "email"],
+//   }),
+// );
 // Google callback
-router.get(
-  "/auth/google/callback",
-  passport.authenticate("google", { session: false }),
-  (req, res) => {
-    const token = jwt.sign(
-      { id: req.user._id, email: req.user.email },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" },
-    );
+// router.get(
+//   "/auth/google/callback",
+//   passport.authenticate("google", { session: false }),
+//   (req, res) => {
+//     const token = jwt.sign(
+//       { id: req.user._id, email: req.user.email },
+//       process.env.JWT_SECRET,
+//       { expiresIn: "7d" },
+//     );
 
-    res.redirect(`http://localhost:5173/google-auth?token=${token}`);
-  },
-);
+//     res.redirect(`http://localhost:5173/google-auth?token=${token}`);
+//   },
+// );
 //==============Refresh Token =====================//
 const { refresh } = require("../controllers/Refreshcontroller");
 
@@ -262,5 +263,8 @@ router.post("/courses/:courseId/ratings", auth, isstudent, createRating);
 //cart routes
 router.post("/user/add-to-cart", auth, isstudent, saveCartItems);
 router.get("/user/get-cart", auth, isstudent, getcartitems);
-router.get("/test-notification",auth,isstudent)
+router.get("/test-notification",auth,isstudent);
+
+//google auth 
+router.get("/auth/google",googleLogin)
 module.exports = router;

@@ -7,11 +7,13 @@ import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import IconButton from "../common/iconButton";
-import { ChevronDown, ChevronRight, CheckCircle2, Circle, PlayCircle, Star } from "lucide-react";
+import { ChevronDown, ChevronRight, CheckCircle2, Circle, PlayCircle, Star, X, Menu } from "lucide-react";
 
 const VedioDEtailsSIdebar = ({ setReviewModal }) => {
   const [activeStatus, setActiveStatus] = useState("");
   const [vedioBarActive, setVedioBarActive] = useState("");
+  // Mobile drawer state
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -54,74 +56,15 @@ const VedioDEtailsSIdebar = ({ setReviewModal }) => {
 
   const progress = totalNoOfLectures > 0 ? Math.round((completedLectures?.length / totalNoOfLectures) * 100) : 0;
 
-  return (
-    <div className="w-95 h-screen flex flex-col text-white"
-      style={{
-        background: "linear-gradient(180deg, #080f1a 0%, #050c18 100%)",
-        borderRight: "1px solid rgba(255,255,255,0.06)",
-        fontFamily: "'DM Sans', sans-serif",
-      }}
-    >
-      {/* Google Font Import */}
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Syne:wght@600;700;800&display=swap');
+  // Close mobile sidebar when navigating
+  const handleSubsectionClick = (courseId, secId, topicId) => {
+    navigate(`/view-course/${courseId}/section/${secId}/sub-section/${topicId}`);
+    setVedioBarActive(topicId);
+    setMobileOpen(false);
+  };
 
-        .sidebar-scroll::-webkit-scrollbar { width: 4px; }
-        .sidebar-scroll::-webkit-scrollbar-track { background: transparent; }
-        .sidebar-scroll::-webkit-scrollbar-thumb { background: rgba(251,191,36,0.25); border-radius: 99px; }
-        .sidebar-scroll::-webkit-scrollbar-thumb:hover { background: rgba(251,191,36,0.5); }
-
-        .subsection-item {
-          position: relative;
-          transition: all 0.2s ease;
-        }
-        .subsection-item::before {
-          content: '';
-          position: absolute;
-          left: 0; top: 0; bottom: 0;
-          width: 2px;
-          background: transparent;
-          transition: all 0.25s ease;
-        }
-        .subsection-item.active::before {
-          background: linear-gradient(180deg, #fbbf24, #f59e0b);
-        }
-
-        .section-header {
-          position: relative;
-          overflow: hidden;
-        }
-        .section-header::after {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(90deg, rgba(251,191,36,0.04) 0%, transparent 100%);
-          opacity: 0;
-          transition: opacity 0.2s ease;
-        }
-        .section-header:hover::after { opacity: 1; }
-
-        .progress-bar-fill {
-          transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .back-btn {
-          position: relative;
-          transition: all 0.2s ease;
-        }
-        .back-btn:hover { color: #fbbf24; transform: translateX(-2px); }
-
-        .review-btn {
-          background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
-          box-shadow: 0 0 20px rgba(251,191,36,0.2);
-          transition: all 0.2s ease;
-        }
-        .review-btn:hover {
-          box-shadow: 0 0 28px rgba(251,191,36,0.4);
-          transform: translateY(-1px);
-        }
-      `}</style>
-
+  const SidebarContent = () => (
+    <>
       {/* HEADER */}
       <div className="p-5 sticky top-0 z-10"
         style={{
@@ -137,13 +80,24 @@ const VedioDEtailsSIdebar = ({ setReviewModal }) => {
             <span style={{ fontSize: 16 }}>←</span> Back
           </button>
 
-          <button
-            className="review-btn flex items-center gap-1.5 px-3 py-1.5 text-black text-xs font-bold rounded-lg cursor-pointer"
-            onClick={() => setReviewModal(true)}
-          >
-            <Star size={12} fill="black" />
-            Add Review
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              className="review-btn flex items-center gap-1.5 px-3 py-1.5 text-black text-xs font-bold rounded-lg cursor-pointer"
+              onClick={() => setReviewModal(true)}
+            >
+              <Star size={12} fill="black" />
+              Add Review
+            </button>
+
+            {/* Close button on mobile only */}
+            <button
+              className="mobile-close-sidebar-btn md:hidden flex items-center justify-center w-7 h-7 rounded-lg"
+              style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)" }}
+              onClick={() => setMobileOpen(false)}
+            >
+              <X size={14} style={{ color: "rgba(255,255,255,0.5)" }} />
+            </button>
+          </div>
         </div>
 
         {/* Course Name */}
@@ -231,12 +185,7 @@ const VedioDEtailsSIdebar = ({ setReviewModal }) => {
                     return (
                       <div
                         key={topic._id}
-                        onClick={() => {
-                          navigate(
-                            `/view-course/${courseEntireData?._id}/section/${section._id}/sub-section/${topic._id}`
-                          );
-                          setVedioBarActive(topic._id);
-                        }}
+                        onClick={() => handleSubsectionClick(courseEntireData?._id, section._id, topic._id)}
                         className={`subsection-item ${isActive ? "active" : ""} group flex items-center gap-3 px-5 py-3 cursor-pointer text-sm`}
                         style={{
                           background: isActive
@@ -286,7 +235,205 @@ const VedioDEtailsSIdebar = ({ setReviewModal }) => {
         {/* Bottom padding */}
         <div className="h-8" />
       </div>
-    </div>
+    </>
+  );
+
+  return (
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Syne:wght@600;700;800&display=swap');
+
+        .sidebar-scroll::-webkit-scrollbar { width: 4px; }
+        .sidebar-scroll::-webkit-scrollbar-track { background: transparent; }
+        .sidebar-scroll::-webkit-scrollbar-thumb { background: rgba(251,191,36,0.25); border-radius: 99px; }
+        .sidebar-scroll::-webkit-scrollbar-thumb:hover { background: rgba(251,191,36,0.5); }
+
+        .subsection-item {
+          position: relative;
+          transition: all 0.2s ease;
+        }
+        .subsection-item::before {
+          content: '';
+          position: absolute;
+          left: 0; top: 0; bottom: 0;
+          width: 2px;
+          background: transparent;
+          transition: all 0.25s ease;
+        }
+        .subsection-item.active::before {
+          background: linear-gradient(180deg, #fbbf24, #f59e0b);
+        }
+
+        .section-header {
+          position: relative;
+          overflow: hidden;
+        }
+        .section-header::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(90deg, rgba(251,191,36,0.04) 0%, transparent 100%);
+          opacity: 0;
+          transition: opacity 0.2s ease;
+        }
+        .section-header:hover::after { opacity: 1; }
+
+        .progress-bar-fill {
+          transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .back-btn {
+          position: relative;
+          transition: all 0.2s ease;
+        }
+        .back-btn:hover { color: #fbbf24; transform: translateX(-2px); }
+
+        .review-btn {
+          background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+          box-shadow: 0 0 20px rgba(251,191,36,0.2);
+          transition: all 0.2s ease;
+        }
+        .review-btn:hover {
+          box-shadow: 0 0 28px rgba(251,191,36,0.4);
+          transform: translateY(-1px);
+        }
+
+        /* ===== DESKTOP: always visible sidebar ===== */
+        .sidebar-desktop {
+          display: flex;
+        }
+
+        /* ===== MOBILE TOGGLE BUTTON ===== */
+        .sidebar-mobile-toggle {
+          display: none;
+        }
+
+        /* ===== MOBILE DRAWER ===== */
+        .sidebar-mobile-drawer {
+          display: none;
+        }
+
+        @media (max-width: 768px) {
+          /* Hide desktop sidebar */
+          .sidebar-desktop {
+            display: none !important;
+          }
+
+          /* Show toggle button */
+          .sidebar-mobile-toggle {
+            display: flex !important;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 100;
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            box-shadow: 0 8px 28px rgba(251,191,36,0.45);
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+          }
+          .sidebar-mobile-toggle:hover {
+            transform: scale(1.08);
+            box-shadow: 0 12px 36px rgba(251,191,36,0.55);
+          }
+
+          /* Mobile drawer */
+          .sidebar-mobile-drawer {
+            display: flex;
+            position: fixed;
+            inset: 0;
+            z-index: 200;
+            pointer-events: none;
+          }
+
+          .sidebar-mobile-drawer.open {
+            pointer-events: all;
+          }
+
+          .sidebar-drawer-backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(2,6,23,0.7);
+            backdrop-filter: blur(4px);
+            opacity: 0;
+            transition: opacity 0.25s ease;
+          }
+          .sidebar-mobile-drawer.open .sidebar-drawer-backdrop {
+            opacity: 1;
+          }
+
+          .sidebar-drawer-panel {
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            width: 85%;
+            max-width: 340px;
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(180deg, #080f1a 0%, #050c18 100%);
+            border-right: 1px solid rgba(255,255,255,0.08);
+            transform: translateX(-100%);
+            transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+          }
+          .sidebar-mobile-drawer.open .sidebar-drawer-panel {
+            transform: translateX(0);
+          }
+
+          .mobile-close-sidebar-btn {
+            display: flex !important;
+          }
+        }
+
+        /* On md+ hide the mobile close button inside sidebar header */
+        @media (min-width: 769px) {
+          .mobile-close-sidebar-btn {
+            display: none !important;
+          }
+        }
+      `}</style>
+
+      {/* ===== DESKTOP SIDEBAR ===== */}
+      <div
+        className="sidebar-desktop w-[340px] h-screen flex-col text-white flex-shrink-0"
+        style={{
+          background: "linear-gradient(180deg, #080f1a 0%, #050c18 100%)",
+          borderRight: "1px solid rgba(255,255,255,0.06)",
+          fontFamily: "'DM Sans', sans-serif",
+        }}
+      >
+        <SidebarContent />
+      </div>
+
+      {/* ===== MOBILE TOGGLE BUTTON ===== */}
+      <button
+        className="sidebar-mobile-toggle"
+        onClick={() => setMobileOpen(true)}
+        aria-label="Open course menu"
+      >
+        <Menu size={22} color="#000" />
+      </button>
+
+      {/* ===== MOBILE DRAWER ===== */}
+      <div className={`sidebar-mobile-drawer ${mobileOpen ? "open" : ""}`}>
+        {/* Backdrop */}
+        <div
+          className="sidebar-drawer-backdrop"
+          onClick={() => setMobileOpen(false)}
+        />
+        {/* Panel */}
+        <div
+          className="sidebar-drawer-panel text-white flex flex-col"
+          style={{ fontFamily: "'DM Sans', sans-serif" }}
+        >
+          <SidebarContent />
+        </div>
+      </div>
+    </>
   );
 };
 

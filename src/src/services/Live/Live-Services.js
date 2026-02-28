@@ -5,7 +5,7 @@ const LiveUrl = {
   START_CLASS: "/live/:classId/start",
   END_CLASS: "/live/:classId/end",
   LIVEJOINCLASS: "/live/:classId/join",
-  RECHECK: "/live/:classId/re-checking",
+  RECHECK: "/live/:courseId/re-checking",
 };
 export const CreateLiveClassAPI = async (title, courseId) => {
   try {
@@ -83,29 +83,30 @@ export const JoinLiveClass = async (classId) => {
 
 export const RecheckLive = async (courseIds) => {
   try {
-    const results = await Promise.all(
+    const results = await Promise.allSettled(  //  allSettled instead of all
       courseIds.map(id => LiveClassAPI.get(
-        LiveUrl.RECHECK.replace(":classId", id),
-        {
-          headers: { 'Cache-Control': 'no-cache' }  
-        }
+        LiveUrl.RECHECK.replace(":courseId", id)
       ))
     )
 
-    console.log("the repsosne of the recheck live api would be ",results);
-        const liveMap = {}
-    results.forEach((res, i) => {
-      if (res?.data?.isLive) {
+    console.log("recheck results:", results)  //  now this will always print
+
+    const liveMap = {}
+    results.forEach((result, i) => {
+      if (result.status === 'fulfilled' && result.value?.data?.isLive) {
         liveMap[courseIds[i]] = {
-          classId: res.data.classId,
-          state: res.data.state
+          classId: result.value.data.classId,
+          title: result.value.data.title,
+          course: courseIds[i]
         }
       }
+      // 404s are just ignored 
     })
- 
 
+    console.log(" liveMap:", liveMap)
     return liveMap
   } catch (error) {
-    handleApiError(error)
+    console.log("RecheckLive error:", error)
+    return {}  //  return empty map instead of crashing
   }
 }
