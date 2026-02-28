@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Enqiry, submitEnquiry } from "../../../services/auth"; 
+import { Enqiry, submitEnquiry } from "../../../services/auth";
 import countrycode from "../../../pages/data/countrycode.json";
 
 export const ContactUsForm = () => {
@@ -37,7 +37,7 @@ export const ContactUsForm = () => {
         },
         {
           keepIsSubmitSuccessful: true,
-        }
+        },
       );
     }
   }, [isSubmitSuccessful, reset]);
@@ -54,10 +54,10 @@ export const ContactUsForm = () => {
         </div>
       )}
 
-      {/*  ADDED: FORM WRAPPER (NO INTERNAL CHANGE) */}
+      {/*  ADDED: FORM WRAPPER */}
       {!isSubmitSuccessful && (
         <form onSubmit={handleSubmit(submitContactForm)}>
-          <div className="mx-auto max-w-xl rounded-xl bg-linear-to-b from-[] to-[#000814] p-8 text-white">
+          <div className="md:mx-auto max-w-xl sm:grid  rounded-xl bg-linear-to-b from-[] to-[#000814] p-8 text-white">
             {/* Heading */}
             <h2 className="text-center text-3xl font-bold">Get in Touch</h2>
             <p className="mt-2 text-center text-sm text-gray-400">
@@ -119,7 +119,7 @@ export const ContactUsForm = () => {
                 <div className="flex items-center gap-3">
                   <select
                     {...register("countrycode", { required: true })}
-                    className="h-12 w-15 rounded-md bg-gray-700 px-2 text-sm outline-none focus:ring-2 focus:ring-yellow-400"
+                    className="h-12 w-24 sm:w-32 flex-shrink-0 rounded-md bg-gray-700 px-2 text-sm outline-none focus:ring-2 focus:ring-yellow-400"
                   >
                     {countrycode.map((element, index) => (
                       <option key={index}>
@@ -136,7 +136,7 @@ export const ContactUsForm = () => {
                       minLength: { value: 10, message: "Invalid Phone Number" },
                       maxLength: { value: 10, message: "Invalid Phone Number" },
                     })}
-                    className="h-12 flex-1 rounded-md bg-gray-700 px-4 outline-none placeholder:text-gray-400 focus:ring-2 focus:ring-yellow-400"
+                    className="h-12 flex-1 min-w-0 rounded-md bg-gray-700 px-4 outline-none placeholder:text-gray-400 focus:ring-2 focus:ring-yellow-400"
                   />
                 </div>
 

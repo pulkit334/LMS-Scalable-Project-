@@ -1,37 +1,35 @@
-import ProfilePictureCard from "../components/core/profile/ProfilePictureCard";
-import ProfileInfoForm from "../components/core/profile/ProfileInfoForm";
-import PasswordChange from "../components/core/profile/PasswordChangeForm";
-import DeleteAccount from "../components/core/profile/DeleteAccount";
-
-const EditProfile = () => {
+const Settings = () => {
   return (
     <div
-      className="mx-auto max-w-4xl space-y-6 text-white pb-16"
-      style={{ fontFamily: "'DM Sans', sans-serif" }}
+      className="min-h-screen w-full px-4 py-8 sm:px-6 lg:px-10"
+      style={{ background: "#0f1520" }}
     >
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap');
-      `}</style>
-
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-widest mb-1"
-          style={{ color: "rgba(251,191,36,0.6)" }}
+      {/* Page Header */}
+      <div className="mb-8">
+        <h1
+          className="text-2xl sm:text-3xl font-bold"
+          style={{
+            fontFamily: "'Syne', sans-serif",
+            color: "#f0f4ff",
+            letterSpacing: "-0.02em",
+          }}
         >
-          Account
-        </p>
-        <h1 className="text-2xl font-bold"
-          style={{ fontFamily: "'Syne', sans-serif", color: "#f0f4ff", letterSpacing: "-0.02em" }}
-        >
-          Edit Profile
+          Settings
         </h1>
+        <p className="mt-1 text-sm" style={{ color: "rgba(255,255,255,0.3)" }}>
+          Manage your account preferences
+        </p>
       </div>
 
-      <ProfilePictureCard />
-      <ProfileInfoForm />
-      <PasswordChange />
-      <DeleteAccount />
+      {/* Cards Stack */}
+      <div className="mx-auto max-w-3xl space-y-6">
+        <ProfilePictureCard />
+        <ProfileInfoForm />
+        <PasswordChangeForm />
+        <DeleteAccount />
+      </div>
     </div>
   );
 };
 
-export default EditProfile;
+export default Settings;

@@ -72,17 +72,13 @@ const Navbar = () => {
                     w-72"
                   >
                     {loading && (
-                      <p className="px-3 py-1 text-sm text-gray-500">
-                        Loading.....
-                      </p>
+                      <p className="px-3 py-1 text-sm text-gray-500">Loading.....</p>
                     )}
-
                     {error && (
                       <p className="px-3 py-1 text-sm text-red-500">
                         {error?.message || "Failed to load categories"}
                       </p>
                     )}
-
                     {!loading &&
                       !error &&
                       categorydata?.map((category) => (
@@ -115,9 +111,23 @@ const Navbar = () => {
           })}
         </div>
 
-        {/* ---------------- RIGHT SECTION DESKTOP ---------------- */}
+        {/* ---------------- RIGHT SECTION DESKTOP ✅ FIX IS HERE ---------------- */}
         <div className="hidden md:flex items-center gap-4">
-          {token !== null && <ProfileDropDown />}
+          {token === null ? (
+            <>
+              <Link to="/Login" className="text-white hover:text-yellow-300 text-sm">
+                Login
+              </Link>
+              <Link
+                to="/signup"
+                className="bg-yellow-300 text-black px-4 py-1.5 rounded-md text-sm font-medium hover:bg-yellow-400"
+              >
+                Signup
+              </Link>
+            </>
+          ) : (
+            <ProfileDropDown />
+          )}
         </div>
 
         {/* ---------------- MOBILE MENU BUTTON ---------------- */}
@@ -131,27 +141,20 @@ const Navbar = () => {
       {/* ---------------- MOBILE MENU ---------------- */}
       {mobileOpen && (
         <div className="md:hidden bg-[#1e2a3b] px-6 py-4 space-y-4 border-t border-gray-700">
-
           {NavbarLinks.map((link, index) => {
-
             if (link.title === "Catalog") {
               return (
                 <div key={index}>
                   <div className="flex items-center justify-between text-white">
                     <Link
                       to="/catalog"
-                      onClick={() => {
-                        setMobileOpen(false);
-                      }}
+                      onClick={() => setMobileOpen(false)}
                       className="hover:text-yellow-300"
                     >
                       {link.title}
                     </Link>
-
                     <FaAngleDown
-                      onClick={() =>
-                        setMobileCatalogOpen(!mobileCatalogOpen)
-                      }
+                      onClick={() => setMobileCatalogOpen(!mobileCatalogOpen)}
                       className={`cursor-pointer transition-transform ${
                         mobileCatalogOpen ? "rotate-180" : ""
                       }`}
@@ -160,18 +163,12 @@ const Navbar = () => {
 
                   {mobileCatalogOpen && (
                     <div className="mt-2 ml-4 space-y-2">
-                      {loading && (
-                        <p className="text-sm text-gray-400">
-                          Loading...
-                        </p>
-                      )}
-
+                      {loading && <p className="text-sm text-gray-400">Loading...</p>}
                       {error && (
                         <p className="text-sm text-red-500">
                           {error?.message || "Failed to load categories"}
                         </p>
                       )}
-
                       {!loading &&
                         !error &&
                         categorydata?.map((category) => (
@@ -202,18 +199,19 @@ const Navbar = () => {
             );
           })}
 
-          {token === null && (
+          {/* Mobile Login/Signup or Profile */}
+          {token === null ? (
             <>
-              <Link to="/signup" className="block text-white">
+              <Link to="/signup" className="block text-white hover:text-yellow-300">
                 Signup
               </Link>
-              <Link to="/Login" className="block text-white">
+              <Link to="/Login" className="block text-white hover:text-yellow-300">
                 Login
               </Link>
             </>
+          ) : (
+            <ProfileDropDown />
           )}
-
-          {token !== null && <ProfileDropDown />}
         </div>
       )}
     </div>
