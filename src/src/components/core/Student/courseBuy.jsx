@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 
 import {
   GetPayCourse,
@@ -14,55 +14,45 @@ import BuyCard from "./CourseDeatilPage/buyCard";
 import Reviews from "./Reviews/Reviews";
 import Author from "./CourseDeatilPage/Author";
 import WhatYouWillLearn from "./CourseDeatilPage/CommonModal";
-import CatalogSpinner from "../../../utils/catalogSpinner";
+
+// ✅ fetcher function outside component
+const fetchCourseData = async (Course) => {
+  const [courseRes, contentRes, reviewRes, otherRes] = await Promise.all([
+    GetPayCourse(Course),
+    GetCourseContent(Course),
+    GetpaymentCourseData(Course),
+    paymentcoursereview(Course),
+  ]);
+
+  return {
+    course: courseRes?.data,
+    content: contentRes?.data || [],
+    reviews: reviewRes?.data || [],
+    otherReview: otherRes || [],
+  };
+};
 
 const CourseDetailsPage = () => {
   const { Course } = useParams();
 
-  const [course, setCourse] = useState(null);
-  const [content, setContent] = useState([]);
-  const [reviews, setReviews] = useState([]);
-  const [otherReview, setOtherReview] = useState([]);
-  const [loading, setLoading] = useState(true); 
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["courseDetails", Course], // Course in key so refetches when id changes
+    queryFn: () => fetchCourseData(Course),
+    staleTime: 5 * 60 * 1000, // cache for 5 mins, no refetch on revisit
+  });
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        setLoading(true); 
-        
-        const courseRes = await GetPayCourse(Course);
-        const contentRes = await GetCourseContent(Course);
-        const reviewRes = await GetpaymentCourseData(Course);
-        const otherRes = await paymentcoursereview(Course);
-        
-        setCourse(courseRes?.data);
-        setContent(contentRes?.data || []);
-        setReviews(reviewRes?.data || []);
-        setOtherReview(otherRes || []);
-      } catch (error) {
-        console.error("Error loading course data:", error);
-      } finally {
-        setLoading(false); 
-      }
-    };
-
-    loadData();
-  }, [Course]);
-
-  //  Show spinner while loading
-
-if (loading) {
-  return (
-    <div className="bg-[#0f172a] min-h-screen flex items-center justify-center">
-      <div className="flex flex-col items-center">
-        <div className="w-16 h-16 border-4 border-[#2C333F] border-t-yellow-400 rounded-full animate-spin"></div>
-        <p className="text-[#AFB2BF] mt-4 text-sm animate-pulse">Loading course...</p>
+  if (isLoading) {
+    return (
+      <div className="bg-[#0f172a] min-h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center">
+          <div className="w-16 h-16 border-4 border-[#2C333F] border-t-yellow-400 rounded-full animate-spin"></div>
+          <p className="text-[#AFB2BF] mt-4 text-sm animate-pulse">Loading course...</p>
+        </div>
       </div>
-    </div>
-  );
-}
-  //  Show message if no course found
-  if (!course) {
+    );
+  }
+
+  if (isError || !data?.course) {
     return (
       <div className="bg-[#0f172a] min-h-screen flex items-center justify-center">
         <p className="text-[#AFB2BF] text-lg">Course not found</p>
@@ -70,26 +60,28 @@ if (loading) {
     );
   }
 
-  //  Show course content
+  const { course, content, reviews, otherReview } = data;
+
   return (
     <div className="bg-[#0f172a] min-h-screen text-white">
       <CourseHeader course={course} reviews={reviews} />
 
-      {/* MAIN data */}
-      <div className="max-w-300 mx-auto px-6 flex gap-10 -mt-16">
-        <div className="space-y-10">
+      <div className="max-w-7xl mx-auto px-6 flex gap-10 -mt-16">
+        <div className="flex-1 space-y-10 min-w-0">
           <WhatYouWillLearn text={course.whatyouwilllearn} />
           <CourseContent sections={content} />
           <Author instructor={course.Insturctor} />
-          <Reviews reviews={otherReview} />
         </div>
 
-        {/* right One Card */}
-        <div className="flex justify-end -mt-24">
+        <div className="flex-shrink-0 -mt-24">
           <div className="sticky top-14">
             <BuyCard course={course} />
           </div>
         </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 mt-10 pb-16">
+        <Reviews reviews={otherReview} />
       </div>
     </div>
   );
