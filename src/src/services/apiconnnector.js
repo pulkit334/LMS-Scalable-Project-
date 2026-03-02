@@ -15,7 +15,6 @@ export const AiApi = axios.create({
   baseURL: import.meta.env.VITE_AI_BASE_URL,
   withCredentials: true,
 });
-
 export const LiveClassAPI = axios.create({
   baseURL: import.meta.env.VITE_LIVE_URL,
   withCredentials: true,
@@ -23,12 +22,20 @@ export const LiveClassAPI = axios.create({
 
 let isRefreshing = false;
 let refreshPromise = null;
+
+// ---- shared 429 handler ----
+const handle429 = (error) => {
+  const message = error?.response?.data?.message || "Too many attempts. Please try again later.";
+  toast.error(message);
+};
+
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const status = error?.response?.status;
     const code = error?.response?.data?.code;
     const originalRequest = error.config;
+
     if (status === 403 && code === "ACCOUNT_DELETED REQUEST IS SUBMITTED") {
       localStorage.clear();
       sessionStorage.clear();
@@ -37,40 +44,31 @@ api.interceptors.response.use(
     if (status == 400 && code === "USER_NOT_FOUND") {
       throw new Error("User Does Not Exist");
     }
-    if (
-      status === 403 &&
-      code === "Account Have Been Blocked Kindly Connect To Company"
-    ) {
-      toast.error("Your account has been blocked. Please contact support.");
-
+    if (status === 429) {
+      handle429(error);
       return Promise.reject(error);
     }
-
+    if (status === 403 && code === "Account Have Been Blocked Kindly Connect To Company") {
+      toast.error("Your account has been blocked. Please contact support.");
+      return Promise.reject(error);
+    }
     if (status == 500 && code === "INTERNAL_SERVER_ERROR") {
       throw new Error("Something went wrong. Please try again later.");
     }
-    //if Refresh Token Expired Then Logout From Here
     if (status === 401 && code === "REFRESH_TOKEN_EXPIRED") {
       localStorage.clear();
       sessionStorage.clear();
       window.location.replace("/login");
     }
-
-    if (
-      status === 401 &&
-      code === "ACCESS_TOKEN_EXPIRED" &&
-      !originalRequest._retry
-    ) {
+    if (status === 401 && code === "ACCESS_TOKEN_EXPIRED" && !originalRequest._retry) {
       originalRequest._retry = true;
 
       if (!isRefreshing) {
         isRefreshing = true;
-
         refreshPromise = RefreshVerification()
           .then((refData) => {
             const newToken = refData.token;
             localStorage.setItem("token", newToken);
-
             api.defaults.headers.common.Authorization = `Bearer ${newToken}`;
             return newToken;
           })
@@ -88,28 +86,47 @@ api.interceptors.response.use(
   },
 );
 
+
+const attach429Interceptor = (instance) => {
+  instance.interceptors.response.use(
+    (response) => response,
+    (error) => {
+      if (error?.response?.status === 429) {
+        handle429(error);
+      }
+      return Promise.reject(error);
+    },
+  );
+};
+
+attach429Interceptor(adminApi);
+attach429Interceptor(AiApi);
+attach429Interceptor(LiveClassAPI);
+
+// ---- request interceptors ----
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 
-//Admin APi
+//Admin Api
 adminApi.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
+
 //Ai Api
 AiApi.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
-//Live Class APi
 
+//Live Class Api
 LiveClassAPI.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token")
-  if (token) config.headers.Authorization = `Bearer ${token}`
-  return config 
-})
+  const token = localStorage.getItem("token");
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
