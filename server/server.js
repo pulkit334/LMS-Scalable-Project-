@@ -69,6 +69,7 @@ app.use(
 // ---------- LOGGER ----------
 app.use(morgan("dev"));
 
+
 // ---------- ROUTES ----------
 app.use("/api/v1", authLimiter,     authRoutes);
 app.use("/api/v1", firebaseLimiter, firebaseRoute);
@@ -103,6 +104,7 @@ const httpServer = createServer(app);
 initSocket(httpServer);
 httpServer.listen(PORT, async () => {
   (connect(), console.log(` Server running on port ${PORT}`));
+  console.log("the url of the redis url would be 😐",process.env.REDIS_URL)
 });
 
 // import cluster from "cluster";

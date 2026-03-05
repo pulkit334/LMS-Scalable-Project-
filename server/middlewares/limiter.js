@@ -24,21 +24,21 @@ const adminLimiter = new SlidingWindowRateLimiter({
 
 // Webhook — event based
 const webhookLimiter = new SlidingWindowRateLimiter({
-  max: 40,
+  max: 400,
   windowMs: 60 * 1000,
   redis,
 }).middleware();
 
 // AI — costs money, restrict hard 
 const aiLimiter = new SlidingWindowRateLimiter({
-  max: 20,
+  max: 400,
   windowMs: 60 * 1000,
   redis,
 }).middleware();
 
 // Live Class — polling + signals
 const liveLimiter = new SlidingWindowRateLimiter({
-  max: 50,
+  max: 100,
   windowMs: 60 * 1000,
   redis,
 }).middleware();
