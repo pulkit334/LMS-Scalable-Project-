@@ -99,12 +99,12 @@ app.use((err, req, res, next) => {
 
 // ---------- SERVER ----------
 const PORT = process.env.PORT || 5000;
-
+console.log("REDIS_URL =", process.env.REDIS_URL);
 const httpServer = createServer(app);
 initSocket(httpServer);
 httpServer.listen(PORT, async () => {
   (connect(), console.log(` Server running on port ${PORT}`));
-  console.log("the url of the redis url would be 😐",process.env.REDIS_URL)
+console.log("REDIS_URL =", process.env.REDIS_URL);
 });
 
 // import cluster from "cluster";
