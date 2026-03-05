@@ -99,8 +99,8 @@ const Signup = () => {
               {" "}
               <button
                 onClick={() => {
-                  window.location.href =
-                    "http://localhost:5000/api/v1/auth/google";
+                   window.location.href =
+                    `${import.meta.env.VITE_API_URL}auth/google`;
                 }}
                 className="flex items-center justify-center gap-2 w-full border py-2 rounded"
               >
