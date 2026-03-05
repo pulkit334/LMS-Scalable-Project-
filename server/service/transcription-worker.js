@@ -2,13 +2,20 @@ import dotenv from "dotenv";
 dotenv.config();
 import { Worker } from "bullmq";
 import IORedis from "ioredis";
-import { createClient } from "@deepgram/sdk";
+import deepgramPkg from "@deepgram/sdk";  
+const { createClient } = deepgramPkg;      
 import Transcript from "../models/transcription.js";
 import SubSection from "../models/subsection.js";
 import { QuestionQueue } from "./questionGen-queue-service.js";
 import { NotesGnQueue } from "./Notes-Gn-Queue.js";
 
-const connection = new IORedis({ maxRetriesPerRequest: null });
+const connection = new IORedis(process.env.REDIS_URL || "redis://127.0.0.1:6379", {
+  maxRetriesPerRequest: null,
+  enableReadyCheck: false,
+  tls: process.env.REDIS_URL?.startsWith("rediss://")
+    ? { rejectUnauthorized: false }
+    : undefined,
+});
 const deepgram = createClient(process.env.DEEPGRAM_API_KEY);
 
 const worker = new Worker(
@@ -50,7 +57,7 @@ const worker = new Worker(
     removeOnFail: {
       age: 24 * 3600,
     },
-  
+
     connection,
     settings: {
       backoffStrategy: (attemptsMade) => {
