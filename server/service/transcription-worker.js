@@ -83,7 +83,7 @@ import { Worker } from "bullmq";
 import IORedis from "ioredis";
 import { createRequire } from "module";
 const require = createRequire(import.meta.url);
-const { Deepgram } = require("@deepgram/sdk");  // ← fixed
+const { DeepgramClient } = require("@deepgram/sdk");
 import Transcript from "../models/transcription.js";
 import SubSection from "../models/subsection.js";
 import { QuestionQueue } from "./questionGen-queue-service.js";
@@ -97,7 +97,7 @@ const connection = new IORedis(process.env.REDIS_URL || "redis://127.0.0.1:6379"
     : undefined,
 });
 
-const deepgram = new Deepgram(process.env.DEEPGRAM_API_KEY);  // ← fixed
+const deepgram = new DeepgramClient(process.env.DEEPGRAM_API_KEY);
 
 const worker = new Worker(
   "TranscriptionQueue",
