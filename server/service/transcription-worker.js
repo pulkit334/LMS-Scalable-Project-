@@ -2,13 +2,13 @@ import dotenv from "dotenv";
 dotenv.config();
 import { Worker } from "bullmq";
 import IORedis from "ioredis";
-import deepgramPkg from "@deepgram/sdk";  
-const { createClient } = deepgramPkg;      
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const { createClient } = require("@deepgram/sdk");
 import Transcript from "../models/transcription.js";
 import SubSection from "../models/subsection.js";
 import { QuestionQueue } from "./questionGen-queue-service.js";
 import { NotesGnQueue } from "./Notes-Gn-Queue.js";
-
 const connection = new IORedis(process.env.REDIS_URL || "redis://127.0.0.1:6379", {
   maxRetriesPerRequest: null,
   enableReadyCheck: false,
