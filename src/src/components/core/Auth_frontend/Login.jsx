@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 import React, { useState } from "react";
 import { SubmitHandle } from "../../Auth/Auth";
 import { Link, useNavigate } from "react-router-dom";
@@ -98,7 +97,7 @@ export const Login = () => {
         </div>
 
         {/* ================= RIGHT : IMAGE SPACE ================= */}
-        <div className="relative h-72 sm:h-96 md:h-[470px] rounded-3xl overflow-hidden flex items-center justify-center">
+        <div className="relative h-72 sm:h-96 md:h-117.5 rounded-3xl overflow-hidden flex items-center justify-center">
           <img
             src="/Images/login.webp"
             alt="Login illustration"

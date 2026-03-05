@@ -105,7 +105,7 @@ function App() {
     };
 
     setupFCM();
-  }, [token, user]);Routes
+  }, [token, user]);
 
  return (
     <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
