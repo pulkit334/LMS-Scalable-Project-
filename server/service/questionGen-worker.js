@@ -33,7 +33,7 @@ const worker = new Worker(
       if (!transcript?.rawText) {
         throw new Error("Transcript not found or empty");
       }
-const prompt = `
+      const prompt = `
 You are an LMS question generator.
 Generate EXACTLY 5 multiple-choice questions from the transcript.
 Return ONLY a valid JSON array, no markdown, no extra text.
@@ -105,15 +105,40 @@ ${transcript.rawText}
 
       await SubSection.findByIdAndUpdate(subsectionId, { status: "READY" });
       console.log("Questions generated successfully!");
-
     } catch (err) {
       await SubSection.findByIdAndUpdate(subsectionId, { status: "FAILED" });
       console.error("Worker failed:", err);
       throw err;
     }
   },
-  { connection },
+  {
+    removeOnComplete: {
+      age: 3600,
+      count: 1000,
+    },
+    removeOnFail: {
+      age: 24 * 3600,
+    },
+  
+  
+    connection,
+
+    settings: {
+      backoffStrategy: (attemptsMade) => {
+        return attemptsMade * 5000;
+      },
+    },
+
+}
 );
 
 worker.on("completed", (job) => console.log("Questions done:", job.id));
-worker.on("failed", (job, err) => console.error("Failed:", job?.id, err));
+worker.on("failed", (job, err) => {
+  if (job?.attemptsMade >= job?.opts?.attempts) {
+    SubSection.findByIdAndUpdate(job.data.subsectionId, { status: "FAILED" });
+  }
+  console.error(
+    `Job ${job?.id} failed on attempt ${job?.attemptsMade}:`,
+    err.message,
+  );
+});

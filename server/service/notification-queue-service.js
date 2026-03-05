@@ -7,22 +7,26 @@ const notificationQueue = new Queue("notification-queue", { connection });
 const Thershold_Value = 100;
 
 async function sendNotifications(title, body, deviceTokens, image = null) {
-  console.log("the queue notification send data would be ",title,body,deviceTokens,image)
+  console.log(
+    "the queue notification send data would be ",
+    title,
+    body,
+    deviceTokens,
+    image,
+  );
   if (deviceTokens.length < Thershold_Value) {
     //direct send to the Users
-    console.log("the device token would be ",deviceTokens)
-    const response =await NotificationService.sendMultipleNotification(
+    console.log("the device token would be ", deviceTokens);
+    const response = await NotificationService.sendMultipleNotification(
       title,
       body,
       deviceTokens,
       image,
     );
-
     return {
       method: "direct",
       successCount: response.successCount,
       failureCount: response.failureCount,
-
     };
   }
 
@@ -35,18 +39,26 @@ async function sendNotifications(title, body, deviceTokens, image = null) {
   }
   const jobId = [];
   for (let i = 0; i < batches.length; i++) {
-    const result = await notificationQueue.add("send-notification", {
-      title,
-      body,
-      deviceTokens: batches[i],
-      image,
-      BatchNumber: i + 1,
-      totalBatches: batches.length,
-    });
-    jobId.push(result.id);
-    console.log(
-      ` Batch ${i + 1}/${batches.length} queued (${batches[i].length} tokens)`,
+    const result = await notificationQueue.add(
+      "send-notification",
+      {
+        title,
+        body,
+        deviceTokens: batches[i],
+        image,
+        BatchNumber: i + 1,
+        totalBatches: batches.length,
+      },
+      {
+        attempts: 3,
+
+        backoff: {
+          type: "exponential",
+          delay: 1000,
+        },
+      },
     );
+    jobId.push(result.id);
   }
   return {
     method: "queued",
@@ -55,4 +67,4 @@ async function sendNotifications(title, body, deviceTokens, image = null) {
     jobId,
   };
 }
-module.exports = {sendNotifications}
+module.exports = { sendNotifications };

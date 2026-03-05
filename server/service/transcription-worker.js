@@ -7,6 +7,7 @@ import Transcript from "../models/transcription.js";
 import SubSection from "../models/subsection.js";
 import { QuestionQueue } from "./questionGen-queue-service.js";
 import { NotesGnQueue } from "./Notes-Gn-Queue.js";
+
 const connection = new IORedis({ maxRetriesPerRequest: null });
 const deepgram = createClient(process.env.DEEPGRAM_API_KEY);
 
@@ -20,8 +21,12 @@ const worker = new Worker(
       { punctuate: true, smart_format: true, utterances: true, words: true },
     );
 
+    if (!result?.results?.channels?.[0]?.alternatives?.[0]) {
+      throw new Error("Deepgram returned empty result");
+    }
+
     const transcript = result.results.channels[0].alternatives[0];
-    console.log("Deepgram result:", JSON.stringify(transcript, null, 2));
+
     await Transcript.create({
       subsectionId,
       rawText: transcript.transcript,
@@ -37,8 +42,28 @@ const worker = new Worker(
     await QuestionQueue.add("generate-questions", { subsectionId });
     await NotesGnQueue.add("generate-Notes", { subsectionId });
   },
-  { connection },
+  {
+    removeOnComplete: {
+      age: 3600,
+      count: 1000,
+    },
+    removeOnFail: {
+      age: 24 * 3600,
+    },
+  
+    connection,
+    settings: {
+      backoffStrategy: (attemptsMade) => {
+        return attemptsMade * 2000;
+      },
+    },
+  },
 );
 
-worker.on("completed", (job) => console.log("Transcription done:", job.id));
-worker.on("failed", (job, err) => console.error(`Job ${job?.id} failed:`, err));
+worker.on("completed", (job) => console.error("Transcription done:", job.id));
+worker.on("failed", (job, err) => {
+  console.error(
+    `Job ${job?.id} failed on attempt ${job?.attemptsMade}:`,
+    err.message,
+  );
+});

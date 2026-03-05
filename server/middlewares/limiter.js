@@ -3,7 +3,7 @@ import redis from "../Reddis/limiter-client.js";
 
 // Auth — brute force protection
 const authLimiter = new SlidingWindowRateLimiter({
-  max: 20,
+  max: 2000,
   windowMs: 60 * 1000,
   redis,
 }).middleware();

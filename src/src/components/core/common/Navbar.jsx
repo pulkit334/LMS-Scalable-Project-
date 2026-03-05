@@ -38,7 +38,6 @@ const Navbar = () => {
   return (
     <div className="w-full bg-[#1e2a3b] border-b z-50 border-[#1e2a3b]">
       <div className="mx-auto flex h-14 max-w-maxContent items-center justify-between px-6">
-
         {/* ---------------- LOGO ---------------- */}
         <Link to="/">
           <img
@@ -72,7 +71,9 @@ const Navbar = () => {
                     w-72"
                   >
                     {loading && (
-                      <p className="px-3 py-1 text-sm text-gray-500">Loading.....</p>
+                      <p className="px-3 py-1 text-sm text-gray-500">
+                        Loading.....
+                      </p>
                     )}
                     {error && (
                       <p className="px-3 py-1 text-sm text-red-500">
@@ -111,11 +112,14 @@ const Navbar = () => {
           })}
         </div>
 
-        {/* ---------------- RIGHT SECTION DESKTOP ✅ FIX IS HERE ---------------- */}
+        {/* ---------------- RIGHT SECTION DESKTOP  FIX IS HERE ---------------- */}
         <div className="hidden md:flex items-center gap-4">
           {token === null ? (
             <>
-              <Link to="/Login" className="text-white hover:text-yellow-300 text-sm">
+              <Link
+                to="/Login"
+                className="text-white hover:text-yellow-300 text-sm"
+              >
                 Login
               </Link>
               <Link
@@ -126,7 +130,43 @@ const Navbar = () => {
               </Link>
             </>
           ) : (
-            <ProfileDropDown />
+            <div className="flex items-center gap-4">
+              {/* ---------------- NOTIFICATION BELL ---------------- */}
+              <div className="relative  inline-block">
+                <button
+                  onClick={() => setShowNotification(!showNotification)}
+                  className="text-white hover:text-yellow-300 relative"
+                >
+                  <IoIosNotifications size={24} />
+                  {UserNotification?.length > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                      {UserNotification.length}
+                    </span>
+                  )}
+                </button>
+                {showNotification && (
+                  <div className="absolute right-0 top-full mt-2 z-50">
+                    <NotificationModal
+                      notifications={UserNotification}
+                      onClose={() => setShowNotification(false)}
+                    />
+                  </div>
+                )}
+              </div>
+              {/* ---------------- CART ---------------- */}
+              <Link
+                to="/dashboard/cart"
+                className="relative text-white hover:text-yellow-300"
+              >
+                <FiShoppingCart size={20} />
+                {totalItems > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                    {totalItems}
+                  </span>
+                )}
+              </Link>
+              <ProfileDropDown />
+            </div>
           )}
         </div>
 
@@ -163,7 +203,9 @@ const Navbar = () => {
 
                   {mobileCatalogOpen && (
                     <div className="mt-2 ml-4 space-y-2">
-                      {loading && <p className="text-sm text-gray-400">Loading...</p>}
+                      {loading && (
+                        <p className="text-sm text-gray-400">Loading...</p>
+                      )}
                       {error && (
                         <p className="text-sm text-red-500">
                           {error?.message || "Failed to load categories"}
@@ -202,15 +244,55 @@ const Navbar = () => {
           {/* Mobile Login/Signup or Profile */}
           {token === null ? (
             <>
-              <Link to="/signup" className="block text-white hover:text-yellow-300">
+              <Link
+                to="/signup"
+                className="block text-white hover:text-yellow-300"
+              >
                 Signup
               </Link>
-              <Link to="/Login" className="block text-white hover:text-yellow-300">
+              <Link
+                to="/Login"
+                className="block text-white hover:text-yellow-300"
+              >
                 Login
               </Link>
             </>
           ) : (
-            <ProfileDropDown />
+            <div className="flex items-center gap-4">
+              {/* ---------------- MOBILE NOTIFICATION ---------------- */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowNotification(!showNotification)}
+                  className="text-white hover:text-yellow-300 relative"
+                >
+                  <IoIosNotifications size={24} />
+                  {UserNotification?.length > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                      {UserNotification.length}
+                    </span>
+                  )}
+                </button>
+                {showNotification && (
+                  <NotificationModal
+                    notifications={UserNotification}
+                    onClose={() => setShowNotification(false)}
+                  />
+                )}
+              </div>
+              {/* ---------------- MOBILE CART ---------------- */}
+              <Link
+                to="/dashboard/cart"
+                className="relative text-white hover:text-yellow-300"
+              >
+                <FiShoppingCart size={20} />
+                {totalItems > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                    {totalItems}
+                  </span>
+                )}
+              </Link>
+              <ProfileDropDown />
+            </div>
           )}
         </div>
       )}
