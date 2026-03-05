@@ -1,0 +1,8 @@
+nodemodules
+.env
+.gitignore
+.git
+*.log
+./k
+./live-monitor.js
+./test-limit.js
