@@ -16,7 +16,7 @@
     "supertest": "^7.2.2"
   },
   "dependencies": {
-    "@deepgram/sdk": "^5.0.0",
+    "@deepgram/sdk": "5.0.0",
     "@google/generative-ai": "^0.24.1",
     "@sentry/node": "^9.20.0",
     "apminsight": "^5.2.1",
