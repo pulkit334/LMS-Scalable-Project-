@@ -5,7 +5,10 @@ const Transcript = require("../models/transcription");
 const Question = require("../models/questionModal");
 const SubSection = require("../models/subsection");
 
-const connection = new IORedis({ maxRetriesPerRequest: null });
+const connection = new IORedis(process.env.REDIS_URL, {
+  maxRetriesPerRequest:  null,
+  enableReadyCheck: false,
+});
 
 function sanitizeAIOutput(text) {
   const banned = [
