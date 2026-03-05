@@ -8,6 +8,9 @@ const limiterRedis = new Redis(process.env.REDIS_URL, {
     : undefined,
 });
 
+if (!process.env.REDIS_URL) {
+  throw new Error("REDIS_URL is missing from environment variables");
+}
 limiterRedis.on("connect", () => console.log(" Limiter Redis connected"));
 limiterRedis.on("error", (err) => console.error("Limiter Redis error:", err.message));
 

@@ -99,12 +99,18 @@ app.use((err, req, res, next) => {
 
 // ---------- SERVER ----------
 const PORT = process.env.PORT || 5000;
-console.log("REDIS_URL =", process.env.REDIS_URL);
+
+if (!process.env.REDIS_URL) {
+  throw new Error("REDIS_URL is missing from environment variables");
+}
 const httpServer = createServer(app);
 initSocket(httpServer);
 httpServer.listen(PORT, async () => {
   (connect(), console.log(` Server running on port ${PORT}`));
-console.log("REDIS_URL =", process.env.REDIS_URL);
+
+if (!process.env.REDIS_URL) {
+  throw new Error("REDIS_URL is missing from environment variables");
+}
 });
 
 // import cluster from "cluster";
