@@ -1,7 +1,12 @@
 const { Queue } = require("bullmq");
 const IORedis = require("ioredis");
 const NotificationService = require("./notifcaitonservice");
-const connection = new IORedis({ maxRetriesPerRequest: null });
+const connection = new IORedis(process.env.REDIS_URL, {
+  maxRetriesPerRequest: null,
+  tls: process.env.REDIS_URL?.startsWith("rediss://")
+    ? { rejectUnauthorized: false }
+    : undefined,
+})
 const notificationQueue = new Queue("notification-queue", { connection });
 
 const Thershold_Value = 100;

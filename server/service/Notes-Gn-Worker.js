@@ -4,7 +4,12 @@ const IORedis = require("ioredis");
 const Transcript = require("../models/transcription");
 const Subsection = require("../models/subsection");
 
-const connection = new IORedis({ maxRetriesPerRequest: null });
+const connection = new IORedis(process.env.REDIS_URL, {
+  maxRetriesPerRequest: null,
+  tls: process.env.REDIS_URL?.startsWith("rediss://")
+    ? { rejectUnauthorized: false }
+    : undefined,
+})
 const worker = new Worker(
   "NotesGnQueue",
   async (job) => {
