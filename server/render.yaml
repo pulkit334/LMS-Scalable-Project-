@@ -7,14 +7,79 @@ services:
     buildCommand: npm ci
     startCommand: node server.js
     autoDeploy: true
+
     envVars:
       - key: NODE_ENV
         value: production
+
       - key: REDIS_URL
         fromService:
           name: lms-redis
           type: redis
           property: connectionString
+
+      - key: CLOUDINARY_CLOUD_NAME
+        value: "dku3nbe9w"
+
+      - key: CLOUDINARY_API_KEY
+        value: "331789623433594"
+
+      - key: CLOUDINARY_API_SECRET
+        value: "J91WYpx2aDbJdCXA6tTYVVK2a8E"
+
+      - key: RAZORPAY_KEY_ID
+        value: "rzp_test_Rqeqwh3jxZUoO6"
+
+      - key: RAZORPAY_KEY_SECRET
+        value: "MQCPqJ2mZrw822aXYquwq4a1"
+
+      - key: DB_URL
+        value: "mongodb+srv://gpulkit744:vZcPHecFb9IS85IP@pulkit123.fehm6o2.mongodb.net/LMS?retryWrites=true&w=majority&appName=server"
+
+      - key: JWT_SECRET
+        value: "XYZ"
+
+      - key: OLLAMA_BASE_URL
+        value: "https://unstagnant-elida-heartrendingly.ngrok-free.dev "
+
+      - key: OLLAMA_MODEL
+        value: "minimax-m2.5:cloud"
+
+      - key: MAIL_HOST
+        value: "smtp.gmail.com"
+
+      - key: MAIL_USER
+        value: "gpulkit744@gmail.com"
+
+      - key: MAIL_PASS
+        value: "arkbeadtlywprwav"
+
+      - key: DEEPGRAM_API_KEY
+        value: "c0e951f346d736cfd57ae0ace681db8a474b25b1"
+
+      - key: SENTRY_DSN
+        value: "https://12345abc.ingest.sentry.io/987654"
+
+      - key: FolderName
+        value: "pulkitTesting"
+
+      - key: JWT_REFRESH_SECRET
+        value: "XRFXI"
+
+      - key: LIVEKIT_URL
+        value: "wss://pulkit-cqzbu469.livekit.cloud"
+
+      - key: LIVEKIT_API_KEY
+        value: "APIZVZUKM6efYit"
+
+      - key: LIVEKIT_API_SECRET
+        value: "OlehGD8g7DlOHDwgGVPC817EhzqeoVR57uOeNcPZhczA"
+
+      - key: GOOGLE_CLIENT_ID
+        value: "209492291404-08775up77fqksmamlphju8j8kab1iv40.apps.googleusercontent.com"
+
+      - key: GOOGLE_CLIENT_SECRET
+        value: "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"
 
   - type: redis
     name: lms-redis
