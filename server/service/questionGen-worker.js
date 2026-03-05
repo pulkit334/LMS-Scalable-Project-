@@ -70,7 +70,7 @@ Transcript:
 ${transcript.rawText}
 `;
 
-      const response = await fetch(`http://localhost:11434/api/chat`, {
+      const response = await fetch(`${process.env.OLLAMA_BASE_URL}/api/chat`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
