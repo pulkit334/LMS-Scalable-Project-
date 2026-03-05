@@ -2,7 +2,13 @@ const Question = require("../models/questionModal");
 const Subsection = require("../models/subsection");
 const Transcript = require("../models/transcription");
 const IORedis = require("ioredis");
-const redis = new IORedis();
+const redis = new IORedis(process.env.REDIS_URL || "redis://127.0.0.1:6379", {
+  maxRetriesPerRequest: null,
+  enableReadyCheck: false,
+  tls: process.env.REDIS_URL?.startsWith("rediss://")
+    ? { rejectUnauthorized: false }
+    : undefined,
+});
 exports.GetAiRoute = async (req, res) => {
   try {
     const { lectureId } = req.params;
