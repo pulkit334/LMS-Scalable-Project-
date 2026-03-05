@@ -1,6 +1,6 @@
 const Redis = require("ioredis");
 require("dotenv").config();
-const client = new Redis(process.env.REDIS_URL || "redis://127.0.0.1:6379", {
+const client = new Redis(process.env.REDIS_URL, {
   maxRetriesPerRequest: null,
   enableReadyCheck: false,
   tls: process.env.REDIS_URL?.startsWith("rediss://")

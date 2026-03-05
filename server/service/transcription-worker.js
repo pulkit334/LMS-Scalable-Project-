@@ -158,7 +158,7 @@ import SubSection from "../models/subsection.js";
 import { QuestionQueue } from "./questionGen-queue-service.js";
 import { NotesGnQueue } from "./Notes-Gn-Queue.js";
 
-const connection = new IORedis(process.env.REDIS_URL || "redis://127.0.0.1:6379", {
+const connection = new IORedis(process.env.REDIS_URL, {
   maxRetriesPerRequest: null,
   enableReadyCheck: false,
   tls: process.env.REDIS_URL?.startsWith("rediss://")

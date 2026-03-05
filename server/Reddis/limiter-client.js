@@ -1,6 +1,6 @@
 import Redis from "ioredis";
 
-const limiterRedis = new Redis(process.env.REDIS_URL || "redis://127.0.0.1:6379", {
+const limiterRedis = new Redis(process.env.REDIS_URL, {
   maxRetriesPerRequest: null,
   enableReadyCheck: false,
   tls: process.env.REDIS_URL?.startsWith("rediss://")

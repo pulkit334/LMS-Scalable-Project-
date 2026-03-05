@@ -3,7 +3,7 @@ const Subsection = require("../models/subsection");
 const Transcript = require("../models/transcription");
 const IORedis = require("ioredis");
 console.log("the process would be so")
-const redis = new IORedis(process.env.REDIS_URL || "redis://127.0.0.1:6379", {
+const redis = new IORedis(process.env.REDIS_URL, {
   maxRetriesPerRequest: null,
   enableReadyCheck: false,
   tls: process.env.REDIS_URL?.startsWith("rediss://")
