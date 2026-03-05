@@ -3,19 +3,23 @@ services:
     name: lms-api
     runtime: node
     rootDir: server
-    buildCommand: npm install
-    startCommand: node server.js
     plan: free
+    buildCommand: npm ci
+    startCommand: node server.js
+    autoDeploy: true
     envVars:
+      - key: NODE_ENV
+        value: production
       - key: REDIS_URL
         fromService:
           name: lms-redis
           type: redis
           property: connectionString
-      - key: NODE_ENV
-        value: production
 
   - type: redis
     name: lms-redis
     plan: free
     maxmemoryPolicy: noeviction
+    ipAllowList:
+      - source: 0.0.0.0/0
+        description: allow all
