@@ -1,22 +1,23 @@
-services: 
+services:
   - type: web
     name: lms-api
     runtime: docker
     dockerfilePath: ./dockerfile
     envVars:
-     -  key: REDIS_URL
-        fromService: 
-               name: lms-redis
-               type: redis
-               property: connectionString
-     -   key: NODE_ENV 
-         value: production
-     -   key : PORT
-         value: 5000
+      - key: REDIS_URL
+        fromService:
+          name: lms-redis
+          type: redis
+          property: connectionString
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+
   - type: redis
     name: lms-redis
-    plan: free 
+    plan: free
     maxmemoryPolicy: noeviction
-    ipAllowList:  
-  - source: 0.0.0.0/0
-    description: allow all IPs    
+    ipAllowList:
+      - source: 0.0.0.0/0
+        description: allow all IPs
