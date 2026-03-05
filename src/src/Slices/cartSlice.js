@@ -1,6 +1,5 @@
 /* eslint-disable no-unused-vars */
 import { createSlice } from "@reduxjs/toolkit";
-import axios from "axios";
 import toast from "react-hot-toast";
 import { api } from "../services/apiconnnector";
 
