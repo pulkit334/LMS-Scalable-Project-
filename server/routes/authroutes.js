@@ -15,26 +15,6 @@ const {
 
 const { resetpasswordtoken, resetPassword } = require("../controllers/reset");
 
-// router.get(
-//   "/auth/google",
-//   passport.authenticate("google", {
-//     scope: ["profile", "email"],
-//   }),
-// );
-// Google callback
-// router.get(
-//   "/auth/google/callback",
-//   passport.authenticate("google", { session: false }),
-//   (req, res) => {
-//     const token = jwt.sign(
-//       { id: req.user._id, email: req.user.email },
-//       process.env.JWT_SECRET,
-//       { expiresIn: "7d" },
-//     );
-
-//     res.redirect(`http://localhost:5173/google-auth?token=${token}`);
-//   },
-// );
 //==============Refresh Token =====================//
 const { refresh } = require("../controllers/Refreshcontroller");
 
@@ -220,7 +200,7 @@ router.get(
 router.post(
   "/course/getCategoryPageDetails",
   auth,
-  // cacheMiddleware((req) => `Cache:CategoryDetails`, 600),
+  cacheMiddleware((req) => `Cache:CategoryDetails`, 300),
   CategoryPageDetails,
 );
 

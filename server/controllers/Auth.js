@@ -315,12 +315,10 @@ exports.changePassword = async (req, res) => {
 
 
 exports.googleLogin = async (req, res) => {
-    console.log("CLIENT:", client); //  add this
-  console.log("CLIENT TYPE:", typeof client); //  add this
+
   try {
     //code
     const { code, accountType } = req.query;
-          console.log("CODE RECEIVED:", code); //  add this
     if (!code) {
       return res
         .status(400)

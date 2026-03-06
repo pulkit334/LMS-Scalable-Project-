@@ -2,7 +2,7 @@ const Question = require("../models/questionModal");
 const Subsection = require("../models/subsection");
 const Transcript = require("../models/transcription");
 const IORedis = require("ioredis");
-console.log("the process would be so")
+console.log("the process would be so");
 const redis = new IORedis(process.env.REDIS_URL, {
   maxRetriesPerRequest: null,
   enableReadyCheck: false,
@@ -15,10 +15,16 @@ exports.GetAiRoute = async (req, res) => {
     const { lectureId } = req.params;
     console.log("subsectionId:", lectureId); //
 
-    const allQuestions = await Question.find({}).lean();
-    console.log("Total questions in DB:", allQuestions.length);
-    console.log("Sample subsectionId from DB:", allQuestions[0]?.subsectionId);
+    // const allQuestions = await Question.find({}).lean();
 
+    const cacheKey = `questions:${lectureId}`;
+    const cached = await redis.get(cacheKey);
+    if (cached) {
+      return res.status(200).json({
+        success: false,
+        data: JSON.parse(cached),
+      });
+    }
     const questions = await Question.find({ subsectionId: lectureId }).lean();
 
     if (!questions || questions.length === 0) {
@@ -27,6 +33,7 @@ exports.GetAiRoute = async (req, res) => {
         message: "No questions found for this lecture",
       });
     }
+    await redis.setex(cacheKey, 86400, JSON.stringify(questions));
 
     return res.status(200).json({
       success: true,
@@ -84,6 +91,7 @@ exports.DownloadNotes = async (req, res) => {
     const { subsectionId } = req.params;
 
     //  Check Redis cache first
+
     const cached = await redis.getBuffer(`notes:${subsectionId}`);
     if (cached) {
       console.log(" Serving from Redis cache");
