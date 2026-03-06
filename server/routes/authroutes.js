@@ -123,13 +123,13 @@ router.post("/publish-courses", auth, changestatus);
 router.patch("/course/update/:courseId", auth, isinstructor, updateCourse);
 
 //Payment Course Loader
-router.get("/course/:courseId", auth, isstudent, getCourse);
-router.get("/course/:courseId/content", auth, isstudent, getCourseContent);
-router.get("/course/:courseId/reviews", auth, getPaymentCourseReviews);
+router.get("/course/:courseId", auth, isstudent,cacheMiddleware((req)=>`Cache:CourseId`,500), getCourse);
+router.get("/course/:courseId/content", auth, isstudent,cacheMiddleware((req)=>`Cache:CourseId`,500), getCourseContent);
+router.get("/course/:courseId/reviews", auth,cacheMiddleware((req)=>`Cache:CourseId`,500), getPaymentCourseReviews);
 router.get(
   "/user/purchased-history",
   auth,
-  // cacheMiddleware((req) => `Cache:purchased-History`, 3000),
+  cacheMiddleware((req) => `Cache:purchased-History`, 100),
   isstudent,
   Paymenthistory,
 );
@@ -233,7 +233,7 @@ router.patch("/update-review/:reviewId", auth, updateRating);
 
 router.get("/courses/reviews", sliderReview);
 router.get("/my-lecture/:courseId/coursereview", getCourseReviews);
-router.get("/payment-review/:courseId/review", getCourseReviews);
+router.get("/payment-review/:courseId/review",cacheMiddleware((req)=>`Cache:CourseId`,500), getCourseReviews);
 //================Helper Function ======////
 router.post("/aboutus/submit-form", submitContactForm);
 

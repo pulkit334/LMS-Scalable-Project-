@@ -15,7 +15,7 @@ import Reviews from "./Reviews/Reviews";
 import Author from "./CourseDeatilPage/Author";
 import WhatYouWillLearn from "./CourseDeatilPage/CommonModal";
 
-// ✅ fetcher function outside component
+
 const fetchCourseData = async (Course) => {
   const [courseRes, contentRes, reviewRes, otherRes] = await Promise.all([
     GetPayCourse(Course),
@@ -39,6 +39,7 @@ const CourseDetailsPage = () => {
     queryKey: ["courseDetails", Course], // Course in key so refetches when id changes
     queryFn: () => fetchCourseData(Course),
     staleTime: 5 * 60 * 1000, // cache for 5 mins, no refetch on revisit
+    gcTime : 1000 * 60 * 10
   });
 
   if (isLoading) {
