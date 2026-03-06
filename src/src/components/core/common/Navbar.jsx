@@ -251,7 +251,7 @@ const Navbar = () => {
                 Signup
               </Link>
               <Link
-                to="/login"
+                to="/Login"
                 className="block text-white hover:text-yellow-300"
               >
                 Login

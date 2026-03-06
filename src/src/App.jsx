@@ -132,7 +132,7 @@ function App() {
             element={<UserNotification />}
           />
           <Route
-            path="/login"
+            path="/Login"
             element={
               <OpenRoute>
                 <Login />
