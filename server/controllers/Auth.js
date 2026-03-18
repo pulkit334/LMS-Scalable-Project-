@@ -7,7 +7,7 @@ require("dotenv").config();
 
 const Profile = require("../models/profile");
 const mailsender = require("../utils/mailpotp");
-const {client} = require("../../server/utils/googleconfig")
+const {client} = require("../utils/googleconfig.js")
 
 exports.sendOtp = async (req, res) => {
   try {

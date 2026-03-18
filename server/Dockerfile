@@ -1,13 +1,13 @@
-FROM node:18-alpine
+# Production Node.js image
+FROM node:20-alpine
 
-WORKDIR /app
+WORKDIR /app    
 
 COPY package*.json ./
-RUN npm install --production
+RUN npm install --omit=dev
 
 COPY . .
 
 EXPOSE 5000
 
 CMD ["node", "server.js"]
-

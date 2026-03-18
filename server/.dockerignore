@@ -1,4 +1,4 @@
-nodemodules
+node_modules
 .env
 .gitignore
 .git
@@ -6,3 +6,8 @@ nodemodules
 ./k
 ./live-monitor.js
 ./test-limit.js
+./github
+.crone
+./crone
+.gitignore
+*.log

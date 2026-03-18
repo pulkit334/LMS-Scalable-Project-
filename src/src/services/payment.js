@@ -11,7 +11,7 @@ export const paymentcoursereview = async (course) => {
   const response = await api.get(
     CoursePayment.getCourseReviews.replace(":courseId", course),
   );
-  console.log("the Other Log DAta will be tsdssssssssssssssssssssssssssssssssssssssshe Main Data",response?.data)
+  console.log("the Other Log DAta will be t Main Data",response?.data)
   return response?.data;
 };
 
