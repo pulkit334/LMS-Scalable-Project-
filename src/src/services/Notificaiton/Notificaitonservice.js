@@ -22,9 +22,7 @@ export const MarkReadOperations = async (user) => {
   return response?.data;
 };
 export const MarkdeletionOperations = async (user) => {
-  console.log("the deletions user will be", user);
-
-  const response = await api.delete(NotificationService.statusDeletion, {
+const response = await api.delete(NotificationService.statusDeletion, {
     data: {
       [user]: "",
     },

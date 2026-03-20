@@ -11,8 +11,7 @@ const Admin = {
 };
 export const AdminInsightApi = async () => {
   const response = await adminApi.get(Admin.InsightPath);
-  console.log("the Admin Insight Data Insight is", response);
-  return response?.data;
+return response?.data;
   
 };
 
@@ -55,9 +54,7 @@ export const ToptrendingData = async () => {
 };
 //Status Patch Requets
 export const StatusPath = async ({ id, status }) => {
-  console.log("Updating status:", id, status);
-
-  const response = await adminApi.patch(Admin. StatusPath.replace(":id", id), {
+const response = await adminApi.patch(Admin. StatusPath.replace(":id", id), {
     status,
   });
 console.log("the repsosne of final data would be",response)

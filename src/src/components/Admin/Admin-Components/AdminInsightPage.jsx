@@ -62,12 +62,7 @@ const AdminInsights = () => {
   }
 
   const yearRevenue = insight?.charts?.YearRevenue || [];
-  console.log(
-    "the year reviewnu is",
-    yearRevenue.map((i) => `${i._id.month}/${i._id.year}`),
-  );
-
-  const revenueLineData = {
+const revenueLineData = {
     labels: yearRevenue.map((i) => `${MONTHS[i._id.month - 1]} ${i._id.year}`),
     datasets: [
       {

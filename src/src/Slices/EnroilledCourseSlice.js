@@ -6,11 +6,7 @@ export const fetchEnrolledCourses = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await UserEnrolledCourses();
-      console.log("the repsonse Of Enrolled Couress are",response)
-      return response;
-    } catch (error) {
-      return rejectWithValue(error.message);
-    }
+}
   }
 );
 

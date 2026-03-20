@@ -2,34 +2,21 @@ const Question = require("../models/questionModal");
 const Subsection = require("../models/subsection");
 const Transcript = require("../models/transcription");
 const IORedis  = require("ioredis");
-console.log("the process would be so")
-const redis = new IORedis(process.env.REDIS_URL, {
-  maxRetriesPerRequest: null,
-  enableReadyCheck: false,
-  tls: process.env.REDIS_URL?.startsWith("rediss://")
-    ? { rejectUnauthorized: false }
-    : undefined,
-});
-
 exports.GetAiRoute = async (req, res) => {
   try {
     const { lectureId } = req.params;
-    console.log("subsectionId:", lectureId);
-
-    // ✅ Check Redis cache first
+// ✅ Check Redis cache first
     const cacheKey = `questions:${lectureId}`;
     const cached = await redis.get(cacheKey);
     if (cached) {
-      console.log("✅ Serving questions from Redis cache");
-      return res.status(200).json({
+return res.status(200).json({
         success: true,
         data: JSON.parse(cached),
       });
     }
 
     const allQuestions = await Question.find({}).lean();
-    console.log("Total questions in DB:", allQuestions.length);
-    console.log("Sample subsectionId from DB:", allQuestions[0]?.subsectionId);
+console.log("Sample subsectionId from DB:", allQuestions[0]?.subsectionId);
 
     const questions = await Question.find({ subsectionId: lectureId }).lean();
 
@@ -42,15 +29,12 @@ exports.GetAiRoute = async (req, res) => {
 
     // ✅ Cache for 24hrs
     await redis.setex(cacheKey, 86400, JSON.stringify(questions));
-    console.log("✅ Questions cached in Redis for 24hrs");
-
-    return res.status(200).json({
+return res.status(200).json({
       success: true,
       data: questions,
     });
   } catch (err) {
-    console.log("Error fetching AI questions", err);
-    return res.status(500).json({
+return res.status(500).json({
       success: false,
       message: "Internal Server Error",
     });
@@ -101,8 +85,7 @@ exports.DownloadNotes = async (req, res) => {
     //  Check Redis cache first
     const cached = await redis.getBuffer(`notes:${subsectionId}`);
     if (cached) {
-      console.log("✅ Serving from Redis cache");
-      res.setHeader("Content-Type", "application/pdf");
+res.setHeader("Content-Type", "application/pdf");
       res.setHeader(
         "Content-Disposition",
         `attachment; filename="lecture-notes.pdf"`,
@@ -162,9 +145,7 @@ ${transcript.rawText}
 
     //  Save to Redis with 24hr expiry
     await redis.setex(`notes:${subsectionId}`, 86400, pdfBuffer);
-    console.log("✅ PDF cached in Redis for 24hrs");
-
-    res.setHeader("Content-Type", "application/pdf");
+res.setHeader("Content-Type", "application/pdf");
     res.setHeader(
       "Content-Disposition",
       `attachment; filename="lecture-notes.pdf"`,

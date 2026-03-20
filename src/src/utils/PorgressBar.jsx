@@ -5,12 +5,7 @@ const COLORS = ["#3b82f6", "#34d399", "#fbbf24", "#f87171"];
 
 export default function TopCoursesProgress({ data = [] }) {
   if (!data.length) return null;
-console.log("the data for the progress bar woulld be ",data)
-  const max = Math.max(
-    ...data.map((item) => item.totalEnrollments),
-    1
-  );
-  if (!max) return null;
+if (!max) return null;
   return (
     <Box>
         

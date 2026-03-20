@@ -118,8 +118,7 @@ exports.CategoryPageDetails = async (req, res) => {
     //     totalStudents: course.studentEnrolled?.length || 0,
     //   }))
     //   .sort((a, b) => b.totalStudents - a.totalStudents);
-    console.log("the Mostselling Courses are", mostSellingCourses);
-    return res.status(200).json({
+return res.status(200).json({
       success: true,
       selectedCategory,
       differentCategories,

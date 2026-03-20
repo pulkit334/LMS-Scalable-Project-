@@ -14,8 +14,7 @@ import {
 export default function EditCourse() {
   const dispatch = useDispatch();
   const { courseId } = useParams();
-  console.log("The Course id is ", courseId);
-  const { course } = useSelector((state) => state.course);
+const { course } = useSelector((state) => state.course);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {

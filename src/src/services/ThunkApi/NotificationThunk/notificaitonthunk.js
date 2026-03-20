@@ -7,8 +7,7 @@ export const  FetchNotification = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const res = await Usernotification();
-      console.log("the fetchNotification Result is ", res);
-      return res;
+return res;
     } catch (error) {
       return rejectWithValue(
         error?.message || "Failed to fetch User-Notficaiton",

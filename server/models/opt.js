@@ -24,10 +24,8 @@ async function sendverification(email, otp) {
       "Verification mail Form StudyNotio",
       otp
     );
-    console.log("Email sent Succesfully", mailResponse);
-  } catch (error) {
-    console.log("Error While Sending Email", error);
-    throw error;
+} catch (error) {
+throw error;
   }
 }
 
@@ -35,8 +33,7 @@ OTPSCHEMA.pre("save", async function () {
   try {
     await sendverification(this.email, this.otp);
   } catch (err) {
-    console.log("Hook Email Error:", err);
-  }
+}
 });
 
 module.exports = mongoose.model("OTP", OTPSCHEMA);

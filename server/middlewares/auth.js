@@ -27,9 +27,7 @@ if (req.headers.authorization) {
     req.user = decoded;
     next();
   } catch (err) {
-    console.log("auth error:", err.message);
-
-    return res.status(401).json({
+return res.status(401).json({
       success: false,
       message: "Invalid or expired token",
       code: "ACCESS_TOKEN_EXPIRED",
@@ -60,9 +58,7 @@ exports.isstudent = async (req, res, next) => {
 //isinstrutor
 exports.isinstructor = async (req, res, next) => {
   try {
-    console.log("middleware user:", req.user);
-
-    if (req.user.accountType !== "instructor") {
+if (req.user.accountType !== "instructor") {
       return res.status(403).json({
         success: false,
         message: "Only instructors are allowed to access this route",

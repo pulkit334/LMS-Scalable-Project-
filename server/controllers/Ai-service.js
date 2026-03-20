@@ -2,7 +2,6 @@ const Question = require("../models/questionModal");
 const Subsection = require("../models/subsection");
 const Transcript = require("../models/transcription");
 const IORedis = require("ioredis");
-console.log("the process would be so");
 const redis = new IORedis(process.env.REDIS_URL, {
   maxRetriesPerRequest: null,
   enableReadyCheck: false,
@@ -13,7 +12,7 @@ const redis = new IORedis(process.env.REDIS_URL, {
 exports.GetAiRoute = async (req, res) => {
   try {
     const { lectureId } = req.params;
-    console.log("subsectionId:", lectureId); //
+//
 
     // const allQuestions = await Question.find({}).lean();
 
@@ -40,8 +39,7 @@ exports.GetAiRoute = async (req, res) => {
       data: questions,
     });
   } catch (err) {
-    console.log("Error fetching AI questions", err);
-    return res.status(500).json({
+return res.status(500).json({
       success: false,
       message: "Internal Server Error",
     });
@@ -94,8 +92,7 @@ exports.DownloadNotes = async (req, res) => {
 
     const cached = await redis.getBuffer(`notes:${subsectionId}`);
     if (cached) {
-      console.log(" Serving from Redis cache");
-      res.setHeader("Content-Type", "application/pdf");
+res.setHeader("Content-Type", "application/pdf");
       res.setHeader(
         "Content-Disposition",
         `attachment; filename="lecture-notes.pdf"`,
@@ -155,9 +152,7 @@ ${transcript.rawText}
 
     //  Save to Redis with 24hr expiry
     await redis.setex(`notes:${subsectionId}`, 86400, pdfBuffer);
-    console.log(" PDF cached in Redis for 24hrs");
-
-    res.setHeader("Content-Type", "application/pdf");
+res.setHeader("Content-Type", "application/pdf");
     res.setHeader(
       "Content-Disposition",
       `attachment; filename="lecture-notes.pdf"`,

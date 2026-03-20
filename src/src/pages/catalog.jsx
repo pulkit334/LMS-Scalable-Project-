@@ -40,18 +40,14 @@ const Catalog = () => {
         const res = await getCatalogData({ categoryId: categoryID });
         setCatalogPageData(res);
       } catch (error) {
-        console.log("Catalog API error:", error);
-      } finally {
+} finally {
         setLoading(false); // 
       }
     };
 
     fetchCatalogData();
   }, [categoryID]);
-
-  console.log("The Data in catalog", catalogPageData?.mostSellingCourses);
-
-  return (
+return (
     <div className="bg-[#000814] text-[#F1F2FF] min-h-screen">
       {/* ================= HERO ================= */}
       <section className="bg-gradient-to-b from-[#161D29] to-[#000814] border-b border-[#2C333F]">

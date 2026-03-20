@@ -113,9 +113,7 @@ const InstructorChart = ({ courses = [] }) => {
       },
     },
   };
-
-  console.log("thw course data is", courses?.[0]);
-  const options = {
+const options = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {

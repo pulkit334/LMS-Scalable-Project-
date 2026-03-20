@@ -12,17 +12,9 @@ const notificationQueue = new Queue("notification-queue", { connection });
 const Thershold_Value = 100;
 
 async function sendNotifications(title, body, deviceTokens, image = null) {
-  console.log(
-    "the queue notification send data would be ",
-    title,
-    body,
-    deviceTokens,
-    image,
-  );
-  if (deviceTokens.length < Thershold_Value) {
+if (deviceTokens.length < Thershold_Value) {
     //direct send to the Users
-    console.log("the device token would be ", deviceTokens);
-    const response = await NotificationService.sendMultipleNotification(
+const response = await NotificationService.sendMultipleNotification(
       title,
       body,
       deviceTokens,

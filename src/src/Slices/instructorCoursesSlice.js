@@ -6,8 +6,7 @@ export const fetchInstructorCourses = createAsyncThunk(
   "instructorCourses/fetch",
   async () => {
     const res = await GetInsturctorCourse();
-    console.log("The data is this ", res);
-    return res.data; // backend data array
+return res.data; // backend data array
   }
 );
 

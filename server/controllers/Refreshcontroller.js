@@ -5,9 +5,7 @@ const User = require("../models/User");
 exports.refresh = async (req, res) => {
   try {
     const refreshToken = req.cookies.refreshToken;
-    console.log("refresh cookie:", refreshToken);
-
-    if (!refreshToken) {
+if (!refreshToken) {
       return res.status(401).json({
         success: false,
         message: "Refresh token missing",

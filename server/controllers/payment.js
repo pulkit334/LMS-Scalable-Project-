@@ -64,9 +64,7 @@ exports.CapturePayment = async (req, res) => {
         price: course.price,
       });
     }
-
-    console.log(" Payment Courses:", courses);
-    console.log(" Course Thumbnails:", courseThumbnails);
+console.log(" Course Thumbnails:", courseThumbnails);
 
     // Razorpay order
     const options = {
@@ -82,9 +80,7 @@ exports.CapturePayment = async (req, res) => {
     };
 
     const paymentResponse = await instance.orders.create(options);
-    console.log(" Payment Response:", paymentResponse);
-
-    return res.status(200).json({
+return res.status(200).json({
       success: true,
       orderId: paymentResponse.id,
       currency: paymentResponse.currency,
@@ -350,8 +346,7 @@ exports.sendPaymentSuccessEmail = async (req, res) => {
       message: "Payment success email sent",
     });
   } catch (error) {
-    console.log("Error sending email:", error);
-    return res.status(500).json({
+return res.status(500).json({
       success: false,
       message: "Could Not Send Email",
     });

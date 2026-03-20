@@ -48,9 +48,7 @@ const Course_mangment = () => {
   const hasNextPage = paginationdata?.hasNextPage || false;
   const hasPrevPage = paginationdata?.hasPrevpage || false; //
   const currentPage = paginationdata?.page || 1;
-
-  console.log("the course Management data would be", paginationdata);
-  // Current Pages
+// Current Pages
   const getPages = () => {
     const pages = [];
     const chunkSize = 10;
@@ -102,8 +100,7 @@ const Course_mangment = () => {
     dispatch(fetchCourseInsight({ page: 1, limit: 5 }));
     dispatch(fetchcategoriesTrend());
   }, [dispatch]);
-  console.log("the course table data would be ", CourseTableData);
-  console.log("the categoires  table data would be ", TopCategories);
+console.log("the categoires  table data would be ", TopCategories);
 
   return (
     <div

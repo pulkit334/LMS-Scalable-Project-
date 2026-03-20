@@ -1,12 +1,6 @@
 export function courseProgress(courseProgress = []) {
   const progressMap = new Map();
-console.log("The Course Progress is ",courseProgress)
-  courseProgress.forEach((progress) => {
-    progressMap.set(
-      progress.courseId.toString(),
-      progress.completedVideos.length
-    );
-  });
+});
 
   return progressMap;
 }

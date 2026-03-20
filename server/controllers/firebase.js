@@ -2,22 +2,16 @@ const NotificationService = require("../service/notifcaitonservice");
 
 const sendFirebaseNotification = async (req, res) => {
   try {
-    console.log("Controller hit! Request body:", req.body);
-    
-    const { title, body, deviceToken ,  image} = req.body;
+const { title, body, deviceToken ,  image} = req.body;
     
     // Validate input
     if (!deviceToken || !title || !body) {
-      console.log("Validation failed - missing fields");
-      return res.status(400).json({ 
+return res.status(400).json({ 
         success: false, 
         error: "Missing required fields: deviceToken, title, body" 
       });
     }
-    
-    console.log("Controller sending notification:", { title, body, deviceToken });
-    
-    await NotificationService.sendNotification(title, body, deviceToken,  image);
+await NotificationService.sendNotification(title, body, deviceToken,  image);
     
     res.status(200).json({ 
       message: "Notification sent successfully", 

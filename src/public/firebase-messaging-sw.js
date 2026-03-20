@@ -16,9 +16,7 @@ firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage((payload) => {
-  console.log("Background message received:", payload);
-
-  const title =
+const title =
     payload.notification?.title ||
     payload.data?.title ||
     "New Notification";
@@ -41,9 +39,7 @@ messaging.onBackgroundMessage((payload) => {
 
 // Handle notification click
 self.addEventListener('notificationclick', (event) => {
-  console.log('Notification clicked:', event);
-  
-  event.notification.close();
+event.notification.close();
   
   if (event.action === 'open') {
     // Open your app
@@ -63,5 +59,4 @@ self.addEventListener('notificationclick', (event) => {
 
 // Handle notification close
 self.addEventListener('notificationclose', (event) => {
-  console.log('Notification closed:', event);
 });

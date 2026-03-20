@@ -20,8 +20,7 @@ function GoogleLoginButton({ accountType = "student" }) {
         Navigate("/")
       }
     } catch (err) {
-      console.log("the error would be ", err.message);
-      console.error("Error while requesting google code : ", err);
+console.error("Error while requesting google code : ", err);
     }
   };
 

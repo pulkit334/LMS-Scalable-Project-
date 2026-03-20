@@ -115,8 +115,7 @@ const VedioDetails = () => {
       setVideoActive(false);
       setVideoEnded(false);
     } catch (err) {
-      console.log("Completion error", err);
-    } finally {
+} finally {
       setSaving(false);
     }
   };
@@ -146,8 +145,7 @@ const VedioDetails = () => {
           dispatch(fetchEnrolledCourses());
         }
       } catch (err) {
-        console.log("Auto completion failed", err);
-      }
+}
     }
   };
 

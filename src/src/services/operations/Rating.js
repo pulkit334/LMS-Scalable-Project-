@@ -16,8 +16,7 @@ export const CreateRating = async ({ courseId, data }) => {
     );
     return response.data;
   } catch (error) {
-    console.log(error?.response?.data?.message || error.message);
-    throw error;
+throw error;
   }
 };
 

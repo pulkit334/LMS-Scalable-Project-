@@ -55,10 +55,15 @@ app.use(cookieParser());
 // ---------- CORS ----------
 app.use(
   cors({
-    origin: true,
+    origin: [
+      process.env.FRONTEND_URL,
+      "https://notion-x.store",
+      "https://www.notion-x.store",
+      "http://localhost:5173",
+    ],
     credentials: true,
   }),
-); // ---------- FILE UPLOAD ----------
+);// ---------- FILE UPLOAD ----------
 app.use(
   fileUpload({
     useTempFiles: true,
@@ -79,13 +84,11 @@ app.use("/api/v4", aiLimiter,       AIRoutes);
 app.use("/api/v5", liveLimiter,     LiveRoutes);
 app.get("/test-limit", (req, res) => res.json({ ok: true })); //  test route
 app.get("/test-cron", async (req, res) => {
-  console.log(" Testing cart reminder...");
-  await checkAbandonedCarts();
+await checkAbandonedCarts();
   res.send("Che ck server console for logs");
 });
 app.get("/", async (req, res) => {
-  console.log(" Testing ngrok...");
-  res.send("Check server console for logs");
+res.send("Check server console for logs");
 });
 
 // ---------- ERROR HANDLER ----------
@@ -99,7 +102,6 @@ app.use((err, req, res, next) => {
 
 // ---------- SERVER ----------
 const PORT = process.env.PORT || 5000;
-console.log("REDIS_URL =", process.env.REDIS_URL);
 const httpServer = createServer(app);
 initSocket(httpServer);
 httpServer.listen(PORT, async () => {

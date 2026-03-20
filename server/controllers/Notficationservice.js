@@ -7,16 +7,12 @@ exports.saveFcmToken = async (req, res) => {
   try {
     const userId = req.user.id;
     let fcmToken = req.body.fcmToken;
-
-    console.log("the fcmToken would be", fcmToken);
-
-    if (!fcmToken) {
+if (!fcmToken) {
       const keys = Object.keys(req.body);
 
       if (keys.length > 0) {
         fcmToken = keys[0];
-        console.log(" Token extracted from keys:", fcmToken);
-      } else {
+} else {
         return res.status(400).json({
           success: false,
           message: "FCM token is required",
@@ -50,8 +46,7 @@ exports.saveFcmToken = async (req, res) => {
       message: "FCM token saved successfully",
     });
   } catch (err) {
-    console.log("the error is ", err);
-    return res.status(500).json({
+return res.status(500).json({
       success: false,
       message: "Failed Network Problem",
     });
@@ -100,16 +95,14 @@ exports.MarkReadOperations = async (req, res) => {
     if (keys.length > 0) {
       user = keys[0];
     }
-    console.log("the user id would be in the backend would be", user);
-    const updatedData = await Notification.findByIdAndUpdate(
+const updatedData = await Notification.findByIdAndUpdate(
       user,
       {
         read: true,
       },
       { new: true },
     );
-    console.log("the updated Data would be ", updatedData);
-    return res.status(202).json({
+return res.status(202).json({
       success: true,
       message: "Updated successfully",
       data: updatedData,
@@ -148,8 +141,7 @@ exports.MarkDeleteOperations = async (req, res) => {
       data: deletedData,
     });
   } catch (err) {
-    console.log("the error would be ", err);
-    return res.status(500).json({
+return res.status(500).json({
       success: false,
       message: "Internal Server Error",
     });

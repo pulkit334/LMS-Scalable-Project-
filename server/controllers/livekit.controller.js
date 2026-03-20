@@ -11,7 +11,7 @@ import { getIO } from "../config/socket.js";
 //create the class
 export const createClass = async (req, res) => {
   try {
-    console.log("the course Clasa would ", req.body);
+
     const { title, courseId } = req.body;
     const cls = await Class.create({
       title,
@@ -31,7 +31,7 @@ export const CreateRoom = async (req, res) => {
     //Id id
     const { classId } = req.params;
     const teacherId = req.user.id;
-console.log('🔴 CreateRoom hit', req.params, req.user.id) 
+
     const cls = await Class.findOne({ _id: classId, teacher: teacherId });
     if (!cls)
       return res
@@ -53,7 +53,7 @@ console.log('🔴 CreateRoom hit', req.params, req.user.id)
     cls.state = "LIVE";
     cls.startedAt = new Date();
    const saved =  await cls.save();
- console.log("the state of the live class would be ",saved.state)
+
     const io = getIO();
     io.to(`course:${cls.course}`).emit("class:live", {
       classId: classId,
@@ -102,8 +102,7 @@ export const JoinRoom = async (req, res) => {
 
     return res.json({ token, host: process.env.LIVEKIT_URL });
   } catch (err) {
-    console.log("the erro was", err.message);
-    return res.status(500).json({
+return res.status(500).json({
       message: "Failed Try Again",
       success: false,
     });
@@ -165,7 +164,7 @@ const receiver = new WebhookReceiver(
 export const livekitWebhook = async (req, res) => {
   try {
     const event = receiver.receive(req.body, req.headers["authorization"]);
-    console.log("LiveKit Event:", event.event);
+  
 
     switch (event.event) {
       case "room_finished":
@@ -174,16 +173,13 @@ export const livekitWebhook = async (req, res) => {
           endedAt: new Date(),
         });
       case "participant_joined":
-        console.log("Someone joined:", event.participant.identity);
-        break;
+break;
       case "participant_left":
-        console.log("Someone left", event.participant.identity);
-        break;
+break;
     }
 
     return res.status(200).json({ received: true });
   } catch (err) {
-    console.log("Webhook error:", err.message);
     res.status(400).json({ message: err.message });
   }
 };
@@ -223,7 +219,6 @@ export const getLiveSignal = async (req, res) => {
       title: liveClass.title,
     });
   } catch (error) {
-    console.log("the error would be ", error);
     res.status(400).json({ message: error.message });
   }
 };

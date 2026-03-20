@@ -19,8 +19,7 @@ export const CoursecategoryData = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const res = await CategoryResponse();
-      console.log("the repsosne is ", res);
-      return res?.AllCategory;
+return res?.AllCategory;
     } catch (err) {
       return rejectWithValue(err);
     }

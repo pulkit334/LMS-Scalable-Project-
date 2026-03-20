@@ -114,8 +114,7 @@ exports.InsightData = async (req, res) => {
       },
     });
   } catch (error) {
-    console.log(error);
-    return res.status(500).json({
+return res.status(500).json({
       success: false,
       message: "Failed To Fetch",
       error: error.message,
@@ -206,9 +205,7 @@ exports.InstructorData = async (req, res) => {
     }));
     const totalPages = Math.ceil(total / limit);
     // abh Merge Kar dete hai Codes Ko As Insturtor wiht firtsName LastName and _id->Count Merge
-    console.log("FINAL DATA LENGTH:", FinalData.length);
-
-    return res.status(202).json({
+return res.status(202).json({
       success: true,
       message: "All instructors fetched",
       data: {
@@ -224,8 +221,7 @@ exports.InstructorData = async (req, res) => {
       },
     });
   } catch (error) {
-    console.log("the Admin is", error);
-    return res.status(500).json({
+return res.status(500).json({
       success: false,
       message: "Failed To Fetch",
       error: error.message,
@@ -280,8 +276,7 @@ exports.UserMangment = async (req, res) => {
       },
     });
   } catch (err) { 
-    console.log("The error is ", err);
-    return res.status(500).json({
+return res.status(500).json({
       success: false,
       message: "Failed To Fetch",
       error: err.message,
@@ -439,8 +434,7 @@ exports.chartMangment = async (req, res) => {
       data: trendData,
     });
   } catch (err) {
-    console.log(err?.message);
-    return res.status(500).json({
+return res.status(500).json({
       success: false,
       message: "Failed To Fetch",
     });
@@ -502,8 +496,7 @@ exports.getTopCourses = async (req, res) => {
     ]);
     res.json({ success: true, TopCoursesData });
   } catch (err) {
-    console.log(err);
-    res.status(500).json({
+res.status(500).json({
       success: false,
       message: "Failed To Fetch",
     });

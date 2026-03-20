@@ -34,12 +34,7 @@ exports.createCourse = async (req, res) => {
         message: "Thumbnail image is required",
       });
     }
-    console.log(
-      "The categoory is dsbhsdhbjcbzxkbzclbjzxlbjzxbjlbjlzlbvzlbkln",
-      category,
-    );
-
-    const thumbnail = req.files.thumbnailImage;
+const thumbnail = req.files.thumbnailImage;
 
     //validation
     if (
@@ -111,9 +106,7 @@ exports.createCourse = async (req, res) => {
       { $push: { course: newCourse._id } },
       { new: true },
     );
-
-    console.log("the data is ", response);
-    res.status(201).json({
+res.status(201).json({
       success: true,
       message: "Course Created Succesfully",
       courseId: newCourse._id,
@@ -205,8 +198,7 @@ exports.getEnrolledCourses = async (req, res) => {
 exports.changestatus = async (req, res) => {
   try {
     const { courseId, isPublic } = req.body;
-    console.log(courseId, isPublic);
-    const userId = req.user.id;
+const userId = req.user.id;
     if (!courseId) {
       return res.status(400).json({
         success: false,
@@ -241,8 +233,7 @@ exports.changestatus = async (req, res) => {
       message: "Successfully Published",
     });
   } catch (error) {
-    console.log(error);
-    return res.status(500).json({
+return res.status(500).json({
       success: false,
       message: "Error Pls Try Again ",
       error,
@@ -390,8 +381,7 @@ exports.updateCourse = async (req, res) => {
 
       const publicId =
         courseImage.image?.publicId || `courses/${courseId}/thumbnail`;
-      console.log("The public Id is ", courseImage);
-      const uploaded = await uploadImageToCloudinary(
+const uploaded = await uploadImageToCloudinary(
         req.files.thumbnailImage,
         process.env.FolderName,
         {
@@ -441,10 +431,8 @@ exports.deleteCourse = async (req, res) => {
     const userId = req.user.id;
 
     // 2️ Find course
-    console.log("the Course before result is", courseId);
-    const Course = await course.findById(courseId);
-    console.log("the Course result is this ", Course);
-    if (!Course) {
+const Course = await course.findById(courseId);
+if (!Course) {
       return res.status(404).json({
         success: false,
         message: "Course not found",
@@ -521,20 +509,14 @@ exports.getCourse = async (req, res) => {
         message: "courseId is required",
       });
     }
-
-    console.log("courseId:", courseId);
-
-    const data = await course
+const data = await course
       .findById(courseId)
       .select(
         "courseName courseDescription price thumbnail category Insturctor totalDuration status studentEnrolled whatyouwilllearn",
       )
       .populate("category", "name")
       .populate("Insturctor", "image.url firstName lastName email");
-
-    console.log("course data:", data);
-
-    if (!data) {
+if (!data) {
       return res.status(404).json({
         success: false,
         message: "Course not found",

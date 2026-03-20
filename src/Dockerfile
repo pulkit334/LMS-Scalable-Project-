@@ -9,7 +9,7 @@ RUN npm install
 COPY . .
 RUN npm run build
 
-# Stage 2: Serve with Nginx
+
 FROM nginx:alpine
 
 COPY --from=builder /app/dist /usr/share/nginx/html
@@ -17,6 +17,9 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 
 RUN echo 'server { \
     listen 80; \
+    location /api/ { \
+        proxy_pass http://backend:5000; \
+    } \
     location / { \
         root /usr/share/nginx/html; \
         index index.html; \

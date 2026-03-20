@@ -3,9 +3,7 @@ const admin = require("../utils/utlis/firebase");
 class NotificationService {
   // single device
   static async sendNotification(title, body, deviceToken, image) {
-    console.log({ title, body, deviceToken });
-    
-    const message = {
+const message = {
       notification: { 
         title, 
         body,
@@ -55,12 +53,8 @@ class NotificationService {
         },
       },
     };
-
-    console.log('📤 Sending web notification...');
-    const response = await admin.messaging().sendEachForMulticast(message);
-    
-    console.log('✅ Success:', response.successCount);
-    console.log('❌ Failed:', response.failureCount);
+const response = await admin.messaging().sendEachForMulticast(message);
+console.log('❌ Failed:', response.failureCount);
     
     return response;
   }

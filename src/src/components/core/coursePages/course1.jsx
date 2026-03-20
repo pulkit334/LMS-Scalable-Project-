@@ -95,12 +95,7 @@ const CourseInformation = () => {
       if (!response?.success) {
         throw new Error("No response from server");
       }
-      console.log(
-        "The responsdczxcxzxczczzxzczxczxczxczxxzxzczxxzczxxcxe is",
-        response,
-      );
-
-      if (response?.courseId || response?.course?._id) {
+if (response?.courseId || response?.course?._id) {
         // ONLY CHANGE (Redux instead of prop)
         dispatch(setCourseId(response.courseId));
         dispatch(setStep(2));

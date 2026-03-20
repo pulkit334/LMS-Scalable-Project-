@@ -26,8 +26,7 @@ const ViewCourses = () => {
   useEffect(() => {
     const setCourseSpecificDetails = async () => {
       try {
-        console.log("the Coures Id is", courseId);
-        const CourseData = await getFullCourseDetails(courseId);
+const CourseData = await getFullCourseDetails(courseId);
         dispatch(setCourseSectionData(CourseData?.courseDetails.courseContent));
         dispatch(setEntireCourseData(CourseData?.courseDetails));
         dispatch(setCompletedLectures(CourseData?.completedVideos));
@@ -37,8 +36,7 @@ const ViewCourses = () => {
         });
         dispatch(setTotalNoOfLectures(lecture));
       } catch (error) {
-        console.log("'the error is ", error);
-      }
+}
     };
     setCourseSpecificDetails();
   }, [courseId, dispatch, token]);

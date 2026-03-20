@@ -39,8 +39,7 @@ router.post('/test-notification', async (req, res) => {
 
   try {
     const response = await admin.messaging().send(message);
-    console.log(' Test notification sent:', response);
-    res.json({ success: true, messageId: response });
+res.json({ success: true, messageId: response });
   } catch (error) {
     console.error(' Test failed:', error);
     res.json({ success: false, error: error.message });

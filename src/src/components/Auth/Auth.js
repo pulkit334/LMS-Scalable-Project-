@@ -9,14 +9,11 @@ export const SubmitHandle = async (data, dispatch, navigate) => {
 
     const token = res?.token;
     const user = res?.user;
-    console.log(user?.accountType);
-    if (!user || !token) {
+if (!user || !token) {
       toast.error("Invalid credentials");
       return;
     }
-    console.log("Redirect role:", user.accountType);
-
-    // Update Redux
+// Update Redux
     dispatch(setToken(token));
     dispatch(setUser(user));
 
@@ -24,10 +21,7 @@ export const SubmitHandle = async (data, dispatch, navigate) => {
     localStorage.setItem("token", token);
 
     const role = user?.accountType?.trim()?.toLowerCase();
-    console.log("the role here is",role)
-    if (role === "admin") {
-      console.log("Navigating to admin...");
-      navigate("/admin/insight", { replace: true });
+navigate("/admin/insight", { replace: true });
       return;
     }
 

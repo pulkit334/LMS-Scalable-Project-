@@ -1,5 +1,3 @@
-/* eslint-disable no-unused-vars */
-/* eslint-disable no-undef */
 import { initializeApp } from "firebase/app";
 import { getMessaging, getToken, onMessage } from "firebase/messaging";
 
@@ -13,25 +11,31 @@ const firebaseConfig = {
   measurementId: "G-FMX0JW7LT4"
 };
 
-
 const app = initializeApp(firebaseConfig);
-const messaging = getMessaging(app);
+
+let messaging = null
+
+try {
+  messaging = getMessaging(app)
+} catch(err) {
+  console.log('Firebase messaging not supported on HTTP',err)
+}
 
 export const requestFCMToken = async () => {
-  const permission = await Notification.requestPermission();
+  if (!messaging) return null  // ← guard check!
 
-  if (permission !== "granted") {
-    throw new Error("Notification not granted");
-  }
+  const permission = await Notification.requestPermission()
+  if (permission !== "granted") throw new Error("Notification not granted")
 
   return getToken(messaging, {
     vapidKey: 'BDgUnloUtRuE7AjsTrwfWS5oXtKM81TEoOiwCVkQEL2pKxFBfEuPO6nt1T-CUYTD4g73nzbo-GiAAJftrCZlqQ8',
-  });
-};
+  })
+}
 
-// FIXED: This should set up a listener, not return a Promise
 export const onMessageListner = (callback) => {
+  if (!messaging) return  // ← guard check!
+  
   onMessage(messaging, (payload) => {
-    callback(payload);
-  });
-};
+    callback(payload)
+  })
+}

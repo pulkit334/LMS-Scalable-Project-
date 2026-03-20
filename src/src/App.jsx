@@ -77,9 +77,7 @@ function App() {
   //Notification usefffect
   useEffect(() => {
     onMessageListner((payload) => {
-      console.log("Foreground notification:", payload);
-
-      toast(
+toast(
         <div>
           <strong>{payload?.notification?.title}</strong>
           <p>{payload?.notification?.body}</p>

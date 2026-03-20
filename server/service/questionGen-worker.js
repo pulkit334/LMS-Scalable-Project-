@@ -86,9 +86,7 @@ ${transcript.rawText}
       });
 
       const data = await response.json();
-      console.log("Ollama raw response:", JSON.stringify(data, null, 2));
-
-      if (!data.message?.content) {
+if (!data.message?.content) {
         throw new Error(`Ollama returned no content: ${JSON.stringify(data)}`);
       }
 
@@ -107,8 +105,7 @@ ${transcript.rawText}
       await Question.insertMany(questions.map((q) => ({ ...q, subsectionId })));
 
       await SubSection.findByIdAndUpdate(subsectionId, { status: "READY" });
-      console.log("Questions generated successfully!");
-    } catch (err) {
+} catch (err) {
       await SubSection.findByIdAndUpdate(subsectionId, { status: "FAILED" });
       console.error("Worker failed:", err);
       throw err;

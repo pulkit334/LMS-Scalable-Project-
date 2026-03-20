@@ -79,8 +79,7 @@ export const sendotp = async (email) => {
   const toastId = toast.loading("Sending Mail");
 
   const response = await api.post(AUTH.SEND_OTP, email);
-  console.log("OTP Hit");
-  if (response) {
+if (response) {
     toast.success("successfully Sent the Otp", toastId);
   }
   return response.data;
@@ -113,8 +112,7 @@ export const SinupUser = (data, navigate) => {
 export const submitEnquiry = async (data) => {
   try {
     const response = await api.post(Enqiry.Enquiry, data);
-    console.log("here is your SUbmited Data", response);
-    toast.success("Message sent successfully");
+toast.success("Message sent successfully");
     return response.data;
   } catch (error) {
     const message =
@@ -145,8 +143,7 @@ export const deleteAccount = async () => {
 //Setting Image upladar
 export const ImageUploader = async (data) => {
   try {
-    console.log("hey ther ehere is data ");
-    const response = await api.patch(PROFILE.ImageUploader, data);
+const response = await api.patch(PROFILE.ImageUploader, data);
     return response.data;
   } catch (error) {
     toast.error(`${error}`);
@@ -176,8 +173,7 @@ export const changePassword = async (data) => {
 export const UndoAccount = async (email) => {
   try {
     const response = await api.post(AUTH.Profile_Recovery, { email });
-    console.log(response);
-    localStorage.setItem(response, JSON.stringify(response));
+localStorage.setItem(response, JSON.stringify(response));
     return response?.data;
   } catch (error) {
     toast.error(`${error.message}`);
@@ -200,8 +196,7 @@ export const GetCategorires = async () => {
 
 export const createCourseSection = async (data) => {
   const response = await api.post(Course_Section.createsection, data);
-  console.log("The Time duration is", response);
-  return response?.data;
+return response?.data;
 };
 export const deleteSection = async (sectionId) => {
   return api.delete(
@@ -219,8 +214,7 @@ export const createSubsection = async (formData, config = {}) => {
 
 export const GetInsturctorCourse = async () => {
   const response = await api.get(Course_Section.GetInrtuctorCourse);
-  console.log("The course is ", response);
-  return response?.data;
+return response?.data;
 };
 
 //public the course or private
@@ -230,8 +224,7 @@ export const CoursePublication = async (courseId, isPublic) => {
     courseId,
     isPublic,
   });
-  console.log("The data is COurse publciaiton ", response);
-  return response.data;
+return response.data;
 };
 
 export const UpdateSubsection = async (subSectionId, formData, config = {}) => {
@@ -245,13 +238,10 @@ export const UpdateSubsection = async (subSectionId, formData, config = {}) => {
 };
 
 export const getFullCourseDetails = async (courseId) => {
-  console.log("The courseID is ", courseId);
-  const res = await api.get(
+const res = await api.get(
     Course.GetFUllCourseDetails.replace(":courseId", courseId),
   );
-  console.log("The Fullcourse edit data is", res);
-
-  return res.data;
+return res.data;
 };
 
 export const UpdateUser = async (courseId, formData) => {
@@ -259,19 +249,14 @@ export const UpdateUser = async (courseId, formData) => {
     Course_Section.UpdateCourse.replace(":courseId", courseId),
     formData,
   );
-  console.log("The Data is", res);
-  return res?.data;
+return res?.data;
 };
 
 export const CourseDelete = async (courseId) => {
-  console.log("Deleting course API hit:", courseId);
-
-  const response = await api.delete(
+const response = await api.delete(
     Course.DeleteCourse.replace(":courseId", courseId),
   );
-
-  console.log("Delete course response:", response?.data);
-  return response?.data;
+return response?.data;
 };
 
 export const CompleteLectureMarker = async (courseId, subSectionId, token) => {
@@ -290,25 +275,17 @@ export const RefreshVerification = async (data) => {
   const response = await api.post(AUTH.RefreshVerification);
   // const token = response.data?.token || [];
   // localStorage.setItem("token", token);
-  console.log("The Token is ", response);
-  return response?.data;
+return response?.data;
 };
 export const CategoryResponse = async (data) => {
   const response = await api.get(categories.GET_ALL);
-  console.log("the categouyr respons eis theese s", response);
-  return response?.data;
+return response?.data;
 };
 
 //for google 
 export const googleauth = async (code,accountType) => {
   try {
     const response = await api.get(`${AUTH.google_auth_login}?code=${code}&accountType=${accountType}`);
-    console.log("the google auth result data would be ",response)
-    return response.data;
-
-  } catch (err) {
-    console.error("Google Auth Error : ", err);
-    
-    throw err;
+throw err;
   }
 };

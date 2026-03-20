@@ -24,9 +24,7 @@ export const GoLive = ({ courses, onClose, PUBLISHED }) => {
     setLoading(false)
   }
 }
-  console.log("the courses are ", PUBLISHED);
-
-  return (
+return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
       <div className="bg-gray-900 border border-gray-800 rounded-2xl p-8 w-full max-w-md flex flex-col gap-5">
         {/* Header */}

@@ -1,7 +1,6 @@
 exports.createSubsection = async (req, res) => {
   try {
-    console.log("The Data is ", req.body);
-    // fetch the data
+// fetch the data
     const { sectionId, timeDuration, tittle, description } = req.body;
 
     if (!req.files || Object.keys(req.files).length === 0) {

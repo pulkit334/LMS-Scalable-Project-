@@ -15,8 +15,7 @@ const ReviewSlider = () => {
   const { loading, reviews = [] } = useSelector(
     (state) => state.ratingSlice || {},
   );
-  console.log("the Reveiw is", reviews);
-  const [lgreview, setlgreview] = useState(false);
+const [lgreview, setlgreview] = useState(false);
   useEffect(() => {
     if (reviews.length === 0) {
       dispatch(fetchHomeReviews());
@@ -35,8 +34,7 @@ const ReviewSlider = () => {
         </h1>
       </div>
     );
-  console.log("My Course Reviews Are ", reviews);
-  return (
+return (
     <div className="w-full max-w-6xl mx-auto py-16">
       <Swiper
         className="swiper-wrapper"

@@ -14,8 +14,7 @@ const GoogleAuth = () => {
 
   useEffect(() => {
     const token = new URLSearchParams(window.location.search).get("token");
-    console.log("the token is ", token);
-    const restoreUsers = async () => {  
+const restoreUsers = async () => {  
       if (!token) return;
 
       try {

@@ -9,8 +9,7 @@ export const fetchHomeReviews = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const   response = await getRating();
-      console.log("the Revivew after fetch is ", response);
-      return response?.data;
+return response?.data;
     } catch (Error) {
       return rejectWithValue(Error?.response || Error);
     }
@@ -22,8 +21,7 @@ export const fetchCourseReviews = createAsyncThunk(
   async (courseId, { rejectWithValue }) => {
     try {
       const response = await MyLectureReview(courseId);
-      console.log("The data is ", response);
-      return response;
+return response;
     } catch (error) {
       return rejectWithValue(error?.response || error);
     }

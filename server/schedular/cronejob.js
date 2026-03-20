@@ -49,9 +49,7 @@ const deletion = async () => {
         "Your account has been permanently deleted."
       ).catch(() => {}); // avoiding the cron Crash 
     });
-
-    console.log(` Deleted ${users.length} users successfully`);
-  } catch (err) {
+} catch (err) {
     console.error(" Cron deletion error:", err);
   }
 };

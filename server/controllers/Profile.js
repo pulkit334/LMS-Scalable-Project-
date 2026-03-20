@@ -8,8 +8,7 @@ const Cloudinary = require("cloudinary").v2;
 const crypto = require("crypto");
 exports.UpdateProfile = async (req, res) => {
   try {
-    console.log("hey ther updated successfully");
-    const userId = req.user.id;
+const userId = req.user.id;
 
     const allowedFields = [
       "dateofBirth",
@@ -156,8 +155,7 @@ exports.UndoAccount = async (req, res) => {
       message: "Recovery email sent. Please check your inbox.",
     });
   } catch (err) {
-    console.log("the erroro hitted", err);
-    return res.sta;
+return res.sta;
   }
 };
 
@@ -216,8 +214,7 @@ exports.UpdateProfilePhoto = async (req, res) => {
     if (!user.image) {
       user.image = {};
     }
-    console.log("updating the file  New one ", uploadedImage);
-    // now safe to set
+// now safe to set
     user.set("image", {
       url: uploadedImage.secure_url,
       publicId: uploadedImage.public_id,

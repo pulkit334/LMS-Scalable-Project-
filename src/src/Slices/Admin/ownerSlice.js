@@ -26,8 +26,7 @@ export const fetchInstructorInsight = createAsyncThunk(
   "Admin/fetchInstructorInsight",
   async ({ page = 1, limit = 5, search = "" }, { rejectWithValue }) => {
     try {
-      console.log(search);
-      const res = await InstrctorApi(page, limit, search);
+const res = await InstrctorApi(page, limit, search);
       return res;
     } catch (err) {
       return rejectWithValue(err);
@@ -89,8 +88,7 @@ export const fetchUserState = createAsyncThunk(
   async ({ id, status }, { rejectWithValue }) => {
     try {
       const res = await StatusPath({ id, status });
-      console.log("the fecthuser state Data would be", res);
-      return res?.data;
+return res?.data;
     } catch (err) {
       return rejectWithValue(err);
     }

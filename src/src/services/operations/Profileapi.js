@@ -27,6 +27,5 @@ export const UserEnrolledCourses = async () => {
 
 export const InstructorCourse = async () => {
   const response = await api.get(Profile.InstructorCourse);
-  console.log("The data for InstructorCourse is ", response);
-  return response?.data?.courses;
+return response?.data?.courses;
 };

@@ -58,8 +58,7 @@ const AddLectureModal = ({ isOpen, onClose, sectionId, lecture = null }) => {
     setTimeDuration(duration);
     setVideoPreview(URL.createObjectURL(file));
     setNewVideoFile(file); //  Store the new file
-    console.log("📹 New video selected:", file.name);
-  };
+};
 
   /* -------------------- SAFE CLOSE -------------------- */
   const handleModalClose = () => {
@@ -80,8 +79,7 @@ const AddLectureModal = ({ isOpen, onClose, sectionId, lecture = null }) => {
 
       if (hasNewVideo) {
         formData.append("videoFile", newVideoFile);
-        console.log("📹 Uploading new video:", newVideoFile.name);
-      }
+}
 
       // Add other form fields
       formData.append("tittle", data.tittle);
@@ -115,10 +113,7 @@ const AddLectureModal = ({ isOpen, onClose, sectionId, lecture = null }) => {
           });
 
       setIsUploading(false);
-
-      console.log(" API Response:", response);
-
-      if (response?.data?.success) {
+if (response?.data?.success) {
         toast.success(isEdit ? "Lecture updated!" : "Lecture created!", { id: toastId });
         
         onClose({

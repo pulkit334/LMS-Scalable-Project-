@@ -57,5 +57,4 @@ worker.on("failed", (job, err) => {
 });
 
 worker.on("completed", (job) => {
-  console.log("job completed:", job.id);
 });

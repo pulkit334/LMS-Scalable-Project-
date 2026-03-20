@@ -11,10 +11,8 @@ const {client} = require("../utils/googleconfig.js")
 
 exports.sendOtp = async (req, res) => {
   try {
-    console.log(" sendOtp ROUTE HIT");
-    console.log("BODY:", req.body);
-    console.log("COOKIES:", req.cookies);
-    console.log("HEADERS AUTH:", req.headers.authorization);
+console.log("BODY:", req.body);
+console.log("HEADERS AUTH:", req.headers.authorization);
     //fetch the email from Req Body
     const { email } = req.body;
     //Check If User alerady exist or Not
@@ -39,15 +37,13 @@ exports.sendOtp = async (req, res) => {
     const Otppayload = { email, otp };
     //create an entry in db for Otp
     const otpBody = await OTP.create(Otppayload);
-    console.log(otpBody);
-    await mailsender(email, "Your OTP Code", `<h1>Your OTP is: ${otp}</h1>`);
+await mailsender(email, "Your OTP Code", `<h1>Your OTP is: ${otp}</h1>`);
     return res.status(201).json({
       success: true,
       message: "OTP Sent Succesfully",
     });
   } catch (err) {
-    console.log(err);
-    return res.status(500).json({
+return res.status(500).json({
       success: false,
       message: "Error while Sending Otp ",
     });
@@ -57,9 +53,7 @@ exports.sendOtp = async (req, res) => {
 //sinup
 exports.sinup = async (req, res) => {
   try {
-    console.log("BODY:", req.body);
-
-    const {
+const {
       firstName,
       lastName,
       email,
@@ -68,8 +62,7 @@ exports.sinup = async (req, res) => {
       contactNumber,
       otp,
     } = req.body;
-    console.log(otp);
-    if (
+if (
       !firstName ||
       !lastName ||
       !email ||
@@ -135,8 +128,7 @@ exports.sinup = async (req, res) => {
       message: "Successfully Registered",
     });
   } catch (err) {
-    console.log("SIGNUP ERROR:", err);
-    return res.status(400).json({
+return res.status(400).json({
       success: false,
       message: `${err}`,
       error: err,
@@ -228,17 +220,14 @@ exports.login = async (req, res) => {
       sameSite: "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
-    console.log(user?.accountType);
-    return res.cookie("token", token, options).status(200).json({
+return res.cookie("token", token, options).status(200).json({
       success: true,
       user,
       token,
       message: "Logged in",
     });
   } catch (err) {
-    console.log("LOGIN ERROR:", err);
-
-    return res.status(500).json({
+return res.status(500).json({
       message: "Authenticatin Failed",
       success: false,
       error: err.message,
@@ -326,15 +315,7 @@ exports.googleLogin = async (req, res) => {
     }
     //code -> server -> Excahneg ek Token
     const { tokens } = await client.getToken(code);
-
-    console.log("TOKENS:", tokens)
-    //Use TOken Se -> muje User Profile Details
-    const ticket = await client.verifyIdToken({
-      idToken: tokens.id_token,
-      audience: process.env.GOOGLE_CLIENT_ID,
-    });
-
-    const { email, name, picture, sub: googleId } = ticket.getPayload();
+const { email, name, picture, sub: googleId } = ticket.getPayload();
     const [firstName, ...lastArr] = name.split(" ");
     const lastName = lastArr.join(" ") || "";
     //Check If USer Exist or Not

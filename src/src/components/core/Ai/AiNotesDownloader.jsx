@@ -25,8 +25,7 @@ export default function AINotesButton({ subsectionId }) {
     const interval = setInterval(async () => {
       try {
         const res = await GetAiNotes(subsectionId);
-        console.log("the interval would be ", res);
-        if (res.status === "done") {
+if (res.status === "done") {
           clearInterval(interval);
 
           const blob = await DownloadAiNotes(subsectionId);

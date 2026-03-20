@@ -57,12 +57,7 @@ export async function BuyCourse(
         },
       }
     );
-    console.log(
-      "The response of After Payment Capture would be",
-      orderResponse
-    );
-
-    if (!orderResponse.data.success) {
+if (!orderResponse.data.success) {
       throw new Error(orderResponse.data.message);
     }
 
@@ -82,21 +77,18 @@ export async function BuyCourse(
       },
 
       handler: function (response) {
-        console.log("the Handller Response is", response);
-        // SendPaymentSuccessEmail(response, orderResponse?.data?.amount, token);
+// SendPaymentSuccessEmail(response, orderResponse?.data?.amount, token);
         //verify the payment
         VerifyPayment({ ...response, courses }, token,  disptach,Navigate);
       },
     };
-    console.log("OPTIONS:", options);
-    const paymentObject = new window.Razorpay(options);
+const paymentObject = new window.Razorpay(options);
     paymentObject.open();
     paymentObject.on("payment.failed", function (response) {
       disptach(setPaymentLoading(false));
     });
   } catch (error) {
-    console.log("Payment Api Error", error);
-    toast.error("Could Not Make Payment");
+toast.error("Could Not Make Payment");
   }
   toast.dismiss();
 }
@@ -117,11 +109,7 @@ async function SendPaymentSuccessEmail(response, amount, token) {
       }
     );
   } catch (err) {
-    console.log(
-      "Payment Success Email Error",
-      err?.response?.data || err.message
-    );
-  }
+}
 }
 
 async function VerifyPayment(bodyData, token,   disptach,Navigate) {
@@ -133,8 +121,7 @@ async function VerifyPayment(bodyData, token,   disptach,Navigate) {
         Authorization: `Bearer ${token}`,
       },
     });
-    console.log("The Repsons eof the verify Payment would be ", response);
-    if (!response?.data?.success) {
+if (!response?.data?.success) {
       throw new Error(response?.data?.message);
     }
     toast.success("Payment Successfully");

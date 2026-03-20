@@ -9,5 +9,3 @@ const signature = crypto
   .createHmac("sha256", secret)
   .update(rawBody)
   .digest("hex");
-
-console.log("VALID SIGNATURE:", signature);

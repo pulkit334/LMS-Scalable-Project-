@@ -1,6 +1,5 @@
 const CourseHeader = ({ course, reviews }) => {
-  console.log("The courseheader Reviews Data is ");
-  return (
+return (
     <div className="bg-[#020617] pt-8 pb-[140px]">
       <div className="max-w-[1180px] mx-auto px-6 grid grid-cols-12 gap-10">
         {/* LEFT */}

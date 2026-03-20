@@ -52,9 +52,7 @@ const VedioDEtailsSIdebar = ({ setReviewModal }) => {
 
     setActiveFlags();
   }, [courseSectionData, location.pathname]);
-  console.log("the Course Entire Data is", courseSectionData);
-
-  const progress = totalNoOfLectures > 0 ? Math.round((completedLectures?.length / totalNoOfLectures) * 100) : 0;
+const progress = totalNoOfLectures > 0 ? Math.round((completedLectures?.length / totalNoOfLectures) * 100) : 0;
 
   // Close mobile sidebar when navigating
   const handleSubsectionClick = (courseId, secId, topicId) => {

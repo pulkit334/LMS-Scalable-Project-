@@ -10,10 +10,7 @@ const getCatalogData = async (categoryid) => {
       "/course/getCategoryPageDetails",
       categoryid
     );
-    console.log("the data would be ",response)
-    if (!response?.data?.success) {
-      throw new Error("Could No tFetch Category Page Data");
-    }
+}
     toast.success("Fetched Successfully", { id: toastsid });
     return response?.data;
   } catch (error) {

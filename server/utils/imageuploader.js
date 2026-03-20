@@ -21,7 +21,6 @@ exports.uploadImageToCloudinary = async (file, folder, options = {}) => {
 
     return result;
   } catch (err) {
-    console.log("Cloudinary Upload Error:", err);
-    throw err;
+throw err;
   }
 };

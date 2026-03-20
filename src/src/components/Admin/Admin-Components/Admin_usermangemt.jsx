@@ -17,11 +17,7 @@ const Admin_usermangemt = () => {
   const adminuser = UserData?.AllData ?? [];
 
   //  Pagination Logic States //
-  console.log(
-    "the userData is insdie the admin user iwll be ",
-    UserData?.pagination,
-  );
-  const hasPrevPage = UserData?.pagination?.hasPrevPage || false;
+const hasPrevPage = UserData?.pagination?.hasPrevPage || false;
   const hasNextPage = UserData?.pagination?.hasNextPage || false;
   const currentPage = UserData?.pagination?.page || 1;
   const totalPage = UserData?.pagination?.pages || 1;

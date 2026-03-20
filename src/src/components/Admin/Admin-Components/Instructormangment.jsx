@@ -56,12 +56,7 @@ const Instructormangment = () => {
     dispatch(fetchCourseChartPath());
     dispatch(fetchcategoriesTrend());
   }, []);
-  console.log(
-    "the current status of my Instructor Dashbaord will be ",
-    instructors,
-  );
-
-  useEffect(() => {
+useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedValue(value);
     }, 200); // 300–500ms is ideal

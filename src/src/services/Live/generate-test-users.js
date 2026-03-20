@@ -41,9 +41,7 @@ async function generateAllTokens() {
     console.error("❌ CLASS_ID missing in .env");
     process.exit(1);
   }
-
-  console.log(`🚀 Generating ${CONFIG.TOTAL_USERS} tokens`);
-  console.log(`📚 Room: ${CONFIG.CLASS_ID}\n`);
+console.log(`📚 Room: ${CONFIG.CLASS_ID}\n`);
 
   const users = [];
   const start = Date.now();
@@ -76,8 +74,7 @@ async function generateAllTokens() {
     });
 
     if (i % 100 === 0) {
-      console.log(`Generated ${i}/${CONFIG.TOTAL_USERS} tokens...`);
-    }
+}
   }
 
   const elapsed = ((Date.now() - start) / 1000).toFixed(2);
@@ -92,12 +89,8 @@ async function generateAllTokens() {
   }));
 
   fs.writeFileSync("test-users-slim.json", JSON.stringify(slim, null, 2));
-
-  console.log("\n Done!");
-  console.log(`⏱ Time taken: ${elapsed}s`);
-  console.log("📁 Files created:");
-  console.log("   - test-users.json");
-  console.log("   - test-users-slim.json");
+console.log(`⏱ Time taken: ${elapsed}s`);
+console.log("   - test-users.json");
 }
 
 generateAllTokens().catch((err) => {

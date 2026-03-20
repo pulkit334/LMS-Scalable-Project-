@@ -5,8 +5,7 @@ const course = require("../models/course");
 
 exports.createSubsection = async (req, res) => {
   try {
-    console.log("The Data is ", req.body);
-    // fetch the data
+// fetch the data
     const { sectionId, timeDuration, tittle, description } = req.body;
 
     if (!req.files || Object.keys(req.files).length === 0) {
@@ -146,8 +145,7 @@ const deleteCloudinaryVideo = async (videoUrl) => {
     });
 
     if (result.result === "ok") {
-      console.log(" Video deleted:", publicId);
-    } else {
+} else {
       console.warn(" Deletion result:", result);
     }
   } catch (error) {
@@ -177,10 +175,7 @@ exports.UpdateSubsection = async (req, res) => {
     if (req.files && req.files.videoFile) {
       const oldVideoUrl = subsection.videoUrl;
       const vedio = req.files.videoFile;
-
-      console.log("the vedio details would be", vedio);
-
-      uploadDetails = await uploadImageToCloudinary(
+uploadDetails = await uploadImageToCloudinary(
         vedio,
         process.env.FolderName,
       );
@@ -207,10 +202,7 @@ exports.UpdateSubsection = async (req, res) => {
     const UpdatedData = await Section.findOne({
       subsection: SubsectionId,
     }).populate("subsection");
-
-    console.log("The updation data is ", UpdatedData);
-
-    return res.status(200).json({
+return res.status(200).json({
       success: true,
       message: "Successfully Updated The data",
       updatedSection: UpdatedData,

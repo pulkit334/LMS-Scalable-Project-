@@ -37,8 +37,7 @@ const PublishCourse = ({ onBack }) => {
         }, 1500);
       }
     } catch (err) {
-      console.log("The error is", err);
-      toast.error("Course publish failed", { id: toastId });
+toast.error("Course publish failed", { id: toastId });
     }
   };
 

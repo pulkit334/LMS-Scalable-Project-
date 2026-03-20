@@ -198,13 +198,7 @@ exports.getCourseReviews = async (req, res) => {
     const course = await Course.findById(courseId)
       .select("studentEnrolled")
       .lean();
-console.log("the courses are",course)
-    if (!course) {
-      return res.status(404).json({
-        success: false,
-        message: "Course not found",
-      });
-    }
+}
 
     // 2️Get ONLY reviews by enrolled students
     const reviews = await RatingAndReview.find({
@@ -214,11 +208,7 @@ console.log("the courses are",course)
       .populate("user", "firstName lastName image")
       .sort({ createdAt: -1 })
       .limit(3);
-console.log(
-  reviews[0]?.user
-);
-
-    if (!reviews.length) {
+if (!reviews.length) {
       return res.status(202).json({
         success: false,
         message: "No reviews found for this course",
@@ -263,8 +253,7 @@ exports.sliderReview = async (req, res) => {
       data: response,
     });
   } catch (error) {
-    console.log("the server side Cotroller Error is", error);
-    return res.status(500).json({
+return res.status(500).json({
       success: false,
       message: "Failed Try Again",
     });
@@ -301,8 +290,7 @@ exports.updateRating = async (req, res) => {
       message: "Updated successfully",
     });
   } catch (error) {
-    console.log(error);
-    return res.status(500).json({
+return res.status(500).json({
       success: false,
       message: "Failed Try Again",
     });

@@ -10,15 +10,13 @@ export function getpasswordResetToken(email, setEmailSent) {
     dispatch(setloading(true));
     try {
       const response = await api.post(AUTH.FORGOT_PASSWORD, { email });
-      console.log("REset PAsssword Token REsponse...", response);
-      if (!response?.data.success) {
+if (!response?.data.success) {
         throw new Error(response.data.message);
       }
       toast.success("REset Email sent");
       setEmailSent(true);
     } catch (erorr) {
-      console.log("REset PAssword Token Error");
-      toast.error("Failed to Send Email For Reseting the Password");
+toast.error("Failed to Send Email For Reseting the Password");
     }
     dispatch(setloading(false));
   };
