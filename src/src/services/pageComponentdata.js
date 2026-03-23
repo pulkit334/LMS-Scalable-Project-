@@ -9,8 +9,10 @@ const getCatalogData = async (categoryid) => {
     const response = await api.post(
       "/course/getCategoryPageDetails",
       categoryid
-    );
-}
+    )
+    if (!response?.data?.success) {
+      throw new Error("Could No tFetch Category Page Data");
+    }
     toast.success("Fetched Successfully", { id: toastsid });
     return response?.data;
   } catch (error) {

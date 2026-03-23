@@ -107,10 +107,10 @@ router.get(
   "/courses",
   auth,
   isinstructor,
-  // cacheMiddleware((req) => "Courses:ALL", 100),
+  cacheMiddleware((req) => "Courses:ALL", 100),
   ShowCourses,
 );
-//Protected
+//Protected 
 router.get(
   "/enrolled-courses",
   auth,
@@ -123,7 +123,7 @@ router.post("/publish-courses", auth, changestatus);
 router.patch("/course/update/:courseId", auth, isinstructor, updateCourse);
 
 //Payment Course Loader
-router.get("/course/:courseId", auth, isstudent,cacheMiddleware((req)=>`Cache:CourseId`,500), getCourse);
+router.get("/course/:courseId", isstudent,cacheMiddleware((req)=>`Cache:CourseId`,500), getCourse);
 router.get("/course/:courseId/content", auth, isstudent,cacheMiddleware((req)=>`Cache:CourseId`,500), getCourseContent);
 router.get("/course/:courseId/reviews", auth,cacheMiddleware((req)=>`Cache:CourseId`,500), getPaymentCourseReviews);
 router.get(
@@ -193,13 +193,11 @@ router.post("/category/create", auth, Category);
 // Public (all categories)
 router.get(
   "/category/all",
-  auth,
   cacheMiddleware((req) => "Category:All", 360),
   AllCategory,
 );
 router.post(
   "/course/getCategoryPageDetails",
-  auth,
   cacheMiddleware((req) => `Cache:CategoryDetails`, 300),
   CategoryPageDetails,
 );

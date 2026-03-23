@@ -79,7 +79,7 @@ export const sendotp = async (email) => {
   const toastId = toast.loading("Sending Mail");
 
   const response = await api.post(AUTH.SEND_OTP, email);
-if (response) {
+  if (response) {
     toast.success("successfully Sent the Otp", toastId);
   }
   return response.data;
@@ -112,7 +112,8 @@ export const SinupUser = (data, navigate) => {
 export const submitEnquiry = async (data) => {
   try {
     const response = await api.post(Enqiry.Enquiry, data);
-toast.success("Message sent successfully");
+    
+    toast.success("Message sent successfully");
     return response.data;
   } catch (error) {
     const message =
@@ -143,7 +144,7 @@ export const deleteAccount = async () => {
 //Setting Image upladar
 export const ImageUploader = async (data) => {
   try {
-const response = await api.patch(PROFILE.ImageUploader, data);
+    const response = await api.patch(PROFILE.ImageUploader, data);
     return response.data;
   } catch (error) {
     toast.error(`${error}`);
@@ -173,7 +174,7 @@ export const changePassword = async (data) => {
 export const UndoAccount = async (email) => {
   try {
     const response = await api.post(AUTH.Profile_Recovery, { email });
-localStorage.setItem(response, JSON.stringify(response));
+    localStorage.setItem(response, JSON.stringify(response));
     return response?.data;
   } catch (error) {
     toast.error(`${error.message}`);
@@ -196,7 +197,8 @@ export const GetCategorires = async () => {
 
 export const createCourseSection = async (data) => {
   const response = await api.post(Course_Section.createsection, data);
-return response?.data;
+
+  return response?.data;
 };
 export const deleteSection = async (sectionId) => {
   return api.delete(
@@ -214,7 +216,8 @@ export const createSubsection = async (formData, config = {}) => {
 
 export const GetInsturctorCourse = async () => {
   const response = await api.get(Course_Section.GetInrtuctorCourse);
-return response?.data;
+
+  return response?.data;
 };
 
 //public the course or private
@@ -224,7 +227,8 @@ export const CoursePublication = async (courseId, isPublic) => {
     courseId,
     isPublic,
   });
-return response.data;
+
+  return response.data;
 };
 
 export const UpdateSubsection = async (subSectionId, formData, config = {}) => {
@@ -238,10 +242,12 @@ export const UpdateSubsection = async (subSectionId, formData, config = {}) => {
 };
 
 export const getFullCourseDetails = async (courseId) => {
-const res = await api.get(
+ 
+  const res = await api.get(
     Course.GetFUllCourseDetails.replace(":courseId", courseId),
   );
-return res.data;
+
+  return res.data;
 };
 
 export const UpdateUser = async (courseId, formData) => {
@@ -249,14 +255,19 @@ export const UpdateUser = async (courseId, formData) => {
     Course_Section.UpdateCourse.replace(":courseId", courseId),
     formData,
   );
-return res?.data;
+ 
+  return res?.data;
 };
 
 export const CourseDelete = async (courseId) => {
-const response = await api.delete(
+
+
+  const response = await api.delete(
     Course.DeleteCourse.replace(":courseId", courseId),
   );
-return response?.data;
+
+
+  return response?.data;
 };
 
 export const CompleteLectureMarker = async (courseId, subSectionId, token) => {
@@ -275,17 +286,22 @@ export const RefreshVerification = async (data) => {
   const response = await api.post(AUTH.RefreshVerification);
   // const token = response.data?.token || [];
   // localStorage.setItem("token", token);
-return response?.data;
+  return response?.data;
 };
 export const CategoryResponse = async (data) => {
   const response = await api.get(categories.GET_ALL);
-return response?.data;
+  return response?.data;
 };
 
 //for google 
 export const googleauth = async (code,accountType) => {
   try {
     const response = await api.get(`${AUTH.google_auth_login}?code=${code}&accountType=${accountType}`);
-throw err;
+    return response.data;
+
+  } catch (err) {
+    console.error("Google Auth Error : ", err);
+    
+    throw err;
   }
 };

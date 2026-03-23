@@ -51,6 +51,7 @@ import TeacherLive from "./components/LiveClass/LiveTeacher";
 import  Warning from "./utils/Warning"
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import StudentLive from "./components/LiveClass/StudentLive";
+import SecurityCheck from "./utils/SecurityCheck";
 function App() {
   const dispatch = useDispatch();
   const token = useSelector((state) => state.auth.token);
@@ -144,7 +145,16 @@ toast(
             path="/support/reactivate-account"
             element={<Authrecovery />}
           />
-          <Route path="/courses/:Course" element={<Coursebuy />} />
+          
+<Route
+  path="/courses/:Course"
+  element={
+    <SecurityCheck>
+      <Coursebuy />
+    </SecurityCheck>
+  }
+/>
+          
           <Route
             path="/recover-account/:token"
             element={<EmailVerification />}

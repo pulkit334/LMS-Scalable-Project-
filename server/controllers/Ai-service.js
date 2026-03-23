@@ -132,7 +132,7 @@ Transcript:
 ${transcript.rawText}
 `;
 
-    const response = await fetch("http://localhost:11434/api/chat", {
+    const response = await fetch("http://15.207.110.11/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

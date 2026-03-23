@@ -4,9 +4,9 @@ const {transcriptionQueue} = require("../service/transcription-queue-service")
 exports.webHookEndPoint = async (req, res) => {
   try {
     const data = req.body
-console.log("Webhook public_id:", data.public_id)
+
 const subsection = await SubSection.findOne({ cloudinaryId: data.public_id })
-console.log("Found subsection:", subsection)
+
     if (!subsection) return res.status(404).json({ message: "Subsection not found" })
 
     subsection.status = "TRANSCRIBING"

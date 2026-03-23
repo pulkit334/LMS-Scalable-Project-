@@ -108,16 +108,7 @@ exports.CategoryPageDetails = async (req, res) => {
     } catch (err) {
       console.error("Most selling aggregation failed:", err.message);
     }
-    // const courses = await Course.find({ status: "PUBLISHED" })
-    //   .populate("ratingAndReviews")
-    //   .lean();
 
-    // const mostSellingCourses = courses
-    //   .map(course => ({
-    //     ...course,
-    //     totalStudents: course.studentEnrolled?.length || 0,
-    //   }))
-    //   .sort((a, b) => b.totalStudents - a.totalStudents);
 return res.status(200).json({
       success: true,
       selectedCategory,

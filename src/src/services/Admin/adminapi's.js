@@ -57,6 +57,5 @@ export const StatusPath = async ({ id, status }) => {
 const response = await adminApi.patch(Admin. StatusPath.replace(":id", id), {
     status,
   });
-console.log("the repsosne of final data would be",response)
   return response.data;
 };

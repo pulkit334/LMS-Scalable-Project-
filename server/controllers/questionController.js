@@ -125,14 +125,14 @@ Transcript:
 ${transcript.rawText}
 `;
 
-    const response = await fetch("http://localhost:11434/api/chat", {
+    const response = await fetch("http://15.207.110.11/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         model: process.env.OLLAMA_MODEL,
         messages: [{ role: "user", content: prompt }],
         stream: false,
-        options: { temperature: 0.2 },
+        options: { temperature: 0.2,num_predict: 800 },
       }),
     });
 

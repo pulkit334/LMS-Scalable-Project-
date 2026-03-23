@@ -54,10 +54,10 @@ export const ProfileMenu = () => {
               Go to profile
             </button>
           </Link>
-
+{/* 
           <button className="w-full px-6 py-3 text-left hover:bg-gray-100">
             Convert to business
-          </button>
+          </button> */}
         </>
       )}
 

@@ -20,7 +20,10 @@ const PurchaseHistory = () => {
 
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
-if(history.length==0)
+console.log("the histor of data is",history)
+  const fetchHistory = async () => {
+    setLoading(true);
+    if(history.length==0)
     <Result loading={true} text="Loading"/>
     setErr("");
 

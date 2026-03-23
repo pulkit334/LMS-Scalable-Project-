@@ -4,8 +4,13 @@ const Section = require("../models/section");
 exports.createSection = async (req, res) => {
   try {
     const { sectionName, courseId } = req.body;
-const testCourse = await Course.findById(courseId);
-if (!testCourse) {
+
+    console.log("courseId received:", courseId);
+
+    const testCourse = await Course.findById(courseId);
+    console.log("FOUND COURSE:", testCourse);
+
+    if (!testCourse) {
       return res.status(404).json({
         success: false,
         message: "Course not found",
@@ -46,7 +51,8 @@ exports.updateSection = async (req, res) => {
         message: "Missing Properties",
       });
     }
-//update the data in section as  not need to update id so not need to go to course
+    console.log("the data is", sectionID, SectionName);
+    //update the data in section as  not need to update id so not need to go to course
     const updatedData = await Section.findByIdAndDelete(
       sectionID,
       { SectionName },
@@ -70,7 +76,16 @@ exports.updateSection = async (req, res) => {
 };
 
   exports.deleteSection = async (req, res) => {
-}
+    console.log("teh id is ",req.params)
+    try {
+      const { sectionId } = req.params;
+
+      if (!sectionId) {
+        return res.status(400).json({
+          success: false,
+          message: "sectionId is required",
+        });
+      }
 
       // 1️⃣ Remove section from course
       const updatedCourse = await Course.findOneAndUpdate(
@@ -115,7 +130,8 @@ exports.section = async (req, res) => {
       });
     }
     const data = await Section.findById(sectionId).select("sectionName");
-return res.status(200).json({
+    console.log(data);
+    return res.status(200).json({
       success: true,
       message: "Fetched...",
       data,

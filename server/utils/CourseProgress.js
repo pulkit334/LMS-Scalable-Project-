@@ -1,6 +1,12 @@
 export function courseProgress(courseProgress = []) {
   const progressMap = new Map();
-});
+
+  courseProgress.forEach((progress) => {
+    progressMap.set(
+      progress.courseId.toString(),
+      progress.completedVideos.length
+    );
+  });
 
   return progressMap;
 }

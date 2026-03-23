@@ -5,16 +5,16 @@ import Footer from "../components/core/Homepage/footer";
 import getCatalogData from "../services/pageComponentdata";
 import { Course, GetCategorires } from "../services/auth";
 import Course_Card from "../components/core/catalog/Course_Card";
-import CourseSlider from "../components/core/catalog/CourseSlider"
+import CourseSlider from "../components/core/catalog/CourseSlider";
 import CatalogSpinner from "../utils/catalogSpinner";
-
 
 const Catalog = () => {
   const { catalogName } = useParams();
 
   const [catalogPageData, setCatalogPageData] = useState(null);
   const [categoryID, setCategoryId] = useState("");
-  const [loading, setLoading] = useState(true); // 
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("popular"); // 👈 tab state
 
   // Fetch all categories & match slug
   useEffect(() => {
@@ -23,7 +23,7 @@ const Catalog = () => {
       const matchedCategory = res?.find(
         (ct) =>
           ct.name.split(" ").join("-").toLowerCase() ===
-          catalogName.toLowerCase(),
+          catalogName.toLowerCase()
       );
       setCategoryId(matchedCategory?._id);
     };
@@ -33,21 +33,37 @@ const Catalog = () => {
   // Fetch catalog data
   useEffect(() => {
     if (!categoryID) return;
-
     const fetchCatalogData = async () => {
       try {
-        setLoading(true); // 
+        setLoading(true);
         const res = await getCatalogData({ categoryId: categoryID });
         setCatalogPageData(res);
       } catch (error) {
-} finally {
-        setLoading(false); // 
+        console.log("Catalog API error:", error);
+      } finally {
+        setLoading(false);
       }
     };
-
     fetchCatalogData();
   }, [categoryID]);
-return (
+
+  // 👇 Filter: courses created within last 1 month
+  const getNewCourses = () => {
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
+    return catalogPageData?.selectedCategory?.course?.filter((course) => {
+      const createdAt = new Date(course.createdAt);
+      return createdAt >= oneMonthAgo;
+    }) || [];
+  };
+
+  const starterCourses =
+    activeTab === "popular"
+      ? catalogPageData?.selectedCategory?.course || []
+      : getNewCourses();
+
+  return (
     <div className="bg-[#000814] text-[#F1F2FF] min-h-screen">
       {/* ================= HERO ================= */}
       <section className="bg-gradient-to-b from-[#161D29] to-[#000814] border-b border-[#2C333F]">
@@ -56,11 +72,9 @@ return (
             Home / Catalog /{" "}
             <span className="text-yellow-400 capitalize">{catalogName}</span>
           </p>
-
           <h1 className="text-4xl font-bold mt-4">
             {catalogPageData?.selectedCategory?.name}
           </h1>
-
           <p className="text-[#AFB2BF] mt-3 max-w-3xl leading-relaxed">
             {catalogPageData?.selectedCategory?.description}
           </p>
@@ -75,24 +89,42 @@ return (
 
         {/* Tabs */}
         <div className="flex gap-8 border-b border-[#2C333F] mb-8">
-          <button className="pb-3 text-yellow-400 border-b-2 border-yellow-400 font-medium">
+          <button
+            onClick={() => setActiveTab("popular")}
+            className={`pb-3 font-medium transition border-b-2 ${
+              activeTab === "popular"
+                ? "text-yellow-400 border-yellow-400"
+                : "text-[#AFB2BF] border-transparent hover:text-white"
+            }`}
+          >
             Most Popular
           </button>
-          <button className="pb-3 text-[#AFB2BF] hover:text-white transition">
+          <button
+            onClick={() => setActiveTab("new")}
+            className={`pb-3 font-medium transition border-b-2 ${
+              activeTab === "new"
+                ? "text-yellow-400 border-yellow-400"
+                : "text-[#AFB2BF] border-transparent hover:text-white"
+            }`}
+          >
             New
           </button>
         </div>
 
-         {loading ? (
+        {loading ? (
           <div className="flex justify-center items-center py-20">
-            <CatalogSpinner/>
+            <CatalogSpinner />
           </div>
-        ) : catalogPageData?.selectedCategory?.course?.length > 0 ? (
+        ) : starterCourses.length > 0 ? (
           <div className="relative overflow-hidden">
-            <CourseSlider Courses={catalogPageData?.selectedCategory?.course} />
+            <CourseSlider Courses={starterCourses} />
           </div>
         ) : (
-          <p className="text-center text-[#AFB2BF] py-10">No courses found</p>
+          <p className="text-center text-[#AFB2BF] py-10">
+            {activeTab === "new"
+              ? "No new courses added in the last month"
+              : "No courses found"}
+          </p>
         )}
       </section>
 
@@ -105,7 +137,6 @@ return (
           </span>
         </h2>
 
-    
         {loading ? (
           <div className="flex justify-center items-center py-20">
             <CatalogSpinner />
@@ -125,7 +156,6 @@ return (
           Frequently bought together
         </h2>
 
- 
         {loading ? (
           <div className="flex justify-center items-center py-20">
             <CatalogSpinner />

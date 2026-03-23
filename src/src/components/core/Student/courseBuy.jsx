@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { Navigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 
 import {
@@ -14,9 +14,11 @@ import BuyCard from "./CourseDeatilPage/buyCard";
 import Reviews from "./Reviews/Reviews";
 import Author from "./CourseDeatilPage/Author";
 import WhatYouWillLearn from "./CourseDeatilPage/CommonModal";
+import { useSelector } from "react-redux";
 
 
 const fetchCourseData = async (Course) => {
+
   const [courseRes, contentRes, reviewRes, otherRes] = await Promise.all([
     GetPayCourse(Course),
     GetCourseContent(Course),
@@ -33,13 +35,16 @@ const fetchCourseData = async (Course) => {
 };
 
 const CourseDetailsPage = () => {
+    const token =useSelector((state)=> state.auth.token)
+
   const { Course } = useParams();
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["courseDetails", Course], // Course in key so refetches when id changes
     queryFn: () => fetchCourseData(Course),
     staleTime: 5 * 60 * 1000, // cache for 5 mins, no refetch on revisit
-    gcTime : 1000 * 60 * 10
+    gcTime : 1000 * 60 * 10,
+    enabled : !!token
   });
 
   if (isLoading) {
