@@ -516,12 +516,58 @@ ${trimmedTranscript}`;
   });
 }
 
+/**
+ * Answer a student's follow-up doubt grounded in the lecture transcript & title
+ */
+async function answerLectureDoubt(
+  transcriptText,
+  question,
+  history = [],
+  { lectureTitle = "", lectureDescription = "" } = {}
+) {
+  const cleanQuestion = String(question || "").trim();
+  if (!cleanQuestion) {
+    throw new Error("Question is required");
+  }
+
+  const contextSnippet = String(transcriptText || "").trim().slice(0, 22000);
+  const systemPrompt = `You are a helpful, expert technical tutor inside an LMS video player.${
+    lectureTitle ? ` Current Lecture: "${lectureTitle}".` : ""
+  }${lectureDescription ? ` Topic summary: ${lectureDescription}.` : ""}
+Answer the student's question clearly, concisely, and accurately using the lecture context below. Give simple analogies or short code examples when helpful. Never mention "transcript", "AI model", "OpenRouter", or "Gemini". If something goes slightly beyond the lecture, clearly bridge it from the lecture concepts.
+
+Lecture Context:
+${contextSnippet || `${lectureTitle}\n${lectureDescription}`}`;
+
+  const safeHistory = (Array.isArray(history) ? history : [])
+    .slice(-6)
+    .filter((m) => m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string")
+    .map((m) => ({ role: m.role, content: m.content.slice(0, 1500) }));
+
+  const result = await callOpenRouterWithFallback({
+    messages: [
+      { role: "system", content: systemPrompt },
+      ...safeHistory,
+      { role: "user", content: cleanQuestion },
+    ],
+    temperature: 0.35,
+    maxTokens: 1200,
+    expectJson: false,
+  });
+
+  return {
+    answer: sanitizeText(result.data) || result.data,
+    modelUsed: result.modelUsed,
+  };
+}
+
 module.exports = {
   DEFAULT_OPENROUTER_MODELS,
   getModelChain,
   callOpenRouterWithFallback,
   generateQuizQuestions,
   generateLectureNotes,
+  answerLectureDoubt,
   extractJson,
   normalizeQuestions,
   normalizeNotes,

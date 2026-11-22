@@ -33,6 +33,7 @@ const {
   getPaymentCourseReviews,
   getCourseContent,
   markLectureComplete,
+  downloadCourseCertificate,
 } = require("../controllers/Course");
 
 //************for Courses -> section*************//
@@ -151,6 +152,12 @@ router.post(
   auth,
   isstudent,
   markLectureComplete,
+);
+router.get(
+  "/course/:courseId/certificate",
+  auth,
+  isstudent,
+  downloadCourseCertificate,
 );
 
 // ================= SECTION ROUTES =================

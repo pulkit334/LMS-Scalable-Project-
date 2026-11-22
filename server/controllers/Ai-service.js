@@ -1,10 +1,12 @@
 const Question = require("../models/questionModal");
 const Subsection = require("../models/subsection");
 const Transcript = require("../models/transcription");
+const QuizAttempt = require("../models/quizAttempt");
 const generatePDF = require("../utils/GeneratePdf");
 const {
   generateQuizQuestions,
   generateLectureNotes,
+  answerLectureDoubt,
 } = require("../service/openrouter-service");
 const { transcriptionQueue } = require("../service/transcription-queue-service");
 const { NotesGnQueue } = require("../service/Notes-Gn-Queue");
@@ -320,6 +322,111 @@ exports.DownloadNotes = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: err.message || "Failed to generate notes PDF",
+    });
+  }
+};
+
+exports.AskLectureTutor = async (req, res) => {
+  try {
+    const { subsectionId } = req.params;
+    const { question, history = [] } = req.body || {};
+
+    if (!question || !String(question).trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Please enter a question",
+      });
+    }
+
+    const [transcript, subsection] = await Promise.all([
+      Transcript.findOne({ subsectionId }).lean(),
+      Subsection.findById(subsectionId).lean(),
+    ]);
+
+    if (!subsection && !transcript) {
+      return res.status(404).json({
+        success: false,
+        message: "Lecture not found",
+      });
+    }
+
+    const result = await answerLectureDoubt(
+      transcript?.rawText || "",
+      question,
+      history,
+      {
+        lectureTitle: subsection?.tittle || "",
+        lectureDescription: subsection?.description || "",
+      }
+    );
+
+    return res.status(200).json({
+      success: true,
+      answer: result.answer,
+      modelUsed: result.modelUsed,
+    });
+  } catch (err) {
+    console.error("Error in AskLectureTutor:", err);
+    return res.status(500).json({
+      success: false,
+      message: err.message || "Failed to get AI tutor response",
+    });
+  }
+};
+
+exports.SubmitQuizAttempt = async (req, res) => {
+  try {
+    const { lectureId } = req.params;
+    const userId = req.user?.id;
+    const {
+      courseId = null,
+      score = 0,
+      totalQuestions = 5,
+      difficultyBreakdown = {},
+    } = req.body || {};
+
+    const safeTotal = Math.max(1, Number(totalQuestions) || 1);
+    const safeScore = Math.max(0, Math.min(safeTotal, Number(score) || 0));
+    const accuracy = Math.round((safeScore / safeTotal) * 1000) / 10;
+
+    // Difficulty-weighted score (EASY=1.0, MEDIUM=1.5, HARD=2.2)
+    const bd = {
+      easyCorrect: Number(difficultyBreakdown.easyCorrect) || 0,
+      easyTotal: Number(difficultyBreakdown.easyTotal) || 0,
+      mediumCorrect: Number(difficultyBreakdown.mediumCorrect) || 0,
+      mediumTotal: Number(difficultyBreakdown.mediumTotal) || 0,
+      hardCorrect: Number(difficultyBreakdown.hardCorrect) || 0,
+      hardTotal: Number(difficultyBreakdown.hardTotal) || 0,
+    };
+    const maxWeight =
+      bd.easyTotal * 1.0 + bd.mediumTotal * 1.5 + bd.hardTotal * 2.2;
+    const earnedWeight =
+      bd.easyCorrect * 1.0 + bd.mediumCorrect * 1.5 + bd.hardCorrect * 2.2;
+    const weightedScore =
+      maxWeight > 0
+        ? Math.round((earnedWeight / maxWeight) * 1000) / 10
+        : accuracy;
+
+    const attempt = await QuizAttempt.create({
+      userId,
+      courseId: courseId || null,
+      subsectionId: lectureId,
+      score: safeScore,
+      totalQuestions: safeTotal,
+      accuracy,
+      weightedScore,
+      difficultyBreakdown: bd,
+    });
+
+    return res.status(201).json({
+      success: true,
+      data: attempt,
+    });
+  } catch (err) {
+    console.error("Error in SubmitQuizAttempt:", err);
+    return res.status(500).json({
+      success: false,
+      message: err.message || "Failed to record quiz attempt",
     });
   }
 };

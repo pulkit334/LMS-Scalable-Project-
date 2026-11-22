@@ -8,6 +8,7 @@ const {
   statusUpgrade,
   toggleCourseStatus,
   adminDeleteCourse,
+  getStudentPerformanceAnalytics,
 } = require("../controllers/Admin");
 const express = require("express");
 const { admin, auth } = require("../middlewares/auth");
@@ -43,5 +44,6 @@ router.get("/admin/charts/top-categories", auth, admin, getTopCourses);
 router.patch("/admin/instructors/:id/status", auth, admin, statusUpgrade);
 router.patch("/admin/courses/:id/status", auth, admin, toggleCourseStatus);
 router.delete("/admin/courses/:id", auth, admin, adminDeleteCourse);
+router.get("/admin/students/:id/performance", auth, admin, getStudentPerformanceAnalytics);
 
 module.exports = router;

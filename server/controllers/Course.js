@@ -746,3 +746,81 @@ exports.Updatevedio = async (req,res)=>{
     })
   }
 }
+
+exports.downloadCourseCertificate = async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    const userId = req.user.id;
+
+    const [courseDoc, student, progressDoc] = await Promise.all([
+      course
+        .findById(courseId)
+        .populate("Insturctor", "firstName lastName")
+        .populate({ path: "courseContent", select: "subsection" })
+        .lean(),
+      User.findById(userId).select("firstName lastName").lean(),
+      CourseProgress.findOne({ courseId, userId }).lean(),
+    ]);
+
+    if (!courseDoc) {
+      return res.status(404).json({ success: false, message: "Course not found" });
+    }
+
+    const isEnrolled = courseDoc.studentEnrolled?.some(
+      (id) => String(id) === String(userId)
+    );
+    if (!isEnrolled) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not enrolled in this course",
+      });
+    }
+
+    const totalLectures = (courseDoc.courseContent || []).reduce(
+      (sum, sec) => sum + (sec.subsection?.length || 0),
+      0
+    );
+    const completedCount = progressDoc?.completedVideos?.length || 0;
+
+    if (totalLectures === 0 || completedCount < totalLectures) {
+      return res.status(403).json({
+        success: false,
+        message: `Complete all lectures (${completedCount}/${totalLectures}) to unlock your certificate`,
+      });
+    }
+
+    const generateCertificate = require("../utils/GenerateCertificate");
+    const studentName =
+      `${student?.firstName || ""} ${student?.lastName || ""}`.trim() || "Student";
+    const instructorName =
+      `${courseDoc.Insturctor?.firstName || ""} ${courseDoc.Insturctor?.lastName || ""}`.trim() ||
+      "Instructor";
+    const certId = `NX-${String(courseId).slice(-5).toUpperCase()}-${String(userId).slice(-5).toUpperCase()}`;
+
+    const pdfBuffer = await generateCertificate({
+      studentName,
+      courseName: courseDoc.courseName,
+      instructorName,
+      completionDate: progressDoc?.updatedAt || new Date(),
+      certificateId: certId,
+    });
+
+    const safeSlug = String(courseDoc.courseName || "course")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "");
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="certificate-${safeSlug || "course"}.pdf"`
+    );
+    return res.send(pdfBuffer);
+  } catch (err) {
+    console.error("downloadCourseCertificate error:", err);
+    return res.status(500).json({
+      success: false,
+      message: err.message || "Failed to generate certificate",
+    });
+  }
+};

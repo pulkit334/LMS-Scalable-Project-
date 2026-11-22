@@ -78,3 +78,8 @@ export const CreateAdminCategory = async ({ name, description }) => {
   const response = await api.post("/category/create", { name, description });
   return response.data;
 };
+
+export const GetAdminStudentPerformance = async (studentId) => {
+  const response = await adminApi.get(`/admin/students/${studentId}/performance`);
+  return response.data;
+};

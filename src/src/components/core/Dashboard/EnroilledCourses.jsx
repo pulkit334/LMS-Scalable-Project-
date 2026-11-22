@@ -2,10 +2,11 @@ import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchEnrolledCourses } from "../../../Slices/EnroilledCourseSlice";
 import ProgressBar from "@ramonak/react-progress-bar";
-import { MoreVertical, Check, Trash2 } from "lucide-react";
+import { MoreVertical, Check, Trash2, Award } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useLiveStatus } from "../../Custom/useLiveStatus";
 import { JoinLiveClass, RecheckLive} from "../../../services/Live/Live-Services";
+import { DownloadCourseCertificate } from "../../../services/auth";
 import toast from "react-hot-toast";
 
 const EnrolledCourses = () => {
@@ -20,6 +21,29 @@ const EnrolledCourses = () => {
   const [activeTab, setActiveTab] = useState("all");
   const [openMenu, setOpenMenu] = useState(null);
   const [joining, setJoining] = useState(null)
+  const [downloadingCertId, setDownloadingCertId] = useState(null);
+
+  const handleDownloadCertificate = async (e, courseId, courseName) => {
+    e.stopPropagation();
+    setDownloadingCertId(courseId);
+    const toastId = toast.loading("Generating certificate PDF...");
+    try {
+      const blob = await DownloadCourseCertificate(courseId);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `certificate-${String(courseName || "course").toLowerCase().replace(/[^a-z0-9]+/g, "-")}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success("Certificate downloaded!", { id: toastId });
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Complete 100% of course to unlock certificate", { id: toastId });
+    } finally {
+      setDownloadingCertId(null);
+    }
+  };
 
   useEffect(() => {
     dispatch(fetchEnrolledCourses());
@@ -169,6 +193,19 @@ const EnrolledCourses = () => {
                   baseBgColor="#1e293b"
                 />
               </div>
+
+              {/* CERTIFICATE BUTTON WHEN 100% */}
+              {course?.coursePercentage === 100 && (
+                <button
+                  onClick={(e) => handleDownloadCertificate(e, course._id, course.courseName)}
+                  disabled={downloadingCertId === course._id}
+                  title="Download Course Completion Certificate"
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-400/15 border border-amber-400/35 text-amber-300 hover:bg-amber-400 hover:text-slate-950 text-xs font-semibold transition cursor-pointer shrink-0"
+                >
+                  <Award className="w-3.5 h-3.5" />
+                  {downloadingCertId === course._id ? "..." : "Certificate"}
+                </button>
+              )}
 
               {/* MENU BUTTON */}
               <button

@@ -30,3 +30,16 @@ export const DownloadAiNotes = async (subsectionId) => {
   });
   return response.data;
 };
+
+export const AskAiTutor = async (subsectionId, question, history = []) => {
+  const response = await AiApi.post(`/AskTutor/${subsectionId}`, {
+    question,
+    history,
+  });
+  return response?.data;
+};
+
+export const SubmitQuizAttempt = async (lectureId, payload) => {
+  const response = await AiApi.post(`/SubmitQuiz/${lectureId}`, payload);
+  return response?.data;
+};

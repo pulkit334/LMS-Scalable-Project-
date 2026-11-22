@@ -2,14 +2,15 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { CompleteLectureMarker } from "../../../services/auth";
+import { CompleteLectureMarker, DownloadCourseCertificate } from "../../../services/auth";
 import { updateCompletedLectures } from "../../../Slices/ViewCourseSlics";
 import { fetchEnrolledCourses } from "../../../Slices/EnroilledCourseSlice";
 import {
   fetchCourseReviews,
   fetchHomeReviews,
 } from "../../../Slices/RatingSlice";
-import { Edit, Star, RotateCcw, ChevronRight, Play, CheckCircle } from "lucide-react";
+import { Edit, Star, RotateCcw, ChevronRight, Play, CheckCircle, Award } from "lucide-react";
+import toast from "react-hot-toast";
 import CourseReviewModal from "./CourseReviewModal";
 import AIQuizButton from "../Ai/AIQuizButton";
 import AINotesButton from "../Ai/AiNotesDownloader";
@@ -33,7 +34,7 @@ const VedioDetails = () => {
     (state) => state.ratingSlice,
   );
 
-  const { courseSectionData, completedLectures = [] } = useSelector(
+  const { courseSectionData, totalNoOfLectures = 0, completedLectures = [] } = useSelector(
     (state) => state.viewCourse,
   );
   useEffect(() => {
@@ -369,6 +370,36 @@ const VedioDetails = () => {
                     Mark as Completed
                   </button>
                 )}
+
+                {totalNoOfLectures > 0 && completedLectures.length >= totalNoOfLectures && (
+                  <button
+                    onClick={async () => {
+                      const tId = toast.loading("Generating certificate...");
+                      try {
+                        const blob = await DownloadCourseCertificate(courseId);
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement("a");
+                        a.href = url;
+                        a.download = "course-certificate.pdf";
+                        document.body.appendChild(a);
+                        a.click();
+                        a.remove();
+                        window.URL.revokeObjectURL(url);
+                        toast.success("Certificate downloaded!", { id: tId });
+                      } catch (err) {
+                        toast.error("Failed to download certificate", { id: tId });
+                      }
+                    }}
+                    className="completion-overlay-btn flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm cursor-pointer"
+                    style={{
+                      background: "linear-gradient(135deg, #10b981, #059669)",
+                      color: "#fff",
+                      fontWeight: 700,
+                    }}
+                  >
+                    <Award size={15} /> Download Certificate
+                  </button>
+                )}
               </div>
 
               {nextLecture && (
@@ -494,7 +525,7 @@ const VedioDetails = () => {
         </div>
 
         {/* AI Buttons */}
-        <AIQuizButton subsectionId={subSectionId} />
+        <AIQuizButton subsectionId={subSectionId} courseId={courseId} />
         <AINotesButton subsectionId={subSectionId} />
       </div>
     </div>

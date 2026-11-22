@@ -305,3 +305,10 @@ export const googleauth = async (code,accountType) => {
     throw err;
   }
 };
+
+export const DownloadCourseCertificate = async (courseId) => {
+  const response = await api.get(`/course/${courseId}/certificate`, {
+    responseType: "blob",
+  });
+  return response.data;
+};

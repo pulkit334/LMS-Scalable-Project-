@@ -5,66 +5,47 @@ import { handleApiError } from "../../utils/handleAPiError";
 
 export const useLiveStatus = (courseIds = []) => {
   const [liveMap, setLiveMap] = useState({});
+  const courseKey = courseIds.join(",");
 
   useEffect(() => {
     if (!courseIds.length) return;
 
     const socket = io(import.meta.env.VITE_SOCKET_URL, {
       withCredentials: true,
-      transports : ['websocket','polling6']
+      transports: ["websocket", "polling"],
     });
 
-    // wait for connection before joining rooms
     socket.on("connect", async () => {
-      // 1. join rooms FIRST — synchronous, no await
       courseIds.forEach((id) => socket.emit("join:course", id));
 
-      // 2. then recheck — if this throws, rooms are already joined
       try {
-        await RecheckLive(courseIds);
-} catch (error) {
-        handleApiError(error); // don't let this crash anything
+        const initialMap = await RecheckLive(courseIds);
+        if (initialMap && Object.keys(initialMap).length > 0) {
+          setLiveMap((prev) => ({ ...prev, ...initialMap }));
+        }
+      } catch (error) {
+        handleApiError(error);
       }
     });
-    
+
     socket.on("class:live", (data) => {
       setLiveMap((prev) => ({
         ...prev,
-        [data.course]: data, // { classId, title, course }
+        [data.course]: data,
       }));
     });
 
+    socket.on("class:ended", (data) => {
+      setLiveMap((prev) => {
+        if (!prev[data.course]) return prev;
+        const next = { ...prev };
+        delete next[data.course];
+        return next;
+      });
+    });
+
     return () => socket.disconnect();
-  }, [courseIds.length]);
+  }, [courseKey]);
 
   return liveMap;
 };
-// Component mounts with courseId
-//           ↓
-// useEffect runs
-//           ↓
-// Socket connects to your backend server
-// (http://localhost:5000)
-//           ↓
-// Emits "join:course" event with courseId
-//           ↓
-// Backend puts this socket in room "course:courseId"
-// (like joining a WhatsApp group)
-//           ↓
-// Socket just sits and listens...
-//           ↓
-// Teacher clicks Go Live
-//           ↓
-// Backend emits "class:live" to "course:courseId" room
-//           ↓
-// This socket receives "class:live" event
-//           ↓
-// setLiveData({ classId, title, courseId })
-//           ↓
-// Component re-renders
-//           ↓
-// "Join Live" button appears instantly
-//           ↓
-// Student clicks join → navigates to watch page
-//           ↓
-// Component unmounts → socket.disconnect()

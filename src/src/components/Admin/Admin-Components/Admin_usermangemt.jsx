@@ -15,7 +15,9 @@ import {
   ShieldBan,
   ShieldCheck,
   Eye,
+  BarChart2,
 } from "lucide-react";
+import StudentPerformanceModal from "./StudentPerformanceModal";
 
 const Admin_usermangemt = () => {
   const dispatch = useDispatch();
@@ -27,6 +29,7 @@ const Admin_usermangemt = () => {
   const [role, setRole] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedUser, setSelectedUser] = useState(null);
+  const [analyticsStudentId, setAnalyticsStudentId] = useState(null);
 
   const adminuser = UserData?.AllData ?? [];
   const hasPrevPage = UserData?.pagination?.hasPrevPage || false;
@@ -277,6 +280,16 @@ const Admin_usermangemt = () => {
 
                       <td className="px-5 py-3.5 text-right">
                         <div className="flex items-center justify-end gap-2">
+                          {u.accountType?.toLowerCase() === "student" && (
+                            <button
+                              onClick={() => setAnalyticsStudentId(u._id)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-400/30 text-indigo-300 transition cursor-pointer"
+                            >
+                              <BarChart2 className="w-3.5 h-3.5" />
+                              Analytics
+                            </button>
+                          )}
+
                           <button
                             onClick={() => setSelectedUser(u)}
                             className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-slate-200 transition cursor-pointer"
@@ -417,6 +430,13 @@ const Admin_usermangemt = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {analyticsStudentId && (
+        <StudentPerformanceModal
+          studentId={analyticsStudentId}
+          onClose={() => setAnalyticsStudentId(null)}
+        />
       )}
     </div>
   );
