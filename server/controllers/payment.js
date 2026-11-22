@@ -100,7 +100,7 @@ return res.status(200).json({
     });
   }
 };
-
+  
 // Payment Verification
 exports.VerifyPayment = async (req, res) => {
   try {

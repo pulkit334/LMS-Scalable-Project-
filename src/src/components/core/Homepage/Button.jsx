@@ -1,18 +1,18 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 
-const Button = ({ children, active, Linkto }) => {
+const Button = ({ children, active, Linkto, linkto }) => {
+  const target = Linkto || linkto || "/signup";
   return (
-    <Link to={Linkto}>
+    <Link to={target} className="inline-block">
       <div
-        className={`px-8 py-3 rounded-md text-[13px] font-bold transition-all duration-200
+        className={`px-7 py-3 rounded-lg text-sm font-semibold tracking-tight transition-all duration-200
           ${
             active
-              ? "bg-yellow-500 text-richblack-900"
-              : "bg-[#0b1220] text-richblack-50"
+              ? "bg-amber-400 text-slate-950 shadow-md shadow-amber-400/20 hover:bg-amber-300 hover:shadow-amber-400/35"
+              : "bg-slate-900/90 text-slate-100 border border-white/15 hover:bg-slate-800 hover:border-white/25"
           }
-          hover:scale-95 transition-all duration-200
+          hover:-translate-y-0.5 active:translate-y-0
         `}
       >
         {children}

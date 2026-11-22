@@ -96,15 +96,23 @@ const EnrolledCourses = () => {
           <div
             key={course._id}
             onClick={() => {
-              navigate(
-                `/view-course/${course._id}/section/${course.courseContent?.[0]}`
-              );
+              const firstSec = course.courseContent?.[0];
+              const secId = typeof firstSec === "string" ? firstSec : firstSec?._id;
+              const firstSub = firstSec?.subsection?.[0];
+              const subId = typeof firstSub === "string" ? firstSub : firstSub?._id;
+              if (secId && subId) {
+                navigate(`/view-course/${course._id}/section/${secId}/sub-section/${subId}`);
+              } else if (secId) {
+                navigate(`/view-course/${course._id}/section/${secId}`);
+              } else {
+                navigate(`/view-course/${course._id}`);
+              }
             }}
-            className="grid grid-cols-3 items-center gap-4 border-b border-slate-800 px-4 py-4 last:border-b-0 cursor-pointer"
+            className="grid grid-cols-3 items-center gap-4 border-b border-slate-800/80 px-4 py-4 last:border-b-0 hover:bg-white/[0.03] transition-colors cursor-pointer"
           >
             {/* COURSE INFO */}
             <div className="flex items-center gap-4">
-              {course.thumbnail.endsWith(".mp4") ? (
+              {course.thumbnail?.endsWith(".mp4") ? (
                 <video
                   src={course.thumbnail}
                   className="h-12 w-20 rounded-md object-cover"

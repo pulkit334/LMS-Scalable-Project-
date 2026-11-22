@@ -32,16 +32,9 @@ const CourseInformation = () => {
       requirements: "",
     },
   });
-  const { course, isEdit, resetCourse, courseId } = useSelector(
+  const { course, isEdit, courseId } = useSelector(
     (state) => state.course,
   );
-
-  useEffect(() => {
-    // If not editing, ensure no stale data
-    if (!isEdit && course) {
-      dispatch(resetCourse());
-    }
-  }, []);
 
   useEffect(() => {
     if (isEdit && course) {
@@ -80,8 +73,10 @@ const CourseInformation = () => {
 
       Object.entries(data).forEach(([key, value]) => {
         if (key === "thumbnail") {
-          formData.append("thumbnailImage", value[0]); // FileList → File
-        } else {
+          if (value && value[0]) {
+            formData.append("thumbnailImage", value[0]); // FileList → File
+          }
+        } else if (value !== undefined && value !== null) {
           formData.append(key, value);
         }
       });
@@ -93,11 +88,10 @@ const CourseInformation = () => {
       }
 
       if (!response?.success) {
-        throw new Error("No response from server");
+        throw new Error(response?.message || "No response from server");
       }
-if (response?.courseId || response?.course?._id) {
-        // ONLY CHANGE (Redux instead of prop)
-        dispatch(setCourseId(response.courseId));
+      if (response?.courseId || response?.course?._id) {
+        dispatch(setCourseId(response.courseId || response.course._id));
         dispatch(setStep(2));
 
         if (!isEdit)
@@ -110,7 +104,9 @@ if (response?.courseId || response?.course?._id) {
       return response;
     } catch (err) {
       setloading(false);
-      toast.error("Error occurred. Try again.", { id: toastId });
+      const errMsg =
+        err?.response?.data?.message || err?.message || "Error occurred. Try again.";
+      toast.error(errMsg, { id: toastId });
     }
   };
 

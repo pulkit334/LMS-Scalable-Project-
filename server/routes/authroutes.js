@@ -107,43 +107,43 @@ router.get(
   "/courses",
   auth,
   isinstructor,
-  cacheMiddleware((req) => "Courses:ALL", 100),
+  cacheMiddleware((req) => `Courses:Instructor:${req.user.id}`, 60),
   ShowCourses,
 );
 //Protected 
 router.get(
   "/enrolled-courses",
   auth,
-  cacheMiddleware((req) => "Enrolled-Course", 60),
+  cacheMiddleware((req) => `Enrolled-Course:${req.user.id}`, 60),
   getEnrolledCourses,
 );
 
-router.post("/publish-courses", auth, changestatus);
+router.post("/publish-courses", auth, isinstructor, changestatus);
 // Protected
 router.patch("/course/update/:courseId", auth, isinstructor, updateCourse);
 
 //Payment Course Loader
-router.get("/course/:courseId", isstudent,cacheMiddleware((req)=>`Cache:CourseId`,500), getCourse);
-router.get("/course/:courseId/content", auth, isstudent,cacheMiddleware((req)=>`Cache:CourseId`,500), getCourseContent);
-router.get("/course/:courseId/reviews", auth,cacheMiddleware((req)=>`Cache:CourseId`,500), getPaymentCourseReviews);
+router.get("/course/:courseId", auth, cacheMiddleware((req) => `Cache:Course:${req.params.courseId}`, 300), getCourse);
+router.get("/course/:courseId/content", auth, cacheMiddleware((req) => `Cache:CourseContent:${req.params.courseId}`, 300), getCourseContent);
+router.get("/course/:courseId/reviews", auth, cacheMiddleware((req) => `Cache:CourseReviews:${req.params.courseId}`, 300), getPaymentCourseReviews);
 router.get(
   "/user/purchased-history",
   auth,
-  cacheMiddleware((req) => `Cache:purchased-History`, 100),
   isstudent,
+  cacheMiddleware((req) => `Cache:purchased-History:${req.user.id}`, 100),
   Paymenthistory,
 );
 
 router.get(
   "/getFullCourseDetails/:courseId",
   auth,
-  cacheMiddleware((req) => `Cache:CourseDeatails`, 60),
+  cacheMiddleware((req) => `Cache:CourseDetails:${req.user.id}:${req.params.courseId}`, 60),
   getFullCourseDetails,
 );
 // routes/course.js
 // add validation in it
 
-router.delete("/course/:courseId", auth, deleteCourse);
+router.delete("/course/:courseId", auth, isinstructor, deleteCourse);
 
 //COurse progress
 router.post(
@@ -157,8 +157,8 @@ router.post(
 
 // Protected
 router.post("/course/create", auth, isinstructor, createCourse);
-router.put("/section/update", isinstructor, updateSection);
-router.delete("/section/delete/:sectionId", auth, deleteSection, deleteSection);
+router.put("/section/update", auth, isinstructor, updateSection);
+router.delete("/section/delete/:sectionId", auth, isinstructor, deleteSection);
 
 // GET SECTION
 router.get(
@@ -168,7 +168,7 @@ router.get(
   isstudent,
   section,
 );
-router.post("/section/create", auth, createSection);
+router.post("/section/create", auth, isinstructor, createSection);
 
 // ================= SUBSECTION ROUTES =================
 

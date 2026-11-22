@@ -22,7 +22,7 @@ const Sidebar = () => {
   }
 
   const sidebarContent = (
-    <aside className="flex flex-col w-64 min-h-screen bg-[#161D29] border-r border-slate-800 px-4 py-6 text-white">
+    <aside className="flex flex-col w-64 h-full min-h-screen md:min-h-[calc(100vh-4rem)] bg-[#0f172a] border-r border-white/[0.08] px-4 py-6 text-white">
       {/* Header row with title + close button (close only on mobile) */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-semibold">Dashboard</h2>
@@ -96,10 +96,10 @@ const Sidebar = () => {
         />
       )}
 
-      {/* Sidebar drawer on mobile / static on md+ */}
+      {/* Sidebar drawer on mobile / sticky full-height on md+ */}
       <div
         className={`fixed top-0 left-0 z-40 h-full transition-transform duration-300
-          md:static md:translate-x-0 md:h-auto md:block
+          md:sticky md:top-16 md:translate-x-0 md:h-[calc(100vh-4rem)] md:block shrink-0
           ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}
       >
         {sidebarContent}

@@ -1,4 +1,64 @@
 
+# services:
+
+#   # ─────────────────────────────────────────
+#   # FRONTEND SERVICE (React + Vite → Nginx)
+#   # ─────────────────────────────────────────
+#   frontend:
+#     env_file:
+#       - ./src/.env
+#     build:
+#       context: ./src        # look inside ./src folder for code
+#       dockerfile: Dockerfile # use this file to build the image
+#     ports:
+#       - "80:80"             # EC2_PORT:CONTAINER_PORT → browser hits port 80
+#     depends_on:
+#       - backend             # backend must start before frontend
+#     restart: always         # auto restart if container crashes
+
+#   # ─────────────────────────────────────────
+#   # BACKEND SERVICE (Node.js + Express)
+#   # ─────────────────────────────────────────
+#   backend:
+#     env_file:
+#       - ./server/.env
+#     build:
+#       context: ./server     # look inside ./server folder for code
+#       dockerfile: Dockerfile
+#     ports:
+#       - "5000:5000"         # EC2 port 5000 → container port 5000
+#     depends_on:
+#       - redis               # redis must start before backend
+#     environment:
+#       # hardcoded env variables (safe to put non-secret ones here)
+#       - NODE_ENV=production
+#       - REDIS_URL=redis://redis:6379  # "redis" = service name below
+#                                       # docker auto resolves it to redis container IP
+   
+#                     # load secret variables from .env file on EC2
+#                             # .env is NEVER copied into the image ✅
+#     restart: always
+
+#   # ─────────────────────────────────────────
+#   # REDIS SERVICE (ready-made official image)
+#   # ─────────────────────────────────────────
+#   redis:
+#     image: redis:7-alpine   # pull from docker hub, no Dockerfile needed
+#                             # "7" = version, "alpine" = lightweight linux
+#     # ports:
+#     #   - "6379:6379"         # redis default port
+#     volumes:
+#       - redis-data:/data    # save redis data permanently on EC2
+#                             # without this, all data lost on restart!
+#     restart: always
+
+# # ─────────────────────────────────────────
+# # VOLUMES (permanent storage on EC2)
+# # ─────────────────────────────────────────
+# volumes:
+#   redis-data:               # named volume → survives container restarts
+#                             # stored at /var/lib/docker/volumes/ on EC2
+
 services:
 
   # ─────────────────────────────────────────
@@ -8,13 +68,13 @@ services:
     env_file:
       - ./src/.env
     build:
-      context: ./src        # look inside ./src folder for code
-      dockerfile: Dockerfile # use this file to build the image
+      context: ./src
+      dockerfile: Dockerfile
     ports:
-      - "80:80"             # EC2_PORT:CONTAINER_PORT → browser hits port 80
+      - "80:80"
     depends_on:
-      - backend             # backend must start before frontend
-    restart: always         # auto restart if container crashes
+      - backend
+    restart: always
 
   # ─────────────────────────────────────────
   # BACKEND SERVICE (Node.js + Express)
@@ -23,39 +83,27 @@ services:
     env_file:
       - ./server/.env
     build:
-      context: ./server     # look inside ./server folder for code
+      context: ./server
       dockerfile: Dockerfile
+    extra_hosts:
+      - "host.docker.internal:host-gateway"  # ← allows backend to reach EC2 host
     ports:
-      - "5000:5000"         # EC2 port 5000 → container port 5000
+      - "5000:5000"
     depends_on:
-      - redis               # redis must start before backend
+      - redis
     environment:
-      # hardcoded env variables (safe to put non-secret ones here)
       - NODE_ENV=production
-      - REDIS_URL=redis://redis:6379  # "redis" = service name below
-                                      # docker auto resolves it to redis container IP
-   
-                    # load secret variables from .env file on EC2
-                            # .env is NEVER copied into the image ✅
+      - REDIS_URL=redis://redis:6379
     restart: always
 
   # ─────────────────────────────────────────
-  # REDIS SERVICE (ready-made official image)
+  # REDIS SERVICE
   # ─────────────────────────────────────────
   redis:
-    image: redis:7-alpine   # pull from docker hub, no Dockerfile needed
-                            # "7" = version, "alpine" = lightweight linux
-    # ports:
-    #   - "6379:6379"         # redis default port
+    image: redis:7-alpine
     volumes:
-      - redis-data:/data    # save redis data permanently on EC2
-                            # without this, all data lost on restart!
+      - redis-data:/data
     restart: always
 
-# ─────────────────────────────────────────
-# VOLUMES (permanent storage on EC2)
-# ─────────────────────────────────────────
 volumes:
-  redis-data:               # named volume → survives container restarts
-                            # stored at /var/lib/docker/volumes/ on EC2
-
+  redis-data:

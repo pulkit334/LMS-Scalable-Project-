@@ -4,114 +4,62 @@ const IORedis = require("ioredis");
 const Transcript = require("../models/transcription");
 const Question = require("../models/questionModal");
 const SubSection = require("../models/subsection");
+const { generateQuizQuestions } = require("./openrouter-service");
 
-const connection = new IORedis(process.env.REDIS_URL, {
-  maxRetriesPerRequest:  null,
+const redisUrl = process.env.REDIS_URL || "redis://127.0.0.1:6379";
+const connection = new IORedis(redisUrl, {
+  maxRetriesPerRequest: null,
   enableReadyCheck: false,
+  tls: redisUrl.startsWith("rediss://")
+    ? { rejectUnauthorized: false }
+    : undefined,
 });
 
-function sanitizeAIOutput(text) {
-  const banned = [
-    /google/gi,
-    /gemini/gi,
-    /large language model/gi,
-    /ai model/gi,
-    /developed by/gi,
-  ];
-  let clean = text;
-  for (const pattern of banned) {
-    clean = clean.replace(pattern, "");
-  }
-  return clean;
-}
+const cacheRedis = new IORedis(redisUrl, {
+  maxRetriesPerRequest: null,
+  enableReadyCheck: false,
+  tls: redisUrl.startsWith("rediss://")
+    ? { rejectUnauthorized: false }
+    : undefined,
+});
 
 const worker = new Worker(
   "QuestionQueue",
   async (job) => {
     const { subsectionId } = job.data;
 
-    try {
-      const transcript = await Transcript.findOne({ subsectionId });
-
-      if (!transcript?.rawText) {
-        throw new Error("Transcript not found or empty");
-      }
-      const prompt = `
-You are an LMS question generator.
-Generate EXACTLY 5 multiple-choice questions from the transcript.
-Return ONLY a valid JSON array, no markdown, no extra text.
-
-Rules for explanation:
-- Explain like a teacher to a beginner student
-- Structure EVERY explanation exactly like this:
-  "[correct answer] is correct because [explain the concept simply].
-   [wrong option 1] is wrong because [specific reason].
-   [wrong option 2] is wrong because [specific reason]."
-- Focus on the CONCEPT not the video or transcript
-- Never mention "the transcript" or "the video says"
-- Use simple words, no jargon
-- Generate Question Related to The Concept's Not to The Lecture Wording 
-- Generate Question Related To Concept's That Are asked in Evey Interview But Make Sure it Should Relate To The Concept's Of The 
-  Lecture But Not Pick The words Ask Concept's Related Wording 
-- In Easy Level SomeTime Mix Replace The Easy Level With The Hard Question But Label it as Easy
-
-Format:
-[
-  {
-    "question": "...",
-    "options": ["A","B","C","D"],
-    "answer": "...",
-    "explanation": "...",
-    "difficulty": "EASY || MEDIUM || HARD"
-  }
-]
-
-Transcript:
-${transcript.rawText}
-`;
-
-      const response = await fetch(`${process.env.OLLAMA_BASE_URL}/api/chat`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: process.env.OLLAMA_MODEL,
-          messages: [{ role: "user", content: prompt }],
-          stream: false,
-          options: {
-            temperature: 0.3,
-          },
-        }),
-      });
-
-      const data = await response.json();
-if (!data.message?.content) {
-        throw new Error(`Ollama returned no content: ${JSON.stringify(data)}`);
-      }
-
-      let text = data.message.content;
-      text = sanitizeAIOutput(text);
-
-      let questions = [];
-      try {
-        const clean = text.replace(/```json|```/g, "").trim();
-        questions = JSON.parse(clean);
-      } catch (err) {
-        console.error("JSON parse failed:", text);
-        throw new Error("AI returned invalid JSON");
-      }
-
-      await Question.insertMany(questions.map((q) => ({ ...q, subsectionId })));
-
-      await SubSection.findByIdAndUpdate(subsectionId, { status: "READY" });
-} catch (err) {
-      await SubSection.findByIdAndUpdate(subsectionId, { status: "FAILED" });
-      console.error("Worker failed:", err);
-      throw err;
+    const transcript = await Transcript.findOne({ subsectionId }).lean();
+    if (!transcript?.rawText) {
+      throw new Error("Transcript not found or empty");
     }
+
+    console.log(`[QuestionWorker] Generating questions via OpenRouter for subsection ${subsectionId}`);
+
+    const { data: questions, modelUsed } = await generateQuizQuestions(
+      transcript.rawText
+    );
+
+    // Replace existing questions cleanly on retry or regeneration
+    await Question.deleteMany({ subsectionId });
+    const savedQuestions = await Question.insertMany(
+      questions.map((q) => ({ ...q, subsectionId }))
+    );
+
+    await cacheRedis.setex(
+      `questions:${subsectionId}`,
+      900, // 15-minute cache TTL before fresh questions can be generated
+      JSON.stringify(savedQuestions)
+    );
+
+    await SubSection.findByIdAndUpdate(subsectionId, { status: "READY" });
+
+    console.log(
+      `[QuestionWorker] Saved ${savedQuestions.length} questions for ${subsectionId} using ${modelUsed}`
+    );
   },
   {
+    connection,
+    concurrency: 2,
     removeOnComplete: {
       age: 3600,
       count: 1000,
@@ -119,26 +67,28 @@ if (!data.message?.content) {
     removeOnFail: {
       age: 24 * 3600,
     },
-  
-  
-    connection,
-
-    settings: {
-      backoffStrategy: (attemptsMade) => {
-        return attemptsMade * 5000;
-      },
-    },
-
-}
+  }
 );
 
-worker.on("completed", (job) => console.log("Questions done:", job.id));
-worker.on("failed", (job, err) => {
-  if (job?.attemptsMade >= job?.opts?.attempts) {
-    SubSection.findByIdAndUpdate(job.data.subsectionId, { status: "FAILED" });
-  }
-  console.error(
-    `Job ${job?.id} failed on attempt ${job?.attemptsMade}:`,
-    err.message,
-  );
+worker.on("completed", (job) => {
+  console.log(`[QuestionWorker] Job ${job.id} completed`);
 });
+
+worker.on("failed", async (job, err) => {
+  console.error(
+    `[QuestionWorker] Job ${job?.id} failed on attempt ${job?.attemptsMade}:`,
+    err.message
+  );
+  const maxAttempts = job?.opts?.attempts || 1;
+  if (job?.data?.subsectionId && job.attemptsMade >= maxAttempts) {
+    try {
+      await SubSection.findByIdAndUpdate(job.data.subsectionId, {
+        status: "FAILED",
+      });
+    } catch (updateErr) {
+      console.error("[QuestionWorker] Failed to mark subsection FAILED:", updateErr.message);
+    }
+  }
+});
+
+module.exports = worker;

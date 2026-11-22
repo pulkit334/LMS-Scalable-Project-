@@ -36,10 +36,10 @@ const Navbar = () => {
   }, [dispatch, categorydata]);
 
   return (
-    <div className="w-full bg-[#1e2a3b] border-b z-50 border-[#1e2a3b]">
-      <div className="mx-auto flex h-14 max-w-maxContent items-center justify-between px-6">
+    <header className="sticky top-0 w-full bg-[#0b1220]/85 backdrop-blur-md border-b border-white/[0.08] z-50 transition-colors">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
         {/* ---------------- LOGO ---------------- */}
-        <Link to="/">
+        <Link to="/" className="flex items-center gap-2 shrink-0">
           <img
             src="/Logo/Logo-Full-Light.png"
             alt="Logo"
@@ -48,49 +48,49 @@ const Navbar = () => {
         </Link>
 
         {/* ---------------- DESKTOP NAV ---------------- */}
-        <div className="hidden md:flex items-center gap-8 text-sm">
+        <nav className="hidden md:flex items-center gap-7 text-sm font-medium">
           {NavbarLinks.map((link, index) => {
             if (link.title === "Catalog") {
               return (
-                <div key={index} className="relative group">
+                <div key={index} className="relative group py-2">
                   <Link
                     to="/catalog"
-                    className="cursor-pointer text-white gap-1 items-center flex hover:text-yellow-300"
+                    className="cursor-pointer text-slate-200 gap-1.5 items-center flex hover:text-amber-300 transition-colors"
                   >
                     {link.title}
-                    <FaAngleDown />
+                    <FaAngleDown className="text-xs transition-transform duration-200 group-hover:rotate-180" />
                   </Link>
 
                   <div
-                    className="invisible absolute left-1/2 top-full z-50 mt-3 
-                    -translate-x-1/2 
-                    flex flex-col rounded-lg bg-white p-4 
-                    text-black opacity-0 
-                    transition-all duration-200   
-                    group-hover:visible group-hover:opacity-100 
-                    w-72"
+                    className="invisible absolute left-1/2 top-full z-50 pt-2
+                    -translate-x-1/2
+                    opacity-0 transition-all duration-200
+                    group-hover:visible group-hover:opacity-100
+                    w-64"
                   >
-                    {loading && (
-                      <p className="px-3 py-1 text-sm text-gray-500">
-                        Loading.....
-                      </p>
-                    )}
-                    {error && (
-                      <p className="px-3 py-1 text-sm text-red-500">
-                        {error?.message || "Failed to load categories"}
-                      </p>
-                    )}
-                    {!loading &&
-                      !error &&
-                      categorydata?.map((category) => (
-                        <Link
-                          key={category._id}
-                          to={`/catalog/${category.name}`}
-                          className="block px-3 py-1 text-sm hover:text-yellow-400"
-                        >
-                          {category.name}
-                        </Link>
-                      ))}
+                    <div className="flex flex-col rounded-xl bg-[#0f172a]/95 backdrop-blur-xl border border-white/10 p-2 text-slate-200 shadow-2xl shadow-black/50">
+                      {loading && (
+                        <p className="px-3 py-2 text-xs text-slate-400">
+                          Loading categories...
+                        </p>
+                      )}
+                      {error && (
+                        <p className="px-3 py-2 text-xs text-rose-400">
+                          {error?.message || "Failed to load categories"}
+                        </p>
+                      )}
+                      {!loading &&
+                        !error &&
+                        categorydata?.map((category) => (
+                          <Link
+                            key={category._id}
+                            to={`/catalog/${category.name}`}
+                            className="block rounded-lg px-3 py-2 text-sm text-slate-200 hover:bg-white/[0.06] hover:text-amber-300 transition-colors"
+                          >
+                            {category.name}
+                          </Link>
+                        ))}
+                    </div>
                   </div>
                 </div>
               );
@@ -100,33 +100,33 @@ const Navbar = () => {
               <Link
                 key={index}
                 to={link.path}
-                className={`transition ${
+                className={`transition-colors py-1 ${
                   matchRoute(link.path)
-                    ? "text-yellow-300"
-                    : "text-white hover:text-yellow-300"
+                    ? "text-amber-300 font-semibold"
+                    : "text-slate-200 hover:text-amber-300"
                 }`}
               >
                 {link.title}
               </Link>
             );
           })}
-        </div>
+        </nav>
 
-        {/* ---------------- RIGHT SECTION DESKTOP  FIX IS HERE ---------------- */}
-        <div className="hidden md:flex items-center gap-4">
+        {/* ---------------- RIGHT SECTION DESKTOP ---------------- */}
+        <div className="hidden md:flex items-center gap-3">
           {token === null ? (
             <>
               <Link
                 to="/Login"
-                className="text-white hover:text-yellow-300 text-sm"
+                className="text-slate-200 hover:text-white border border-white/10 hover:border-white/25 px-4 py-1.5 rounded-lg text-sm font-medium transition-all"
               >
-                Login
+                Log in
               </Link>
               <Link
                 to="/signup"
-                className="bg-yellow-300 text-black px-4 py-1.5 rounded-md text-sm font-medium hover:bg-yellow-400"
+                className="bg-amber-400 text-slate-950 px-4 py-1.5 rounded-lg text-sm font-semibold hover:bg-amber-300 shadow-sm shadow-amber-400/20 transition-all"
               >
-                Signup
+                Sign up
               </Link>
             </>
           ) : (
@@ -153,18 +153,20 @@ const Navbar = () => {
                   </div>
                 )}
               </div>
-              {/* ---------------- CART ---------------- */}
-              <Link
-                to="/dashboard/cart"
-                className="relative text-white hover:text-yellow-300"
-              >
-                <FiShoppingCart size={20} />
-                {totalItems > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-                    {totalItems}
-                  </span>
-                )}
-              </Link>
+              {/* ---------------- CART (Students only) ---------------- */}
+              {user?.accountType?.toLowerCase() === "student" && (
+                <Link
+                  to="/dashboard/cart"
+                  className="relative text-slate-200 hover:text-amber-300 transition-colors"
+                >
+                  <FiShoppingCart size={20} />
+                  {totalItems > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 bg-amber-400 text-slate-950 font-bold text-[10px] rounded-full w-4 h-4 flex items-center justify-center">
+                      {totalItems}
+                    </span>
+                  )}
+                </Link>
+              )}
               <ProfileDropDown />
             </div>
           )}
@@ -180,7 +182,7 @@ const Navbar = () => {
 
       {/* ---------------- MOBILE MENU ---------------- */}
       {mobileOpen && (
-        <div className="md:hidden bg-[#1e2a3b] px-6 py-4 space-y-4 border-t border-gray-700">
+        <div className="md:hidden bg-[#0f172a] px-6 py-4 space-y-4 border-t border-white/10">
           {NavbarLinks.map((link, index) => {
             if (link.title === "Catalog") {
               return (
@@ -279,24 +281,26 @@ const Navbar = () => {
                   />
                 )}
               </div>
-              {/* ---------------- MOBILE CART ---------------- */}
-              <Link
-                to="/dashboard/cart"
-                className="relative text-white hover:text-yellow-300"
-              >
-                <FiShoppingCart size={20} />
-                {totalItems > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-                    {totalItems}
-                  </span>
-                )}
-              </Link>
+              {/* ---------------- MOBILE CART (Students only) ---------------- */}
+              {user?.accountType?.toLowerCase() === "student" && (
+                <Link
+                  to="/dashboard/cart"
+                  className="relative text-slate-200 hover:text-amber-300"
+                >
+                  <FiShoppingCart size={20} />
+                  {totalItems > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-amber-400 text-slate-950 font-bold text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                      {totalItems}
+                    </span>
+                  )}
+                </Link>
+              )}
               <ProfileDropDown />
             </div>
           )}
         </div>
       )}
-    </div>
+    </header>
   );
 };
 

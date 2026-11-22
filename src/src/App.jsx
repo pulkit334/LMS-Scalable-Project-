@@ -125,6 +125,7 @@ toast(
           />
 
           <Route path="/signup" element={<Signup />} />
+          <Route path="/catalog" element={<Catalog />} />
           <Route path="/catalog/:catalogName" element={<Catalog />} />
           <Route
             path="/user/view-notifications"
@@ -224,6 +225,15 @@ toast(
               </PrivateRoute>
             }
           >
+            <Route
+              path="view-course/:courseId"
+              element={
+                <StudentGuard>
+                  <ViewDetails />
+                </StudentGuard>
+              }
+            />
+
             <Route
               path="view-course/:courseId/section/:sectionId"
               element={

@@ -1,27 +1,53 @@
 @import "tailwindcss";
+
 /* Global styles */
 html, body, #root {
   block-size: 100%;
   overflow-x: hidden;
-   cursor: url("/Images/cursor-_1_.cur") 0 0, auto;
+  font-family: "Inter", "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
 }
+
+::selection {
+  background: rgba(251, 191, 36, 0.28);
+  color: #f8fafc;
+}
+
+/* Subtle custom dark scrollbar */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+::-webkit-scrollbar-track {
+  background: #020617;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.25);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.45);
+}
+
 .swiper-wrapper {
   transition-timing-function: linear !important;
 }
 
-
-.homepage_bg{
+.homepage_bg {
   background: url("/Images/bghome.svg");
-
-
 }
+
 body {
   background: #020617;
+  color: #f1f5f9;
 }
 
 .auth-input {
-  @apply bg-[#0f172a] text-white text-sm rounded-md px-4 py-2.5 outline-none border border-[#1e293b] focus:border-cyan-400 transition;
+  @apply bg-[#0f172a] text-white text-sm rounded-lg px-4 py-2.5 outline-none border border-slate-700/70 focus:border-amber-400/80 focus:ring-2 focus:ring-amber-400/15 transition;
 }
+
 @keyframes successPop {
   from {
     opacity: 0;
@@ -32,6 +58,7 @@ body {
     transform: scale(1) translateY(0);
   }
 }
+
 .disabled {
   cursor: not-allowed;
 }

@@ -43,9 +43,15 @@ const VedioDetails = () => {
   }, [courseId, dispatch]);
 
   const { token } = useSelector((state) => state.auth);
-  const [videoActive, setVideoActive] = useState(false);
+  const [videoActive, setVideoActive] = useState(true);
   const [videoEnded, setVideoEnded] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  // Auto-open player and clear completion overlay when switching lectures
+  useEffect(() => {
+    setVideoActive(true);
+    setVideoEnded(false);
+  }, [subSectionId]);
 
   //  FIND CURRENT VIDEO
   let currentSub = null;
@@ -283,7 +289,7 @@ const VedioDetails = () => {
         }
       `}</style>
 
-      <div className="vd-container max-w-5xl mx-auto px-6 pt-6 pb-16">
+      <div className="vd-container w-full max-w-4xl mx-auto px-4 sm:px-6 pt-6 pb-28">
 
         {/* VIDEO PLAYER */}
         <div
@@ -318,12 +324,13 @@ const VedioDetails = () => {
 
           {videoActive && (
             <video
+              key={currentSub._id}
               ref={playerRef}
               src={currentSub.videoUrl}
-              autoPlay
               controls
+              playsInline
               onEnded={handleVideoEnd}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain bg-black"
             />
           )}
 

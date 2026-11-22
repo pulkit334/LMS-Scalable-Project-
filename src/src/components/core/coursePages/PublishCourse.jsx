@@ -36,6 +36,7 @@ const PublishCourse = ({ onBack }) => {
           window.location.href = "/dashboard/my-courses";
         }, 1500);
       }
+    // eslint-disable-next-line no-unused-vars
     } catch (err) {
 toast.error("Course publish failed", { id: toastId });
     }

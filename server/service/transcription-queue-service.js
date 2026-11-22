@@ -1,12 +1,16 @@
-const { Queue } = require("bullmq")
-const IORedis = require("ioredis")    
-const connection = new IORedis(process.env.REDIS_URL, {
+require("dotenv").config();
+const { Queue } = require("bullmq");
+const IORedis = require("ioredis");
+
+const redisUrl = process.env.REDIS_URL || "redis://127.0.0.1:6379";
+const connection = new IORedis(redisUrl, {
   maxRetriesPerRequest: null,
-  tls: process.env.REDIS_URL?.startsWith("rediss://")
+  enableReadyCheck: false,
+  tls: redisUrl.startsWith("rediss://")
     ? { rejectUnauthorized: false }
     : undefined,
-})
+});
 
-const transcriptionQueue = new Queue("TranscriptionQueue", { connection })
+const transcriptionQueue = new Queue("TranscriptionQueue", { connection });
 
-module.exports = { transcriptionQueue }
+module.exports = { transcriptionQueue };

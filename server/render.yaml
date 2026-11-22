@@ -43,7 +43,7 @@ services:
         value: "https://unstagnant-elida-heartrendingly.ngrok-free.dev "
 
       - key: OLLAMA_MODEL
-        value: "minimax-m2.5:cloud"
+        value: "llama3.2:1b"
 
       - key: MAIL_HOST
         value: "smtp.gmail.com"

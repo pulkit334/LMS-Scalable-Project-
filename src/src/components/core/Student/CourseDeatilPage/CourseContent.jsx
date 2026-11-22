@@ -3,17 +3,18 @@ import { useMemo, useState } from "react";
 import { ChevronDown, ChevronUp, Layers, PlayCircle } from "lucide-react";
 import Section from "./Section";
 
-const CourseContent = ({ sections = [] }) => {
+const CourseContent = ({ sections }) => {
   const [showAll, setShowAll] = useState(false);
+  const safeSections = Array.isArray(sections) ? sections : [];
 
   const LIMIT = 10;
 
   const totalLectures = useMemo(() => {
-    return sections.reduce((acc, s) => acc + (s?.subsection?.length || 0), 0);
-  }, [sections]);
+    return safeSections.reduce((acc, s) => acc + (s?.subsection?.length || 0), 0);
+  }, [safeSections]);
 
-  const visibleSections = showAll ? sections : sections.slice(0, LIMIT);
-  const remainingCount = Math.max(0, sections.length - LIMIT);
+  const visibleSections = showAll ? safeSections : safeSections.slice(0, LIMIT);
+  const remainingCount = Math.max(0, safeSections.length - LIMIT);
 
   return (
     <div className="bg-[#020617]/90 rounded-2xl border border-slate-800 shadow-[0_0_0_1px_rgba(255,255,255,0.02)] overflow-hidden">
@@ -28,7 +29,7 @@ const CourseContent = ({ sections = [] }) => {
             <div className="mt-2 flex flex-wrap items-center gap-2 text-xs sm:text-sm text-slate-400">
               <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-800 bg-slate-950/60 px-2.5 py-1">
                 <Layers size={14} className="text-slate-400" />
-                {sections.length} section(s)
+                {safeSections.length} section(s)
               </span>
 
               <span className="text-slate-600">•</span>
@@ -61,7 +62,7 @@ const CourseContent = ({ sections = [] }) => {
       </div>
 
       {/* SHOW MORE / LESS */}
-      {sections.length > LIMIT && (
+      {safeSections.length > LIMIT && (
         <div className="border-t border-slate-800 bg-slate-950/40">
           <button
             onClick={() => setShowAll((prev) => !prev)}

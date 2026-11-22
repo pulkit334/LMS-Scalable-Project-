@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 /* eslint-disable react-hooks/static-components */
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";

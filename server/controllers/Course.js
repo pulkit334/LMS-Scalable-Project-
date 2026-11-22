@@ -106,15 +106,22 @@ const thumbnail = req.files.thumbnailImage;
       { $push: { course: newCourse._id } },
       { new: true },
     );
-res.status(201).json({
+    // Invalidate instructor courses & categories cache so new course shows immediately
+    try {
+      const redisClient = require("../Reddis/client");
+      await redisClient.del(`Courses:Instructor:${userid}`, "Category:All");
+    } catch (_) {}
+
+    return res.status(201).json({
       success: true,
-      message: "Course Created Succesfully",
+      message: "Course Created Successfully",
       courseId: newCourse._id,
     });
   } catch (err) {
-    res.status(403).json({
+    console.error("createCourse error:", err);
+    return res.status(500).json({
       success: false,
-      message: "Error Ocurred Try Again..",
+      message: err.message || "Error occurred while creating course",
       error: err.message,
     });
   }
@@ -247,7 +254,7 @@ exports.getFullCourseDetails = async (req, res) => {
   try {
     const { courseId } = req.params;
     const userId = req.user.id;
-    const userRole = req.user.accountType; // STUDENT | INSTRUCTOR | ADMIN
+    const userRole = String(req.user?.accountType || "").trim().toLowerCase();
 
     if (!courseId) {
       return res.status(400).json({
@@ -276,27 +283,28 @@ exports.getFullCourseDetails = async (req, res) => {
       });
     }
 
-    //  INSTRUCTOr
-    if (userRole === "INSTRUCTOR") {
-      if (courseDetails.Insturctor._id.toString() !== userId) {
+    // INSTRUCTOR: can only access/edit their own course
+    if (userRole === "instructor") {
+      if (courseDetails.Insturctor?._id?.toString() !== String(userId)) {
         return res.status(403).json({
           success: false,
           message: "Not authorized to edit this course",
         });
       }
 
-      // Instructor gets FULL editable data
       return res.status(200).json({
         success: true,
         mode: "EDIT",
         courseDetails,
+        completedVideos: [],
       });
     }
 
-    //  STUDENT → VIEW MODE
-    if (userRole === "STUDENT") {
-      // Optional: check enrollment
-      const isEnrolled = courseDetails.studentEnrolled?.includes(userId);
+    // STUDENT: strict enrollment check before exposing private video URLs
+    if (userRole === "student") {
+      const isEnrolled = courseDetails.studentEnrolled?.some(
+        (id) => String(id) === String(userId)
+      );
 
       if (!isEnrolled) {
         return res.status(403).json({
@@ -305,26 +313,39 @@ exports.getFullCourseDetails = async (req, res) => {
         });
       }
 
-      // Calculate duration ONLY for students
       let totalDurationInSeconds = 0;
-      courseDetails.courseContent.forEach((section) => {
-        section.subsection.forEach((sub) => {
-          totalDurationInSeconds += Number(sub.timeDuration || 0);
+      courseDetails.courseContent?.forEach((section) => {
+        section.subsection?.forEach((sub) => {
+          totalDurationInSeconds += Number(sub.timeduration || sub.timeDuration || 0);
         });
       });
+
+      const progressDoc = await CourseProgress.findOne({
+        courseId,
+        userId,
+      }).lean();
 
       return res.status(200).json({
         success: true,
         mode: "VIEW",
         courseDetails,
-        totalDuration: convertSecondsToDuration(totalDurationInSeconds),
+        completedVideos: progressDoc?.completedVideos || [],
+        totalDuration: `${Math.ceil(totalDurationInSeconds / 60)} mins`,
       });
     }
 
-    return res.status(200).json({
-      success: true,
-      mode: "ADMIN",
-      courseDetails,
+    if (userRole === "admin") {
+      return res.status(200).json({
+        success: true,
+        mode: "ADMIN",
+        courseDetails,
+        completedVideos: [],
+      });
+    }
+
+    return res.status(403).json({
+      success: false,
+      message: "Unauthorized role",
     });
   } catch (error) {
     console.error("GET FULL COURSE DETAILS ERROR:", error);

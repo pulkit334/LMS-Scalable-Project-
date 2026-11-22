@@ -49,7 +49,8 @@ export const CreateRoom = async (req, res) => {
     await createRoom(String(classId));
     //generate karo ek Token ko Jo  share
 
-    const token = await generateToken(String(classId), String(teacherId), true);
+    const teacherName = req.user?.email?.split("@")[0] || "Instructor";
+    const token = await generateToken(String(classId), String(teacherId), true, `${teacherName} (Host)`);
     cls.state = "LIVE";
     cls.startedAt = new Date();
    const saved =  await cls.save();
@@ -87,17 +88,23 @@ export const JoinRoom = async (req, res) => {
     const courseData = await Course.findById(cls.course).select(
       "studentEnrolled",
     );
-    const isEnrolled = courseData.studentEnrolled.includes(StudentId);
-    if (!isEnrolled)
-      return res.status(403).json({ success: false, message: "Not enrolled" });
-    if (!isEnrolled)
-      return res
-        .status(403)
-        .json({ success: false, message: "Lack of credentials" });
+    const isEnrolled = Boolean(
+      courseData?.studentEnrolled?.some(
+        (id) => String(id) === String(StudentId),
+      ),
+    );
+    if (!isEnrolled) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not enrolled in this course",
+      });
+    }
+    const studentName = req.user?.email?.split("@")[0] || "Student";
     const token = await generateToken(
       String(classId),
       String(req.user.id),
       false,
+      studentName,
     );
 
     return res.json({ token, host: process.env.LIVEKIT_URL });

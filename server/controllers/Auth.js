@@ -11,8 +11,7 @@ const {client} = require("../utils/googleconfig.js")
 
 exports.sendOtp = async (req, res) => {
   try {
-console.log("BODY:", req.body);
-console.log("HEADERS AUTH:", req.headers.authorization);
+
     //fetch the email from Req Body
     const { email } = req.body;
     //Check If User alerady exist or Not
@@ -200,7 +199,7 @@ exports.login = async (req, res) => {
     //refresh Token
     const Refreshtoken = jwt.sign(payload, process.env.JWT_REFRESH_SECRET, {
       expiresIn: "7d",
-    });
+    }); 
 
     //attach token and remove password
     user.token = token;

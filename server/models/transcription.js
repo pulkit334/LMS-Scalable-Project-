@@ -8,16 +8,24 @@ const Transcribing = new mongoose.Schema(
       required: true,
     },
     rawText: { type: String, required: true },
-    words: { type: JSON, required: true },
-    confidence: { type: Number },
+    words: { type: mongoose.Schema.Types.Mixed, default: [] },
+    confidence: { type: Number, default: 0 },
     language: {
       type: String,
-      enum: ["en", "hi"],
+      default: "en",
+    },
+    notesData: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null,
+    },
+    notesModel: {
+      type: String,
+      default: null,
     },
   },
   {
-    timestamps: { createdAt: true, updatedAt: false },
-  },
+    timestamps: { createdAt: true, updatedAt: true },
+  }
 );
 
 Transcribing.index({ subsectionId: 1 });

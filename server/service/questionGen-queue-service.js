@@ -1,10 +1,16 @@
-import { Queue } from "bullmq"
-import IORedis from "ioredis"
+require("dotenv").config();
+const { Queue } = require("bullmq");
+const IORedis = require("ioredis");
 
-const connection = new IORedis(process.env.REDIS_URL, {
+const redisUrl = process.env.REDIS_URL || "redis://127.0.0.1:6379";
+const connection = new IORedis(redisUrl, {
   maxRetriesPerRequest: null,
-  tls: process.env.REDIS_URL?.startsWith("rediss://")
+  enableReadyCheck: false,
+  tls: redisUrl.startsWith("rediss://")
     ? { rejectUnauthorized: false }
     : undefined,
-})
-export const QuestionQueue = new Queue("QuestionQueue", { connection })
+});
+
+const QuestionQueue = new Queue("QuestionQueue", { connection });
+
+module.exports = { QuestionQueue };

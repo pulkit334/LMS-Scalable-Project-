@@ -1,23 +1,18 @@
+import ProfilePictureCard from "../components/core/profile/ProfilePictureCard";
+import ProfileInfoForm from "../components/core/profile/ProfileInfoForm";
+import PasswordChangeForm from "../components/core/profile/PasswordChangeForm";
+import DeleteAccount from "../components/core/profile/DeleteAccount";
+
 const Settings = () => {
   return (
-    <div
-      className="min-h-screen w-full px-4 py-8 sm:px-6 lg:px-10"
-      style={{ background: "#0f1520" }}
-    >
+    <div className="min-h-screen w-full px-2 py-4 sm:px-4 lg:px-8">
       {/* Page Header */}
-      <div className="mb-8">
-        <h1
-          className="text-2xl sm:text-3xl font-bold"
-          style={{
-            fontFamily: "'Syne', sans-serif",
-            color: "#f0f4ff",
-            letterSpacing: "-0.02em",
-          }}
-        >
-          Settings
+      <div className="mx-auto max-w-3xl mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-slate-100 tracking-tight">
+          Account Settings
         </h1>
-        <p className="mt-1 text-sm" style={{ color: "rgba(255,255,255,0.3)" }}>
-          Manage your account preferences
+        <p className="mt-1 text-sm text-slate-400">
+          Manage your profile photo, personal details, password, and account preferences
         </p>
       </div>
 

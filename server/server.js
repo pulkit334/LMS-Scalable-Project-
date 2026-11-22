@@ -24,6 +24,7 @@ import WebHookRoute from "./routes/WebhookRoutes.js";
 import { checkAbandonedCarts } from "./schedular/cart-schedular-service.js";
 import AIRoutes from "./routes/ai-routes.js";
 import LiveRoutes from "./routes/Live-class-Routes.js";
+
 import {
   authLimiter,
   firebaseLimiter,
@@ -60,6 +61,9 @@ app.use(
       "https://notion-x.store",
       "https://www.notion-x.store",
       "http://localhost:5173",
+      "http://localhost:5174",
+      "http://127.0.0.1:5173",
+      "http://127.0.0.1:5174",
     ],
     credentials: true,
   }),
@@ -82,6 +86,7 @@ app.use("/api/v2", adminLimiter,    adminRoutes);
 app.use("/api/v3", webhookLimiter,  WebHookRoute);
 app.use("/api/v4", aiLimiter,       AIRoutes);
 app.use("/api/v5", liveLimiter,     LiveRoutes);
+
 app.get("/test-limit", (req, res) => res.json({ ok: true })); //  test route
 app.get("/test-cron", async (req, res) => {
 await checkAbandonedCarts();

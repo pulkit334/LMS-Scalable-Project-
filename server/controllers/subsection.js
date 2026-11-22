@@ -1,11 +1,16 @@
 const SubSection = require("../models/subsection");
 const Section = require("../models/section");
 const { uploadImageToCloudinary } = require("../utils/imageuploader");
+const cloudinary = require("../utils/cloudinaryupload");
 const course = require("../models/course");
+const Transcript = require("../models/transcription");
+const Question = require("../models/questionModal");
+const { transcriptionQueue } = require("../service/transcription-queue-service");
+const redisClient = require("../Reddis/client");
 
 exports.createSubsection = async (req, res) => {
   try {
-// fetch the data
+    // fetch the data
     const { sectionId, timeDuration, tittle, description } = req.body;
 
     if (!req.files || Object.keys(req.files).length === 0) {
@@ -28,7 +33,7 @@ exports.createSubsection = async (req, res) => {
     // upload video to cloudinary
     const uploadDetails = await uploadImageToCloudinary(
       video,
-      process.env.FolderName,
+      process.env.FolderName
     );
 
     // create subsection
@@ -37,38 +42,65 @@ exports.createSubsection = async (req, res) => {
       timeduration: timeDuration,
       description,
       cloudinaryId: uploadDetails.public_id,
-      status: "UPLOADED",
+      status: "TRANSCRIBING",
+      notesStatus: "pending",
       videoUrl: uploadDetails.secure_url,
     });
 
+    // Queue transcription immediately so it works both locally and in production
+    try {
+      await transcriptionQueue.add(
+        "transcribe",
+        {
+          subsectionId: String(subsection._id),
+          cloudinaryUrl: uploadDetails.secure_url,
+          cloudinaryId: uploadDetails.public_id,
+        },
+        {
+          attempts: 3,
+          backoff: { type: "exponential", delay: 4000 },
+        }
+      );
+    } catch (queueErr) {
+      console.error("[createSubsection] Failed to queue transcription:", queueErr.message);
+      await SubSection.findByIdAndUpdate(subsection._id, {
+        status: "UPLOADED",
+        notesStatus: null,
+      });
+    }
+
     // update the section with this subsection id
-    const updatedSection = await Section.findByIdAndUpdate(
+    await Section.findByIdAndUpdate(
       sectionId,
       {
         $push: { subsection: subsection._id },
       },
-      { new: true },
+      { new: true }
     ).populate("subsection");
 
     /* ================= COURSE DURATION UPDATE ================= */
 
     const section = await Section.findById(sectionId);
 
-    const courseDoc = await course.findById(section.courseId).populate({
-      path: "courseContent",
-      populate: { path: "subsection" },
-    });
-
-    let totalSeconds = 0;
-
-    courseDoc.courseContent.forEach((sec) => {
-      sec.subsection.forEach((lec) => {
-        totalSeconds += lec.timeduration;
+    if (section?.courseId) {
+      const courseDoc = await course.findById(section.courseId).populate({
+        path: "courseContent",
+        populate: { path: "subsection" },
       });
-    });
 
-    courseDoc.totalDuration = `${Math.ceil(totalSeconds / 60)} mins`;
-    await courseDoc.save();
+      if (courseDoc) {
+        let totalSeconds = 0;
+
+        courseDoc.courseContent.forEach((sec) => {
+          sec.subsection.forEach((lec) => {
+            totalSeconds += Number(lec.timeduration) || 0;
+          });
+        });
+
+        courseDoc.totalDuration = `${Math.ceil(totalSeconds / 60)} mins`;
+        await courseDoc.save();
+      }
+    }
 
     /* ========================================================== */
 
@@ -90,10 +122,8 @@ exports.subsection = async (req, res) => {
   try {
     const { subSectionId } = req.params;
 
-    // MISTAKE #5: WRONG .select() SYNTAX (COMMAS)
-    // FIX: USE SPACES ONLY
     const data = await SubSection.findById(subSectionId).select(
-      "tittle timeduration description vediourl",
+      "tittle timeduration description videoUrl status notesStatus"
     );
 
     if (!data) {
@@ -117,15 +147,14 @@ exports.subsection = async (req, res) => {
   }
 };
 
-//Subsection Update
-// Helper function - OUTSIDE the main function
+// Subsection Update
 const deleteCloudinaryVideo = async (videoUrl) => {
   if (!videoUrl) return;
 
   try {
     const parts = videoUrl.split("/upload/")[1];
     if (!parts) {
-      console.warn(" Invalid Cloudinary URL format:", videoUrl);
+      console.warn("Invalid Cloudinary URL format:", videoUrl);
       return;
     }
 
@@ -136,7 +165,7 @@ const deleteCloudinaryVideo = async (videoUrl) => {
       .replace(/\.[^/.]+$/, "");
 
     if (!publicId) {
-      console.warn(" Could not extract public_id");
+      console.warn("Could not extract public_id");
       return;
     }
 
@@ -144,19 +173,17 @@ const deleteCloudinaryVideo = async (videoUrl) => {
       resource_type: "video",
     });
 
-    if (result.result === "ok") {
-} else {
-      console.warn(" Deletion result:", result);
+    if (result.result !== "ok") {
+      console.warn("Deletion result:", result);
     }
   } catch (error) {
-    console.error(" Cloudinary deletion failed:", {
+    console.error("Cloudinary deletion failed:", {
       error: error.message,
       url: videoUrl,
     });
   }
 };
 
-// Main function
 exports.UpdateSubsection = async (req, res) => {
   try {
     const SubsectionId = req.params.subSectionId;
@@ -175,14 +202,17 @@ exports.UpdateSubsection = async (req, res) => {
     if (req.files && req.files.videoFile) {
       const oldVideoUrl = subsection.videoUrl;
       const vedio = req.files.videoFile;
-uploadDetails = await uploadImageToCloudinary(
+      uploadDetails = await uploadImageToCloudinary(
         vedio,
-        process.env.FolderName,
+        process.env.FolderName
       );
 
-      // Update video URL and delete old video
+      // Update video URL, delete old video, and reset AI artifacts
       if (uploadDetails) {
         subsection.videoUrl = uploadDetails.secure_url;
+        subsection.cloudinaryId = uploadDetails.public_id;
+        subsection.status = "TRANSCRIBING";
+        subsection.notesStatus = "pending";
         await deleteCloudinaryVideo(oldVideoUrl);
       }
     }
@@ -199,10 +229,33 @@ uploadDetails = await uploadImageToCloudinary(
 
     await subsection.save();
 
+    if (uploadDetails) {
+      // Clear stale transcript, questions, and Redis caches, then re-transcribe
+      await Promise.all([
+        Transcript.deleteMany({ subsectionId: SubsectionId }),
+        Question.deleteMany({ subsectionId: SubsectionId }),
+        redisClient.del(`questions:${SubsectionId}`, `notes:${SubsectionId}`).catch(() => {}),
+      ]);
+
+      await transcriptionQueue.add(
+        "transcribe",
+        {
+          subsectionId: String(subsection._id),
+          cloudinaryUrl: uploadDetails.secure_url,
+          cloudinaryId: uploadDetails.public_id,
+        },
+        {
+          attempts: 3,
+          backoff: { type: "exponential", delay: 4000 },
+        }
+      );
+    }
+
     const UpdatedData = await Section.findOne({
       subsection: SubsectionId,
     }).populate("subsection");
-return res.status(200).json({
+
+    return res.status(200).json({
       success: true,
       message: "Successfully Updated The data",
       updatedSection: UpdatedData,
