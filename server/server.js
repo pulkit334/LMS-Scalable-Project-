@@ -58,13 +58,15 @@ app.use(
   cors({
     origin: [
       process.env.FRONTEND_URL,
+      "https://lms-scalable-project-rxbu.onrender.com",
+      "https://lms-scalable-project.vercel.app",
       "https://notion-x.store",
       "https://www.notion-x.store",
       "http://localhost:5173",
       "http://localhost:5174",
       "http://127.0.0.1:5173",
       "http://127.0.0.1:5174",
-    ],
+    ].filter(Boolean),
     credentials: true,
   }),
 );// ---------- FILE UPLOAD ----------

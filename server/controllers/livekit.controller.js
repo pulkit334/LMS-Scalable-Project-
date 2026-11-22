@@ -2,6 +2,10 @@ import {
   createRoom,
   deleteRoom,
   generateToken,
+  updateParticipantPermissions,
+  muteAllStudents,
+  removeParticipantFromRoom,
+  updateClassroomMetadata,
 } from "../service/livekit.service.js";
 import Class from "../models/live.js";
 import Course from "../models/course.js";
@@ -135,6 +139,14 @@ export const EndRoom = async (req, res) => {
     cls.endedAt = new Date();
     await cls.save();
 
+    try {
+      const io = getIO();
+      io?.to(`course:${cls.course}`).emit("class:ended", {
+        classId,
+        course: cls.course,
+      });
+    } catch (_) {}
+
     return res.json({ success: true, message: "Class ended" });
   } catch (err) {
     return res.status(500).json({
@@ -227,5 +239,114 @@ export const getLiveSignal = async (req, res) => {
     });
   } catch (error) {
     res.status(400).json({ message: error.message });
+  }
+};
+
+// Teacher: grant/revoke student speak, camera, or chat permission
+export const updateStudentPermissions = async (req, res) => {
+  try {
+    const { classId } = req.params;
+    const { identity, allowSpeak = false, allowCamera = false, allowChat = true } = req.body;
+    const teacherId = req.user.id;
+
+    if (!identity) {
+      return res.status(400).json({ success: false, message: "Participant identity is required" });
+    }
+
+    const cls = await Class.findOne({ _id: classId, teacher: teacherId });
+    if (!cls) {
+      return res.status(404).json({ success: false, message: "Class not found or unauthorized" });
+    }
+
+    await updateParticipantPermissions(String(classId), String(identity), {
+      allowSpeak,
+      allowCamera,
+      allowChat,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Permissions updated",
+      identity,
+      allowSpeak,
+      allowCamera,
+      allowChat,
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// Teacher: mute & revoke mic/cam for all students in the room
+export const muteAllStudentsController = async (req, res) => {
+  try {
+    const { classId } = req.params;
+    const teacherId = req.user.id;
+
+    const cls = await Class.findOne({ _id: classId, teacher: teacherId });
+    if (!cls) {
+      return res.status(404).json({ success: false, message: "Class not found or unauthorized" });
+    }
+
+    const mutedIds = await muteAllStudents(String(classId), String(teacherId));
+    return res.status(200).json({
+      success: true,
+      message: "All students muted",
+      mutedCount: mutedIds.length,
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// Teacher: remove/kick a participant from the live room
+export const kickParticipant = async (req, res) => {
+  try {
+    const { classId } = req.params;
+    const { identity } = req.body;
+    const teacherId = req.user.id;
+
+    if (!identity) {
+      return res.status(400).json({ success: false, message: "Participant identity is required" });
+    }
+
+    const cls = await Class.findOne({ _id: classId, teacher: teacherId });
+    if (!cls) {
+      return res.status(404).json({ success: false, message: "Class not found or unauthorized" });
+    }
+
+    await removeParticipantFromRoom(String(classId), String(identity));
+    return res.status(200).json({
+      success: true,
+      message: "Participant removed from class",
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// Teacher: update live room settings metadata (e.g., chatLocked)
+export const updateRoomSettings = async (req, res) => {
+  try {
+    const { classId } = req.params;
+    const { chatLocked = false, allowAllMic = false, allowAllCam = false } = req.body;
+    const teacherId = req.user.id;
+
+    const cls = await Class.findOne({ _id: classId, teacher: teacherId });
+    if (!cls) {
+      return res.status(404).json({ success: false, message: "Class not found or unauthorized" });
+    }
+
+    const settings = {
+      chatLocked: Boolean(chatLocked),
+      allowAllMic: Boolean(allowAllMic),
+      allowAllCam: Boolean(allowAllCam),
+      updatedAt: Date.now(),
+    };
+
+    await updateClassroomMetadata(String(classId), settings);
+    return res.status(200).json({ success: true, settings });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
   }
 };

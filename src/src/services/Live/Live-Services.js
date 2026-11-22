@@ -110,3 +110,23 @@ export const RecheckLive = async (courseIds) => {
     return {}  //  return empty map instead of crashing
   }
 }
+
+export const UpdateStudentPermissionsAPI = async (classId, payload) => {
+  const response = await LiveClassAPI.post(`/live/${classId}/permissions`, payload);
+  return response?.data;
+};
+
+export const MuteAllStudentsAPI = async (classId) => {
+  const response = await LiveClassAPI.post(`/live/${classId}/mute-all`);
+  return response?.data;
+};
+
+export const KickStudentAPI = async (classId, identity) => {
+  const response = await LiveClassAPI.post(`/live/${classId}/kick`, { identity });
+  return response?.data;
+};
+
+export const UpdateRoomSettingsAPI = async (classId, settings) => {
+  const response = await LiveClassAPI.post(`/live/${classId}/settings`, settings);
+  return response?.data;
+};

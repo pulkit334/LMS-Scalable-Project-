@@ -1,11 +1,12 @@
 /* eslint-disable no-unused-vars */
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   LiveKitRoom,
   RoomAudioRenderer,
   useTracks,
   useLocalParticipant,
   useParticipants,
+  useDataChannel,
 } from "@livekit/components-react";
 import { Track } from "livekit-client";
 import { useParams, useNavigate } from "react-router-dom";
@@ -25,9 +26,24 @@ import {
   Loader2,
   ArrowLeft,
   Clock,
+  Lock,
+  Unlock,
+  VolumeX,
+  Maximize,
+  Minimize,
+  Hand,
 } from "lucide-react";
-import { StartLiveClass, EndLiveClass } from "../../services/Live/Live-Services";
+import {
+  StartLiveClass,
+  EndLiveClass,
+  MuteAllStudentsAPI,
+  UpdateRoomSettingsAPI,
+} from "../../services/Live/Live-Services";
 import LiveChatPanel from "./LiveChatPanel";
+
+const encoder = new TextEncoder();
+const decoder = new TextDecoder();
+const REACTIONS = ["👍", "👏", "❤️", "🔥", "🎉"];
 
 const formatDuration = (seconds) => {
   const hrs = Math.floor(seconds / 3600);
@@ -37,21 +53,68 @@ const formatDuration = (seconds) => {
   return hrs > 0 ? `${pad(hrs)}:${pad(mins)}:${pad(secs)}` : `${pad(mins)}:${pad(secs)}`;
 };
 
-const TeacherRoom = ({ onRequestEnd, elapsedSeconds }) => {
+const TeacherRoom = ({ classId, onRequestEnd, elapsedSeconds }) => {
   const { localParticipant } = useLocalParticipant();
   const participants = useParticipants();
   const tracks = useTracks([Track.Source.Camera, Track.Source.ScreenShare]);
+
   const cameraTrack = tracks.find(
     (t) => t.participant.isLocal && t.source === Track.Source.Camera
   );
   const screenTrack = tracks.find(
     (t) => t.participant.isLocal && t.source === Track.Source.ScreenShare
   );
+  const studentCameraTracks = tracks.filter(
+    (t) => !t.participant.isLocal && t.source === Track.Source.Camera
+  );
 
+  const stageRef = useRef(null);
   const [micOn, setMicOn] = useState(true);
   const [camOn, setCamOn] = useState(true);
   const [sharing, setSharing] = useState(false);
   const [chatOpen, setChatOpen] = useState(true);
+  const [chatLocked, setChatLocked] = useState(false);
+  const [mutingAll, setMutingAll] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [raisedHands, setRaisedHands] = useState({});
+  const [reports, setReports] = useState([]);
+  const [floatingReactions, setFloatingReactions] = useState([]);
+
+  const spawnReaction = (emoji, senderName) => {
+    const id = `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    setFloatingReactions((prev) => [...prev.slice(-12), { id, emoji, senderName }]);
+    setTimeout(() => {
+      setFloatingReactions((prev) => prev.filter((r) => r.id !== id));
+    }, 2400);
+  };
+
+  useDataChannel("classroom-events", (msg) => {
+    try {
+      const data = JSON.parse(decoder.decode(msg.payload));
+      if (data.type === "hand_raise") {
+        setRaisedHands((prev) => {
+          const next = { ...prev };
+          if (data.raised) {
+            next[data.identity] = data.name || "Student";
+            toast(`${data.name || "A student"} raised their hand`, { icon: "✋" });
+          } else {
+            delete next[data.identity];
+          }
+          return next;
+        });
+      } else if (data.type === "reaction") {
+        spawnReaction(data.emoji, data.name);
+      }
+    } catch (_) {}
+  });
+
+  const publishEvent = async (payload) => {
+    if (!localParticipant) return;
+    await localParticipant.publishData(encoder.encode(JSON.stringify(payload)), {
+      reliable: true,
+      topic: "classroom-events",
+    });
+  };
 
   const toggleMic = async () => {
     await localParticipant.setMicrophoneEnabled(!micOn);
@@ -68,13 +131,60 @@ const TeacherRoom = ({ onRequestEnd, elapsedSeconds }) => {
     setSharing((prev) => !prev);
   };
 
+  const handleMuteAll = async () => {
+    setMutingAll(true);
+    try {
+      const res = await MuteAllStudentsAPI(classId);
+      setRaisedHands({});
+      toast.success(`Muted all students (${res?.mutedCount ?? 0})`);
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to mute all students");
+    } finally {
+      setMutingAll(false);
+    }
+  };
+
+  const handleToggleChatLock = async () => {
+    const nextLocked = !chatLocked;
+    try {
+      await UpdateRoomSettingsAPI(classId, { chatLocked: nextLocked });
+      setChatLocked(nextLocked);
+      await publishEvent({ type: "chat_lock", locked: nextLocked });
+      toast.success(nextLocked ? "Student chat locked" : "Student chat unlocked");
+    } catch (err) {
+      toast.error("Failed to update chat lock setting");
+    }
+  };
+
+  const handleReactionClick = async (emoji) => {
+    spawnReaction(emoji, "You");
+    try {
+      await publishEvent({
+        type: "reaction",
+        emoji,
+        name: localParticipant?.name || "Instructor",
+      });
+    } catch (_) {}
+  };
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      stageRef.current?.requestFullscreen?.();
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen?.();
+      setIsFullscreen(false);
+    }
+  };
+
   const studentCount = Math.max(0, participants.length - 1);
+  const raisedCount = Object.keys(raisedHands).length;
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 bg-[#020617]">
+    <div ref={stageRef} className="flex-1 flex flex-col min-h-0 bg-[#020617]">
       {/* TOP BAR */}
-      <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-3 bg-[#0f172a] border-b border-white/10">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 bg-[#0f172a] border-b border-white/10">
+        <div className="flex flex-wrap items-center gap-2.5">
           <div className="flex items-center gap-2 bg-rose-500/15 border border-rose-500/30 px-3 py-1 rounded-full">
             <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
             <span className="text-rose-400 text-xs font-bold uppercase tracking-wider">
@@ -88,29 +198,66 @@ const TeacherRoom = ({ onRequestEnd, elapsedSeconds }) => {
           <div className="flex items-center gap-1.5 text-xs text-slate-300 bg-white/[0.05] border border-white/10 px-3 py-1 rounded-full">
             <Users className="w-3.5 h-3.5 text-sky-400" />
             <span>
-              {studentCount} {studentCount === 1 ? "student" : "students"} watching
+              {studentCount} {studentCount === 1 ? "student" : "students"}
             </span>
           </div>
+          {raisedCount > 0 && (
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-300 bg-amber-400/15 border border-amber-400/30 px-3 py-1 rounded-full animate-pulse">
+              <Hand className="w-3.5 h-3.5" />
+              <span>{raisedCount} hand raised</span>
+            </div>
+          )}
         </div>
 
-        <button
-          onClick={() => setChatOpen((prev) => !prev)}
-          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold border transition cursor-pointer ${
-            chatOpen
-              ? "bg-amber-400/15 border-amber-400/40 text-amber-300"
-              : "bg-white/[0.05] border-white/10 text-slate-300 hover:text-white"
-          }`}
-        >
-          <MessageSquare className="w-4 h-4" />
-          {chatOpen ? "Hide Chat" : "Open Chat"}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleMuteAll}
+            disabled={mutingAll}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/[0.05] border border-white/10 text-slate-200 hover:bg-rose-500/20 hover:border-rose-500/30 hover:text-rose-200 transition cursor-pointer"
+          >
+            <VolumeX className="w-3.5 h-3.5" />
+            {mutingAll ? "Muting..." : "Mute All"}
+          </button>
+
+          <button
+            onClick={handleToggleChatLock}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition cursor-pointer ${
+              chatLocked
+                ? "bg-rose-500/15 border-rose-500/30 text-rose-300"
+                : "bg-white/[0.05] border-white/10 text-slate-200 hover:text-white"
+            }`}
+          >
+            {chatLocked ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
+            {chatLocked ? "Chat Locked" : "Lock Chat"}
+          </button>
+
+          <button
+            onClick={toggleFullscreen}
+            title="Toggle fullscreen"
+            className="p-2 rounded-xl bg-white/[0.05] border border-white/10 text-slate-300 hover:text-white transition cursor-pointer"
+          >
+            {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
+          </button>
+
+          <button
+            onClick={() => setChatOpen((prev) => !prev)}
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold border transition cursor-pointer ${
+              chatOpen
+                ? "bg-amber-400/15 border-amber-400/40 text-amber-300"
+                : "bg-white/[0.05] border-white/10 text-slate-300 hover:text-white"
+            }`}
+          >
+            <MessageSquare className="w-4 h-4" />
+            Classroom
+          </button>
+        </div>
       </div>
 
-      {/* MAIN STAGE + CHAT DRAWER */}
+      {/* MAIN STAGE + SIDEBAR */}
       <div className="flex-1 flex flex-col md:flex-row min-h-0 overflow-hidden">
         <div className="flex-1 flex flex-col min-w-0 min-h-0">
           {/* VIDEO VIEW */}
-          <div className="flex-1 relative bg-black flex items-center justify-center min-h-[320px]">
+          <div className="flex-1 relative bg-black flex items-center justify-center min-h-[280px]">
             {screenTrack ? (
               <video
                 ref={(el) => {
@@ -156,65 +303,129 @@ const TeacherRoom = ({ onRequestEnd, elapsedSeconds }) => {
                 />
               </div>
             )}
+
+            {/* Floating Live Reactions */}
+            <div className="pointer-events-none absolute bottom-5 left-5 flex flex-col gap-1.5 z-20">
+              {floatingReactions.map((r) => (
+                <div
+                  key={r.id}
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-900/80 border border-white/10 text-xs text-white animate-bounce"
+                >
+                  <span>{r.emoji}</span>
+                  <span className="text-[11px] text-slate-300">{r.senderName}</span>
+                </div>
+              ))}
+            </div>
           </div>
 
+          {/* Active Student Speaker Feeds (if any student was granted cam) */}
+          {studentCameraTracks.length > 0 && (
+            <div className="flex items-center gap-3 px-4 py-2.5 bg-[#090f1f] border-t border-white/10 overflow-x-auto">
+              {studentCameraTracks.map((t) => (
+                <div
+                  key={t.participant.identity}
+                  className="relative w-36 h-24 rounded-xl overflow-hidden border border-emerald-400/40 bg-black shrink-0"
+                >
+                  <video
+                    ref={(el) => {
+                      if (el && t.publication?.track) t.publication.track.attach(el);
+                    }}
+                    autoPlay
+                    playsInline
+                    className="w-full h-full object-cover"
+                  />
+                  <span className="absolute bottom-1 left-1.5 text-[10px] font-semibold bg-black/70 text-white px-1.5 py-0.5 rounded">
+                    {t.participant.name || "Student"}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+
           {/* CONTROLS BAR */}
-          <div className="flex flex-wrap items-center justify-center gap-3 px-6 py-4 bg-[#0f172a] border-t border-white/10">
-            <button
-              onClick={toggleMic}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold border transition cursor-pointer ${
-                micOn
-                  ? "bg-white/[0.06] border-white/10 hover:bg-white/[0.12] text-white"
-                  : "bg-rose-600 border-rose-500 hover:bg-rose-500 text-white"
-              }`}
-            >
-              {micOn ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
-              {micOn ? "Mute" : "Unmute"}
-            </button>
+          <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-3.5 bg-[#0f172a] border-t border-white/10">
+            <div className="flex items-center gap-1.5">
+              {REACTIONS.map((emoji) => (
+                <button
+                  key={emoji}
+                  onClick={() => handleReactionClick(emoji)}
+                  className="w-8 h-8 rounded-lg bg-white/[0.05] hover:bg-white/[0.12] border border-white/10 text-sm transition hover:scale-110 cursor-pointer"
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
 
-            <button
-              onClick={toggleCam}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold border transition cursor-pointer ${
-                camOn
-                  ? "bg-white/[0.06] border-white/10 hover:bg-white/[0.12] text-white"
-                  : "bg-rose-600 border-rose-500 hover:bg-rose-500 text-white"
-              }`}
-            >
-              {camOn ? <Video className="w-4 h-4" /> : <VideoOff className="w-4 h-4" />}
-              {camOn ? "Stop Cam" : "Start Cam"}
-            </button>
+            <div className="flex flex-wrap items-center gap-2.5">
+              <button
+                onClick={toggleMic}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold border transition cursor-pointer ${
+                  micOn
+                    ? "bg-white/[0.06] border-white/10 hover:bg-white/[0.12] text-white"
+                    : "bg-rose-600 border-rose-500 hover:bg-rose-500 text-white"
+                }`}
+              >
+                {micOn ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
+                {micOn ? "Mute" : "Unmute"}
+              </button>
 
-            <button
-              onClick={toggleScreen}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold border transition cursor-pointer ${
-                sharing
-                  ? "bg-indigo-600 border-indigo-400 hover:bg-indigo-500 text-white"
-                  : "bg-white/[0.06] border-white/10 hover:bg-white/[0.12] text-white"
-              }`}
-            >
-              {sharing ? (
-                <MonitorOff className="w-4 h-4" />
-              ) : (
-                <MonitorUp className="w-4 h-4" />
-              )}
-              {sharing ? "Stop Share" : "Share Screen"}
-            </button>
+              <button
+                onClick={toggleCam}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold border transition cursor-pointer ${
+                  camOn
+                    ? "bg-white/[0.06] border-white/10 hover:bg-white/[0.12] text-white"
+                    : "bg-rose-600 border-rose-500 hover:bg-rose-500 text-white"
+                }`}
+              >
+                {camOn ? <Video className="w-4 h-4" /> : <VideoOff className="w-4 h-4" />}
+                {camOn ? "Stop Cam" : "Start Cam"}
+              </button>
 
-            <button
-              onClick={onRequestEnd}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow-lg shadow-rose-600/25 transition cursor-pointer"
-            >
-              <PhoneOff className="w-4 h-4" />
-              End Class
-            </button>
+              <button
+                onClick={toggleScreen}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold border transition cursor-pointer ${
+                  sharing
+                    ? "bg-indigo-600 border-indigo-400 hover:bg-indigo-500 text-white"
+                    : "bg-white/[0.06] border-white/10 hover:bg-white/[0.12] text-white"
+                }`}
+              >
+                {sharing ? (
+                  <MonitorOff className="w-4 h-4" />
+                ) : (
+                  <MonitorUp className="w-4 h-4" />
+                )}
+                {sharing ? "Stop Share" : "Share Screen"}
+              </button>
+
+              <button
+                onClick={onRequestEnd}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow-lg shadow-rose-600/25 transition cursor-pointer"
+              >
+                <PhoneOff className="w-4 h-4" />
+                End Class
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* REAL-TIME LIVE CHAT */}
+        {/* CLASSROOM PANEL (CHAT + PEOPLE + PERMISSIONS + REPORTS) */}
         <LiveChatPanel
           isOpen={chatOpen}
           onClose={() => setChatOpen(false)}
-          title="Class Q&A Chat"
+          isTeacher={true}
+          classId={classId}
+          raisedHands={raisedHands}
+          onDismissHand={(id) =>
+            setRaisedHands((prev) => {
+              const next = { ...prev };
+              delete next[id];
+              return next;
+            })
+          }
+          chatLocked={chatLocked}
+          onToggleChatLock={handleToggleChatLock}
+          reports={reports}
+          onAddReport={(rep) => setReports((prev) => [rep, ...prev])}
         />
       </div>
     </div>
@@ -330,7 +541,7 @@ const TeacherLive = () => {
               Ready to Go Live?
             </h1>
             <p className="text-slate-400 text-sm mt-2 leading-relaxed">
-              Check your camera and microphone before starting. Enrolled students will see the live indicator and can join with real-time chat.
+              Students join muted by default. You can unmute specific speakers, lock/moderate chat, view raised hands, and export session reports.
             </p>
           </div>
           <button
@@ -377,6 +588,7 @@ const TeacherLive = () => {
       >
         <RoomAudioRenderer />
         <TeacherRoom
+          classId={classId}
           onRequestEnd={() => setConfirmEndOpen(true)}
           elapsedSeconds={elapsedSeconds}
         />
