@@ -1,15 +1,9 @@
 import { Bar } from "react-chartjs-2";
-const generateSoftBlueColors = (count) => {
-  return Array.from({ length: count }, () => {
-    const lightness = Math.floor(Math.random() * 20) + 55; // 55–75
-    return `hsl(217, 91%, ${lightness}%)`; // blue hue
-  });
-};
 
 const EnrollmentBarChart = ({
   labels = [],
   values = [],
-  height = 260,
+  height = 240,
   title = "Enrollments",
 }) => {
   const data = {
@@ -18,16 +12,12 @@ const EnrollmentBarChart = ({
       {
         label: title,
         data: values,
-
-        // visual styling
-        backgroundColor: generateSoftBlueColors (values.length),
-        hoverBackgroundColor: "rgba(96,165,250,1)",
-        borderColor: "rgba(147,197,253,1)",
+        backgroundColor: "rgba(99, 102, 241, 0.72)",
+        hoverBackgroundColor: "rgba(129, 140, 248, 0.95)",
+        borderColor: "rgba(129, 140, 248, 0.9)",
         borderWidth: 1,
-
-        barThickness: 28,
-        maxBarThickness: 40,
-        borderRadius: 8,
+        barPercentage: 0.55,
+        borderRadius: 6,
       },
     ],
   };
@@ -35,51 +25,44 @@ const EnrollmentBarChart = ({
   const options = {
     responsive: true,
     maintainAspectRatio: false,
-
     animation: {
-      duration: 700,
+      duration: 500,
       easing: "easeOutQuart",
     },
-
     interaction: {
       mode: "index",
       intersect: false,
     },
-
     plugins: {
       legend: { display: false },
       tooltip: {
-        backgroundColor: "#020617",
-        titleColor: "#e5e7eb",
-        bodyColor: "#e5e7eb",
+        backgroundColor: "#0d1017",
+        borderColor: "rgba(255,255,255,0.12)",
+        borderWidth: 1,
+        titleColor: "#f8fafc",
+        bodyColor: "#cbd5e1",
         padding: 10,
-        cornerRadius: 6,
+        cornerRadius: 8,
         displayColors: false,
       },
     },
-
     scales: {
       x: {
-        ticks: {
-          color: "#9ca3af",
-          font: { size: 12, weight: "500" },
-        },
+        ticks: { color: "#64748b", font: { size: 11 } },
+        grid: { display: false },
+        border: { color: "rgba(255,255,255,0.08)" },
       },
       y: {
         beginAtZero: true,
-        ticks: {
-          color: "#9ca3af",
-          font: { size: 11 },
-        },
+        ticks: { color: "#64748b", font: { size: 11 }, precision: 0 },
+        grid: { color: "rgba(255,255,255,0.04)" },
+        border: { color: "rgba(255,255,255,0.08)" },
       },
     },
   };
 
   return (
-    <div
-      className="w-full rounded-xl bg-[#0f172a] border border-white/10 p-4"
-      style={{ height }}
-    >
+    <div className="w-full" style={{ height }}>
       <Bar data={data} options={options} />
     </div>
   );

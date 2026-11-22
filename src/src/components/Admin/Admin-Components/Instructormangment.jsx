@@ -1,15 +1,12 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Bar } from "react-chartjs-2";
 import {
   fetchCourseChartPath,
   fetchInstructorInsight,
   fetchUserState,
   fetchcategoriesTrend,
 } from "../../../Slices/Admin/ownerSlice";
-
 import Result from "../../../utils/Spinnre";
 import {
   Chart as ChartJS,
@@ -21,9 +18,22 @@ import {
 } from "chart.js";
 import EnrollmentBarChart from "../../../utils/BarChart";
 import TopCoursesProgress from "../../../utils/PorgressBar";
-import { Search } from "lucide-react";
+import toast from "react-hot-toast";
+import {
+  Search,
+  X,
+  Star,
+  Download,
+  ShieldBan,
+  ShieldCheck,
+} from "lucide-react";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
+
+const MONTHS = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+];
 
 const Instructormangment = () => {
   const dispatch = useDispatch();
@@ -37,7 +47,6 @@ const Instructormangment = () => {
   } = useSelector((state) => state.admin);
 
   const coursetrend = Coursetrend?.data || [];
-
   const pagination = InstructorData?.data?.pagination || {};
   const instructors = InstructorData?.data?.instructors || [];
 
@@ -46,54 +55,59 @@ const Instructormangment = () => {
   const hasNextPage = pagination.hasNextPage || false;
   const hasPrevPage = pagination.hasPrevPage || false;
 
-  const ImgApi = () => `https://picsum.photos/400/300?random=${Date.now()}`;
-
   const [value, setValue] = useState("");
   const [debouncedValue, setDebouncedValue] = useState(value);
+  const [statusFilter, setStatusFilter] = useState("ALL");
 
   useEffect(() => {
-    dispatch(fetchInstructorInsight({ page: 1, limit: 5 }));
+    dispatch(fetchInstructorInsight({ page: 1, limit: 8 }));
     dispatch(fetchCourseChartPath());
     dispatch(fetchcategoriesTrend());
   }, []);
-useEffect(() => {
+
+  useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedValue(value);
-    }, 200); // 300–500ms is ideal
-
+    }, 250);
     return () => clearTimeout(handler);
   }, [value]);
 
-  /* ---------------- SEARCH EFFECT ---------------- */
   useEffect(() => {
-    const trimmed = value.trim();
-
+    const trimmed = debouncedValue.trim();
     if (trimmed.length === 0) {
-      dispatch(fetchInstructorInsight({ page: 1, limit: 5 }));
+      dispatch(fetchInstructorInsight({ page: 1, limit: 8 }));
       return;
     }
-
     if (trimmed.length < 2) return;
-
-    dispatch(fetchInstructorInsight({ page: 1, limit: 5, search: trimmed }));
+    dispatch(fetchInstructorInsight({ page: 1, limit: 8, search: trimmed }));
   }, [debouncedValue]);
 
-  /*-----------------Status Logic ----------------- */
-  const hanldeStatusChange = async (inst) => {
-    const nextstatus = inst?.status === "Blocked" ? "Active" : "Blocked";
+  const filteredInstructors = useMemo(() => {
+    if (statusFilter === "ALL") return instructors;
+    return instructors.filter((inst) => {
+      const st = (inst.status || "Active").toUpperCase();
+      return st === statusFilter;
+    });
+  }, [instructors, statusFilter]);
 
-    await dispatch(
-      fetchUserState({
-        id: inst._id,
-        status: nextstatus,
-      }),
-    ).unwrap();
+  const handleStatusChange = async (inst) => {
+    const nextstatus = inst?.status === "Blocked" ? "Active" : "Blocked";
+    try {
+      await dispatch(
+        fetchUserState({
+          id: inst._id,
+          status: nextstatus,
+        })
+      ).unwrap();
+      toast.success(`Instructor marked as ${nextstatus}`);
+    } catch (err) {
+      toast.error("Failed to update instructor status");
+    }
   };
 
-  /* ---------------- PAGINATION LOGIC ---------------- */
   const getPages = () => {
     const pages = [];
-    const chunkSize = 10;
+    const chunkSize = 8;
     const currentChunk = Math.floor((currentPage - 1) / chunkSize);
     const startPage = currentChunk * chunkSize + 1;
     const endPage = Math.min(startPage + chunkSize - 1, totalPages);
@@ -101,245 +115,239 @@ useEffect(() => {
     for (let i = startPage; i <= endPage; i++) {
       pages.push(i);
     }
-
     if (endPage < totalPages) {
       pages.push("...");
       pages.push(totalPages);
     }
-
     return pages;
   };
 
   const goToPage = (page) => {
     if (page < 1 || page > totalPages) return;
-
     const trimmed = value.trim();
-
     if (trimmed.length >= 2) {
-      dispatch(fetchInstructorInsight({ page, limit: 5, search: trimmed }));
+      dispatch(fetchInstructorInsight({ page, limit: 8, search: trimmed }));
     } else {
-      dispatch(fetchInstructorInsight({ page, limit: 5 }));
+      dispatch(fetchInstructorInsight({ page, limit: 8 }));
     }
   };
-
-  // ************************************************Months**************************************************//
-  const MONTHS = [
-    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-  ];
 
   const monthlyTotals = useMemo(() => {
     const totals = new Array(12).fill(0);
     coursetrend.forEach((item) => {
-      const monthIndex = item._id.month - 1;
-      totals[monthIndex] += item.totalEnrollments;
+      const monthIndex = (item._id?.month || 1) - 1;
+      if (monthIndex >= 0 && monthIndex < 12) {
+        totals[monthIndex] += item.totalEnrollments || 0;
+      }
     });
     return totals;
   }, [coursetrend]);
 
+  const handleExportCSV = () => {
+    const header = ["Name", "Email", "Courses", "Avg Rating", "Status"];
+    const rows = filteredInstructors.map((i) => [
+      `"${i.firstName || ""} ${i.lastName || ""}"`,
+      `"${i.email || ""}"`,
+      i.CourseCount || 0,
+      (i.AvgRating || 0).toFixed(1),
+      i.status || "Active",
+    ]);
+    const csv = [header, ...rows].map((r) => r.join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `admin-instructors-page-${currentPage}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
   return (
-    <div
-      className="min-h-screen w-full p-6"
-      style={{ background: "#f8fafc", fontFamily: "'DM Sans', sans-serif" }}
-    >
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap');
+    <div className="p-6 lg:p-8 max-w-7xl mx-auto w-full space-y-6">
+      {/* HEADER */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">
+            Faculty
+          </p>
+          <h1 className="text-2xl font-semibold text-white tracking-tight mt-0.5">
+            Instructor Management
+          </h1>
+        </div>
 
-        .im-card {
-          background: #fff;
-          border: 1px solid #e2e8f0;
-          border-radius: 12px;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }
-
-        .im-search {
-          background: #fff;
-          border: 1px solid #e2e8f0;
-          border-radius: 10px;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-          transition: border-color 0.2s;
-        }
-        .im-search:focus-within {
-          border-color: #3b82f6;
-          box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
-        }
-
-        .im-th {
-          font-size: 11px;
-          font-weight: 600;
-          text-transform: uppercase;
-          letter-spacing: 0.06em;
-          color: #94a3b8;
-          padding: 12px 20px;
-          background: #f8fafc;
-          border-bottom: 1px solid #e2e8f0;
-        }
-
-        .im-tr {
-          border-bottom: 1px solid #f1f5f9;
-          transition: background 0.15s ease;
-        }
-        .im-tr:hover { background: #f8fafc; }
-        .im-tr:last-child { border-bottom: none; }
-
-        .im-td { padding: 14px 20px; font-size: 13px; color: #334155; }
-
-        .badge-active {
-          display: inline-flex; align-items: center; gap: 5px;
-          background: #ecfdf5; color: #10b981;
-          border: 1px solid #a7f3d0;
-          font-size: 11px; font-weight: 600;
-          padding: 3px 10px; border-radius: 99px;
-        }
-        .badge-blocked {
-          display: inline-flex; align-items: center; gap: 5px;
-          background: #fef2f2; color: #ef4444;
-          border: 1px solid #fecaca;
-          font-size: 11px; font-weight: 600;
-          padding: 3px 10px; border-radius: 99px;
-        }
-
-        .btn-block {
-          font-size: 12px; font-weight: 600;
-          padding: 5px 14px; border-radius: 7px;
-          border: 1px solid #fecaca;
-          background: #fef2f2; color: #ef4444;
-          transition: all 0.15s ease; cursor: pointer;
-        }
-        .btn-block:hover { background: #fee2e2; }
-
-        .btn-unblock {
-          font-size: 12px; font-weight: 600;
-          padding: 5px 14px; border-radius: 7px;
-          border: 1px solid #a7f3d0;
-          background: #ecfdf5; color: #10b981;
-          transition: all 0.15s ease; cursor: pointer;
-        }
-        .btn-unblock:hover { background: #d1fae5; }
-
-        .btn-unblock:disabled, .btn-block:disabled {
-          opacity: 0.5; cursor: not-allowed;
-        }
-
-        .pg-btn {
-          padding: 6px 12px; border-radius: 7px; font-size: 13px;
-          border: 1px solid #e2e8f0; background: #fff; color: #64748b;
-          transition: all 0.15s ease; cursor: pointer;
-        }
-        .pg-btn:hover:not(:disabled) { background: #f1f5f9; border-color: #cbd5e1; }
-        .pg-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-        .pg-btn.active { background: #3b82f6; color: #fff; border-color: #3b82f6; font-weight: 600; }
-      `}</style>
-
-      {/* Page header */}
-      <div className="mb-5">
-        <p className="text-xs font-semibold uppercase tracking-widest mb-0.5" style={{ color: "#94a3b8" }}>Admin</p>
-        <h1 className="text-xl font-bold" style={{ color: "#0f172a", letterSpacing: "-0.01em" }}>Instructor Management</h1>
+        <button
+          onClick={handleExportCSV}
+          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#11151f] hover:bg-white/[0.06] border border-white/[0.08] text-slate-200 text-xs font-medium transition cursor-pointer w-fit"
+        >
+          <Download className="w-3.5 h-3.5" />
+          Export CSV
+        </button>
       </div>
 
-      {/* SEARCH */}
-      <div className="im-search mb-4 w-80 px-4 py-2.5 flex items-center gap-2">
-        <Search className="w-4 h-4" style={{ color: "#94a3b8" }} />
-        <input
-          type="text"
-          placeholder="Search instructors..."
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          className="w-full bg-transparent outline-none text-sm"
-          style={{ color: "#0f172a" }}
-        />
+      {/* TOOLBAR */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="relative w-full sm:w-80">
+          <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <input
+            type="text"
+            placeholder="Search instructors..."
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            className="w-full pl-9 pr-8 py-2 rounded-lg bg-[#11151f] border border-white/[0.08] text-sm text-white placeholder-slate-500 outline-none focus:border-indigo-500"
+          />
+          {value && (
+            <button
+              onClick={() => setValue("")}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white cursor-pointer"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+
+        <div className="flex items-center gap-1.5 rounded-lg bg-[#11151f] border border-white/[0.08] p-1 w-fit">
+          {["ALL", "ACTIVE", "BLOCKED"].map((st) => (
+            <button
+              key={st}
+              onClick={() => setStatusFilter(st)}
+              className={`px-3 py-1 rounded-md text-xs font-medium transition cursor-pointer ${
+                statusFilter === st
+                  ? "bg-white/[0.1] text-white"
+                  : "text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              {st === "ALL" ? "All" : st === "ACTIVE" ? "Active" : "Blocked"}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* TABLE */}
-      <div className="im-card overflow-hidden">
+      <div className="rounded-xl bg-[#11151f] border border-white/[0.08] overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full table-auto border-collapse">
+          <table className="w-full border-collapse">
             <thead>
-              <tr>
-                <th className="im-th text-left">Instructor</th>
-                <th className="im-th text-center">Courses</th>
-                <th className="im-th text-center">Rating</th>
-                <th className="im-th text-center">Status</th>
-                <th className="im-th text-center">Actions</th>
+              <tr className="border-b border-white/[0.08] bg-[#0d1017]">
+                <th className="text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 px-5 py-3.5">
+                  Instructor
+                </th>
+                <th className="text-center text-[11px] font-semibold uppercase tracking-wider text-slate-400 px-5 py-3.5">
+                  Courses
+                </th>
+                <th className="text-center text-[11px] font-semibold uppercase tracking-wider text-slate-400 px-5 py-3.5">
+                  Rating
+                </th>
+                <th className="text-center text-[11px] font-semibold uppercase tracking-wider text-slate-400 px-5 py-3.5">
+                  Status
+                </th>
+                <th className="text-right text-[11px] font-semibold uppercase tracking-wider text-slate-400 px-5 py-3.5">
+                  Actions
+                </th>
               </tr>
             </thead>
 
-            <tbody>
+            <tbody className="divide-y divide-white/[0.05]">
               {loading ? (
                 <tr>
-                  <td colSpan="5" className="im-td text-center" style={{ color: "#94a3b8" }}>
-                    <Result loading={true} text="Loading" />
+                  <td colSpan="5" className="px-5 py-12 text-center text-slate-400">
+                    <Result loading={true} text="Loading instructors..." />
                   </td>
                 </tr>
-              ) : instructors.length === 0 ? (
+              ) : filteredInstructors.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="im-td text-center" style={{ color: "#94a3b8", padding: "40px" }}>
+                  <td colSpan="5" className="px-5 py-12 text-center text-sm text-slate-500">
                     No instructors found
                   </td>
                 </tr>
               ) : (
-                instructors.map((inst) => (
-                  <tr key={inst._id} className="im-tr">
-                    {/* Instructor */}
-                    <td className="im-td">
-                      <div className="flex items-center gap-3">
-                        <img
-                          src={inst.image?.url || ImgApi()}
-                          className="h-9 w-9 rounded-full object-cover flex-shrink-0"
-                          style={{ border: "1.5px solid #e2e8f0" }}
-                        />
-                        <div>
-                          <p className="font-semibold text-sm" style={{ color: "#0f172a" }}>
-                            {inst.firstName} {inst.lastName}
-                          </p>
-                          <p className="text-xs" style={{ color: "#94a3b8" }}>{inst.email}</p>
+                filteredInstructors.map((inst) => {
+                  const isBlocked = inst.status === "Blocked";
+                  const avatar =
+                    inst.image?.url ||
+                    `https://api.dicebear.com/5.x/initials/svg?seed=${encodeURIComponent(
+                      inst.firstName || "I"
+                    )}`;
+                  return (
+                    <tr
+                      key={inst._id}
+                      className="hover:bg-white/[0.025] transition-colors"
+                    >
+                      <td className="px-5 py-3.5">
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={avatar}
+                            alt={inst.firstName}
+                            className="h-9 w-9 rounded-full object-cover ring-1 ring-white/15 shrink-0"
+                          />
+                          <div>
+                            <p className="font-medium text-sm text-slate-100">
+                              {inst.firstName} {inst.lastName}
+                            </p>
+                            <p className="text-xs text-slate-400">{inst.email}</p>
+                          </div>
                         </div>
-                      </div>
-                    </td>
+                      </td>
 
-                    {/* Courses */}
-                    <td className="im-td text-center font-medium" style={{ color: "#0f172a" }}>
-                      {inst.CourseCount || 0}
-                    </td>
+                      <td className="px-5 py-3.5 text-center font-mono tabular-nums text-slate-200 text-sm">
+                        {inst.CourseCount || 0}
+                      </td>
 
-                    {/* Rating */}
-                    <td className="im-td text-center">
-                      <span className="flex items-center justify-center gap-1">
-                        <span style={{ color: "#f59e0b" }}>★</span>
-                        <span className="font-medium" style={{ color: "#0f172a" }}>
-                          {(inst.AvgRating || 0).toFixed(1)}
+                      <td className="px-5 py-3.5 text-center">
+                        <span className="inline-flex items-center justify-center gap-1 text-sm">
+                          <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                          <span className="font-mono tabular-nums text-slate-200">
+                            {(inst.AvgRating || 0).toFixed(1)}
+                          </span>
                         </span>
-                      </span>
-                    </td>
+                      </td>
 
-                    {/* Status */}
-                    <td className="im-td text-center">
-                      <span className={inst.status === "Blocked" ? "badge-blocked" : "badge-active"}>
-                        <span style={{
-                          width: 5, height: 5, borderRadius: "50%",
-                          background: inst.status === "Blocked" ? "#ef4444" : "#10b981",
-                          display: "inline-block"
-                        }} />
-                        {inst.status || "Active"}
-                      </span>
-                    </td>
+                      <td className="px-5 py-3.5 text-center">
+                        <span
+                          className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${
+                            isBlocked
+                              ? "bg-rose-500/10 text-rose-400 border-rose-500/25"
+                              : "bg-emerald-500/10 text-emerald-400 border-emerald-500/25"
+                          }`}
+                        >
+                          <span
+                            className={`w-1.5 h-1.5 rounded-full ${
+                              isBlocked ? "bg-rose-400" : "bg-emerald-400"
+                            }`}
+                          />
+                          {inst.status || "Active"}
+                        </span>
+                      </td>
 
-                    {/* Actions */}
-                    <td className="im-td text-center">
-                      <button
-                        onClick={() => hanldeStatusChange(inst)}
-                        disabled={actionLoadingId === inst._id}
-                        className={inst.status === "Blocked" ? "btn-unblock" : "btn-block"}
-                      >
-                        {actionLoadingId === inst._id
-                          ? "Updating..."
-                          : inst.status === "Blocked"
-                            ? "Unblock"
-                            : "Block"}
-                      </button>
-                    </td>
-                  </tr>
-                ))
+                      <td className="px-5 py-3.5 text-right">
+                        <button
+                          onClick={() => handleStatusChange(inst)}
+                          disabled={actionLoadingId === inst._id}
+                          className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition cursor-pointer disabled:opacity-50 ${
+                            isBlocked
+                              ? "bg-emerald-500/10 hover:bg-emerald-500/20 border-emerald-500/25 text-emerald-400"
+                              : "bg-rose-500/10 hover:bg-rose-500/20 border-rose-500/25 text-rose-400"
+                          }`}
+                        >
+                          {actionLoadingId === inst._id ? (
+                            "Updating..."
+                          ) : isBlocked ? (
+                            <>
+                              <ShieldCheck className="w-3.5 h-3.5" />
+                              Unblock
+                            </>
+                          ) : (
+                            <>
+                              <ShieldBan className="w-3.5 h-3.5" />
+                              Block
+                            </>
+                          )}
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -347,49 +355,64 @@ useEffect(() => {
       </div>
 
       {/* PAGINATION */}
-      <div className="h-16 flex items-center justify-center gap-1.5 mt-2">
+      <div className="flex items-center justify-center gap-1.5">
         <button
           disabled={!hasPrevPage}
-          className="pg-btn"
           onClick={() => goToPage(currentPage - 1)}
+          className="px-3 py-1.5 rounded-lg text-xs font-medium bg-[#11151f] border border-white/[0.08] text-slate-300 hover:bg-white/[0.06] disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
         >
           ← Prev
         </button>
 
         {getPages().map((c, idx) =>
           c === "..." ? (
-            <span key={idx} className="px-2 text-sm" style={{ color: "#94a3b8" }}>...</span>
+            <span key={idx} className="px-2 text-xs text-slate-500">
+              ...
+            </span>
           ) : (
             <button
               key={c}
               onClick={() => goToPage(c)}
-              className={`pg-btn ${c === currentPage ? "active" : ""}`}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition cursor-pointer ${
+                c === currentPage
+                  ? "bg-indigo-600 border-indigo-500 text-white"
+                  : "bg-[#11151f] border-white/[0.08] text-slate-300 hover:bg-white/[0.06]"
+              }`}
             >
               {c}
             </button>
-          ),
+          )
         )}
 
         <button
           disabled={!hasNextPage}
-          className="pg-btn"
           onClick={() => goToPage(currentPage + 1)}
+          className="px-3 py-1.5 rounded-lg text-xs font-medium bg-[#11151f] border border-white/[0.08] text-slate-300 hover:bg-white/[0.06] disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
         >
           Next →
         </button>
       </div>
 
-      {/* CHARTS */}
-      <div className="flex gap-5 mt-2">
-        <div className="im-card flex-1 p-5" style={{ height: 280 }}>
+      {/* CHARTS ROW */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div className="rounded-xl bg-[#11151f] border border-white/[0.08] p-5">
+          <div className="mb-3">
+            <h3 className="text-sm font-semibold text-slate-100">
+              Monthly Enrollments
+            </h3>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Student enrollments across all months
+            </p>
+          </div>
           <EnrollmentBarChart
             labels={MONTHS}
             values={monthlyTotals}
+            height={240}
             title="Monthly Enrollments"
           />
         </div>
 
-        <div className="im-card flex-1 p-5 overflow-y-auto" style={{ height: 280 }}>
+        <div className="rounded-xl bg-[#11151f] border border-white/[0.08] p-5 overflow-y-auto max-h-[320px]">
           <TopCoursesProgress data={TopCategories?.TopCoursesData} />
         </div>
       </div>

@@ -1,62 +1,87 @@
-import React, { useState } from "react";
-import { ChevronDown } from "lucide-react";
-import { ProfileMenu } from "../components/core/Auth_frontend/ProfileBar_modal/ProfilePopup"; 
+import React, { useState, useRef, useEffect } from "react";
+import { ChevronDown, ShieldCheck, ExternalLink } from "lucide-react";
+import { useSelector } from "react-redux";
+import { Link } from "react-router-dom";
+import { ProfileMenu } from "../components/core/Auth_frontend/ProfileBar_modal/ProfilePopup";
 
 const AdminNavbar = () => {
   const [open, setOpen] = useState(false);
+  const { user } = useSelector((state) => state.profile);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const displayName = user?.firstName
+    ? `${user.firstName} ${user.lastName || ""}`.trim()
+    : "Admin";
+
+  const avatarUrl =
+    user?.image?.url ||
+    `https://api.dicebear.com/5.x/initials/svg?seed=${encodeURIComponent(displayName)}`;
 
   return (
-    <header className="h-16 w-full flex border-b border-slate-800 text-white relative">
-      
-      {/* LEFT */}
-      <div className="w-65 bg-[#20212d] flex items-center gap-3 px-6">
-        <div className="w-8 h-8 flex items-center justify-center rounded-md bg-indigo-600">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="currentColor"
-            viewBox="0 0 24 24"
-            className="w-5 h-5 text-white"
-          >
-            <path
-              fillRule="evenodd"
-              d="M20 10H4v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8ZM9 13v-1h6v1a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1Z"
-              clipRule="evenodd"
-            />
-            <path d="M2 6a2 2 0 0 1 2-2h16a2 2 0 1 1 0 4H4a2 2 0 0 1-2-2Z" />
-          </svg>
+    <header className="sticky top-0 z-40 h-16 w-full flex items-center justify-between bg-[#0d1017]/95 backdrop-blur-md border-b border-white/[0.07] px-6 text-slate-100">
+      {/* LEFT BRAND */}
+      <div className="flex items-center gap-3">
+        <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-indigo-500/15 border border-indigo-400/30 text-indigo-400">
+          <ShieldCheck className="w-4 h-4" />
         </div>
-        <span className="font-semibold tracking-wide">LMS Admin</span>
+        <div className="leading-tight">
+          <span className="font-semibold text-sm tracking-tight text-white block">
+            Notion-X Console
+          </span>
+          <span className="text-[11px] text-slate-500 block">
+            Administration
+          </span>
+        </div>
       </div>
 
-      {/* CENTER */}
-      <div className="flex-1 bg-linear-to-r from-[#222430] to-[#03071d] flex items-center justify-center">
-        <h2 className="text-sm font-medium text-slate-300">
-          LMS Admin Dashboard
-        </h2>
-      </div>
-
-      {/* RIGHT */}
-      <div className="w-65 bg-[#020617] flex items-center justify-end gap-3 px-6 relative">
-        <div
-          onClick={() => setOpen(!open)}
-          className="flex items-center text-black gap-3 cursor-pointer"
+      {/* RIGHT CONTROLS */}
+      <div className="flex items-center gap-4">
+        <Link
+          to="/catalog"
+          className="hidden sm:inline-flex items-center gap-1.5 text-xs font-medium text-slate-400 hover:text-slate-100 border border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.06] px-3 py-1.5 rounded-lg transition"
         >
-          <img
-            src="https://i.pravatar.cc/40"
-            alt="Admin"
-            className="w-9 h-9 rounded-full border border-slate-700"
-          />
-          <span className="text-sm text-slate-200">Admin</span>
-          <ChevronDown size={16} className="text-slate-400" />
-        </div>
+          <span>View Storefront</span>
+          <ExternalLink className="w-3 h-3" />
+        </Link>
 
-        {/* PROFILE MENU */}
-        <div className="relative left-1">
-        {open && <ProfileMenu />}
+        <div ref={menuRef} className="relative">
+          <button
+            onClick={() => setOpen((prev) => !prev)}
+            className="flex items-center gap-2.5 rounded-xl px-2.5 py-1.5 hover:bg-white/[0.05] border border-transparent hover:border-white/[0.08] transition cursor-pointer"
+          >
+            <img
+              src={avatarUrl}
+              alt={displayName}
+              className="w-8 h-8 rounded-full object-cover ring-1 ring-white/15"
+            />
+            <div className="hidden sm:block text-left leading-tight">
+              <span className="text-xs font-medium text-slate-100 block">
+                {displayName}
+              </span>
+              <span className="text-[10px] text-slate-500 uppercase tracking-wider block">
+                Admin
+              </span>
+            </div>
+            <ChevronDown
+              size={14}
+              className={`text-slate-400 transition-transform ${open ? "rotate-180" : ""}`}
+            />
+          </button>
+
+          {open && <ProfileMenu />}
         </div>
       </div>
-
-    </header> 
+    </header>
   );
 };
 

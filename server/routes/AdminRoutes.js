@@ -6,38 +6,42 @@ const {
   chartMangment,
   getTopCourses,
   statusUpgrade,
+  toggleCourseStatus,
+  adminDeleteCourse,
 } = require("../controllers/Admin");
 const express = require("express");
 const { admin, auth } = require("../middlewares/auth");
 const { cacheMiddleware } = require("../middlewares/Caching");
 const router = express.Router();
 
-//Insights
+// Insights
 router.get("/auth/admin/insight", auth, admin, InsightData);
-//Instrcutor Data
+
+// Instructor Data (auth & admin BEFORE cacheMiddleware)
 router.get(
   "/auth/admin/instructors",
+  auth,
+  admin,
   cacheMiddleware((req) => {
     const page = req.query.page || 1;
     const limit = req.query.limit || 5;
     const search = req.query.search || "";
-
     return `Cache:CourseInstructor:page=${page}:limit=${limit}:search=${search}`;
-  }, 100),
-  auth,
-  admin,
+  }, 60),
   InstructorData,
 );
 
-//User Data
+// User Management
 router.get("/auth/admin/user-mangment", auth, admin, UserMangment);
-//Course Mangment
+
+// Course Management
 router.get("/auth/admin/course-mangment", auth, admin, CourseManagment);
-//Course Mangement Data
 router.get("/auth/admin/course-mangment-trend", auth, admin, chartMangment);
-//admin  top categories
 router.get("/admin/charts/top-categories", auth, admin, getTopCourses);
-// Status APi
+
+// Status & Moderation Actions
 router.patch("/admin/instructors/:id/status", auth, admin, statusUpgrade);
+router.patch("/admin/courses/:id/status", auth, admin, toggleCourseStatus);
+router.delete("/admin/courses/:id", auth, admin, adminDeleteCourse);
 
 module.exports = router;

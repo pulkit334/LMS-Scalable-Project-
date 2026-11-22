@@ -1,58 +1,74 @@
 /* eslint-disable no-unused-vars */
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
 import {
   fetchcategoriesTrend,
   fetchCourseInsight,
 } from "../../../Slices/Admin/ownerSlice";
 import Result from "../../../utils/Spinnre";
-// Chart.js
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  ArcElement,
-  Tooltip,
-  Legend,
-} from "chart.js";
-
-import { Line } from "react-chartjs-2";
 import CourseTrendLineChart from "../../../utils/LIneChart";
-import { CourseDelete } from "../../../services/auth";
+import {
+  DeleteAdminCourse,
+  ToggleAdminCourseStatus,
+  CreateAdminCategory,
+} from "../../../services/Admin/adminapi's";
 import toast from "react-hot-toast";
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  ArcElement,
-  Tooltip,
-  Legend,
-);
+import {
+  Search,
+  X,
+  Trash2,
+  Eye,
+  EyeOff,
+  Download,
+  FolderPlus,
+} from "lucide-react";
 
 const Course_mangment = () => {
   const dispatch = useDispatch();
-  const navigate = useNavigate();
 
   const { CourseData, loading, error, TopCategories } = useSelector(
-    (state) => state.admin,
+    (state) => state.admin
   );
-  const CourseTableData = CourseData?.data?.CourseData;
-  // Pagination Logic Would Be
+  const CourseTableData = CourseData?.data?.CourseData || [];
   const paginationdata = CourseData?.data?.pagination;
   const totalPage = paginationdata?.pages || 1;
   const hasNextPage = paginationdata?.hasNextPage || false;
-  const hasPrevPage = paginationdata?.hasPrevpage || false; //
+  const hasPrevPage = paginationdata?.hasPrevpage || false;
   const currentPage = paginationdata?.page || 1;
-// Current Pages
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [busyId, setBusyId] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const [catModalOpen, setCatModalOpen] = useState(false);
+  const [catName, setCatName] = useState("");
+  const [catDesc, setCatDesc] = useState("");
+  const [creatingCat, setCreatingCat] = useState(false);
+
+  useEffect(() => {
+    dispatch(fetchCourseInsight({ page: 1, limit: 8 }));
+    dispatch(fetchcategoriesTrend());
+  }, [dispatch]);
+
+  const filteredCourses = useMemo(() => {
+    const q = searchTerm.trim().toLowerCase();
+    return CourseTableData.filter((c) => {
+      const matchesStatus =
+        statusFilter === "ALL" || c?.status === statusFilter;
+      if (!matchesStatus) return false;
+      if (!q) return true;
+      return (
+        c?.courseName?.toLowerCase().includes(q) ||
+        c?.category?.name?.toLowerCase().includes(q)
+      );
+    });
+  }, [CourseTableData, searchTerm, statusFilter]);
+
   const getPages = () => {
     const pages = [];
-    const chunkSize = 10;
-
+    const chunkSize = 8;
     const currentChunk = Math.floor((currentPage - 1) / chunkSize);
     const startPage = currentChunk * chunkSize + 1;
     const endPage = Math.min(startPage + chunkSize - 1, totalPage);
@@ -60,158 +76,212 @@ const Course_mangment = () => {
     for (let i = startPage; i <= endPage; i++) {
       pages.push(i);
     }
-
     if (endPage < totalPage) {
       pages.push("...");
       pages.push(totalPage);
     }
-
     return pages;
   };
 
   const goToPage = (page) => {
-    if (page < 1 || page > totalPage) return;
-    if (page === currentPage) return;
-
-    dispatch(fetchCourseInsight({ page, limit: 5 }));
+    if (page < 1 || page > totalPage || page === currentPage) return;
+    dispatch(fetchCourseInsight({ page, limit: 8 }));
   };
 
-  //state compontnent
-  const getStatus = (status) => {
-    return status === "PUBLISHED"
-      ? "badge-published"
-      : "badge-draft";
-  };
-
-  const deleteCourse = async (courseId) => {
-    const response = await CourseDelete(courseId);
-    let toastId
-
-    if (response?.success) {
-      setTimeout(() => {
-        toast.success(`${response?.message}`, toastId);
-      }, 1000);
-      dispatch(fetchCourseInsight({ page: 1, limit: 5 }))
-      toast.dismiss(toastId);
+  const handleToggleStatus = async (course) => {
+    const nextStatus = course.status === "PUBLISHED" ? "DRAFT" : "PUBLISHED";
+    setBusyId(course._id);
+    try {
+      const res = await ToggleAdminCourseStatus(course._id, nextStatus);
+      if (res?.success) {
+        toast.success(`Course moved to ${nextStatus}`);
+        dispatch(fetchCourseInsight({ page: currentPage, limit: 8 }));
+      }
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to update status");
+    } finally {
+      setBusyId(null);
     }
   };
 
-  useEffect(() => {
-    dispatch(fetchCourseInsight({ page: 1, limit: 5 }));
-    dispatch(fetchcategoriesTrend());
-  }, [dispatch]);
-console.log("the categoires  table data would be ", TopCategories);
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      const res = await DeleteAdminCourse(deleteTarget._id);
+      if (res?.success) {
+        toast.success(res.message || "Course deleted");
+        setDeleteTarget(null);
+        dispatch(fetchCourseInsight({ page: currentPage, limit: 8 }));
+      }
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to delete course");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleCreateCategory = async (e) => {
+    e.preventDefault();
+    if (!catName.trim() || !catDesc.trim()) {
+      toast.error("Name and description are required");
+      return;
+    }
+    setCreatingCat(true);
+    try {
+      const res = await CreateAdminCategory({
+        name: catName.trim(),
+        description: catDesc.trim(),
+      });
+      if (res?.success) {
+        toast.success("Category created");
+        setCatName("");
+        setCatDesc("");
+        setCatModalOpen(false);
+      }
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to create category");
+    } finally {
+      setCreatingCat(false);
+    }
+  };
+
+  const handleExportCSV = () => {
+    const header = ["Course Name", "Category", "Students", "Status"];
+    const rows = filteredCourses.map((c) => [
+      `"${String(c.courseName || "").replace(/"/g, '""')}"`,
+      `"${String(c.category?.name || "Uncategorized")}"`,
+      c.enrollments ?? 0,
+      c.status || "DRAFT",
+    ]);
+    const csv = [header, ...rows].map((r) => r.join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `admin-courses-page-${currentPage}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
 
   return (
-    <div
-      className="w-full min-h-screen p-6"
-      style={{ background: "#f8fafc", fontFamily: "'DM Sans', sans-serif" }}
-    >
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap');
+    <div className="p-6 lg:p-8 max-w-7xl mx-auto w-full space-y-6">
+      {/* HEADER */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">
+            Catalog Moderation
+          </p>
+          <h1 className="text-2xl font-semibold text-white tracking-tight mt-0.5">
+            Course Management
+          </h1>
+        </div>
 
-        .cm-card {
-          background: #fff;
-          border: 1px solid #e2e8f0;
-          border-radius: 12px;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }
+        <div className="flex flex-wrap items-center gap-2.5">
+          <button
+            onClick={() => setCatModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition cursor-pointer"
+          >
+            <FolderPlus className="w-3.5 h-3.5" />
+            New Category
+          </button>
 
-        .cm-th {
-          font-size: 11px; font-weight: 600;
-          text-transform: uppercase; letter-spacing: 0.06em;
-          color: #94a3b8; padding: 12px 20px;
-          background: #f8fafc; border-bottom: 1px solid #e2e8f0;
-        }
+          <button
+            onClick={handleExportCSV}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#11151f] hover:bg-white/[0.06] border border-white/[0.08] text-slate-200 text-xs font-medium transition cursor-pointer"
+          >
+            <Download className="w-3.5 h-3.5" />
+            Export CSV
+          </button>
+        </div>
+      </div>
 
-        .cm-tr {
-          border-bottom: 1px solid #f1f5f9;
-          transition: background 0.15s ease;
-        }
-        .cm-tr:hover { background: #f8fafc; }
-        .cm-tr:last-child { border-bottom: none; }
-        .cm-td { padding: 14px 20px; font-size: 13px; color: #334155; }
+      {/* TOOLBAR */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="relative w-full sm:w-80">
+          <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Filter courses on this page..."
+            className="w-full pl-9 pr-8 py-2 rounded-lg bg-[#11151f] border border-white/[0.08] text-sm text-white placeholder-slate-500 outline-none focus:border-indigo-500"
+          />
+          {searchTerm && (
+            <button
+              onClick={() => setSearchTerm("")}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white cursor-pointer"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
 
-        .badge-published {
-          display: inline-flex; align-items: center; gap: 5px;
-          background: #ecfdf5; color: #10b981;
-          border: 1px solid #a7f3d0;
-          font-size: 11px; font-weight: 600;
-          padding: 3px 10px; border-radius: 99px;
-        }
-        .badge-draft {
-          display: inline-flex; align-items: center; gap: 5px;
-          background: #fef9c3; color: #ca8a04;
-          border: 1px solid #fde68a;
-          font-size: 11px; font-weight: 600;
-          padding: 3px 10px; border-radius: 99px;
-        }
-
-        .btn-remove {
-          font-size: 12px; font-weight: 600;
-          padding: 5px 14px; border-radius: 7px;
-          border: 1px solid #fecaca;
-          background: #fef2f2; color: #ef4444;
-          transition: all 0.15s ease; cursor: pointer;
-        }
-        .btn-remove:hover { background: #fee2e2; }
-
-        .pg-btn {
-          padding: 6px 12px; border-radius: 7px; font-size: 13px;
-          border: 1px solid #e2e8f0; background: #fff; color: #64748b;
-          transition: all 0.15s ease; cursor: pointer;
-        }
-        .pg-btn:hover:not(:disabled) { background: #f1f5f9; }
-        .pg-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-        .pg-btn.active { background: #3b82f6; color: #fff; border-color: #3b82f6; font-weight: 600; }
-      `}</style>
-
-      {/* Header */}
-      <div className="mb-5">
-        <p className="text-xs font-semibold uppercase tracking-widest mb-0.5" style={{ color: "#94a3b8" }}>Admin</p>
-        <h2 className="text-xl font-bold" style={{ color: "#0f172a", letterSpacing: "-0.01em" }}>Course Management</h2>
+        <div className="flex items-center gap-1.5 rounded-lg bg-[#11151f] border border-white/[0.08] p-1 w-fit">
+          {["ALL", "PUBLISHED", "DRAFT"].map((st) => (
+            <button
+              key={st}
+              onClick={() => setStatusFilter(st)}
+              className={`px-3 py-1 rounded-md text-xs font-medium transition cursor-pointer ${
+                statusFilter === st
+                  ? "bg-white/[0.1] text-white"
+                  : "text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              {st === "ALL" ? "All" : st === "PUBLISHED" ? "Published" : "Draft"}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* TABLE CARD */}
-      <div className="cm-card overflow-hidden">
-        {/* Loading */}
+      <div className="rounded-xl bg-[#11151f] border border-white/[0.08] overflow-hidden">
         {loading && (
-          <div className="p-8 text-center" style={{ color: "#94a3b8" }}>
-            <Result loading={true} text="Loading data..." />
+          <div className="p-10 text-center text-slate-400">
+            <Result loading={true} text="Loading courses..." />
           </div>
         )}
 
-        {/* Error */}
         {error && (
-          <div className="p-6 text-sm" style={{ color: "#ef4444" }}>Failed to load courses</div>
+          <div className="p-6 text-sm text-rose-400">Failed to load courses</div>
         )}
 
-        {/* Table */}
-        {!loading && CourseTableData?.length > 0 && (
+        {!loading && filteredCourses.length > 0 && (
           <div className="overflow-x-auto">
             <table className="w-full text-sm border-collapse">
-              {/* Table Head */}
               <thead>
-                <tr>
-                  <th className="cm-th text-left">Course</th>
-                  <th className="cm-th text-center">Category</th>
-                  <th className="cm-th text-center">Students</th>
-                  <th className="cm-th text-center">Status</th>
-                  <th className="cm-th text-right">Actions</th>
+                <tr className="border-b border-white/[0.08] bg-[#0d1017]">
+                  <th className="text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 px-5 py-3.5">
+                    Course
+                  </th>
+                  <th className="text-center text-[11px] font-semibold uppercase tracking-wider text-slate-400 px-5 py-3.5">
+                    Category
+                  </th>
+                  <th className="text-center text-[11px] font-semibold uppercase tracking-wider text-slate-400 px-5 py-3.5">
+                    Students
+                  </th>
+                  <th className="text-center text-[11px] font-semibold uppercase tracking-wider text-slate-400 px-5 py-3.5">
+                    Status
+                  </th>
+                  <th className="text-right text-[11px] font-semibold uppercase tracking-wider text-slate-400 px-5 py-3.5">
+                    Actions
+                  </th>
                 </tr>
               </thead>
 
-              {/* Table Body */}
-              <tbody>
-                {CourseTableData.map((course) => {
+              <tbody className="divide-y divide-white/[0.05]">
+                {filteredCourses.map((course) => {
+                  const isPub = course?.status === "PUBLISHED";
                   return (
-                    <tr key={course._id} className="cm-tr">
-                      {/* Course */}
-                      <td className="cm-td">
+                    <tr
+                      key={course._id}
+                      className="hover:bg-white/[0.025] transition-colors"
+                    >
+                      <td className="px-5 py-3.5">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-lg overflow-hidden flex-shrink-0"
-                            style={{ background: "#f1f5f9", border: "1px solid #e2e8f0" }}
-                          >
+                          <div className="w-10 h-10 rounded-lg overflow-hidden bg-[#090b10] border border-white/[0.08] shrink-0">
                             {course?.thumbnail ? (
                               <img
                                 src={course.thumbnail}
@@ -219,61 +289,69 @@ console.log("the categoires  table data would be ", TopCategories);
                                 className="w-full h-full object-cover"
                               />
                             ) : (
-                              <div className="w-full h-full flex items-center justify-center font-semibold text-sm"
-                                style={{ color: "#64748b" }}
-                              >
+                              <div className="w-full h-full flex items-center justify-center font-semibold text-xs text-slate-400">
                                 {course?.courseName?.charAt(0)}
                               </div>
                             )}
                           </div>
-                          <span className="font-semibold text-sm" style={{ color: "#0f172a" }}>
+                          <span className="font-medium text-slate-100 text-sm line-clamp-1">
                             {course?.courseName}
                           </span>
                         </div>
                       </td>
 
-                      {/* Categories */}
-                      <td className="cm-td text-center">
-                        <span className="text-xs px-2.5 py-1 rounded-full font-medium"
-                          style={{ background: "#eff6ff", color: "#3b82f6" }}
-                        >
-                          {course?.category?.name}
+                      <td className="px-5 py-3.5 text-center">
+                        <span className="inline-flex text-xs px-2.5 py-0.5 rounded-md bg-white/[0.05] border border-white/[0.08] text-slate-300 font-medium">
+                          {course?.category?.name || "—"}
                         </span>
                       </td>
 
-                      {/* Students */}
-                      <td className="cm-td text-center font-medium" style={{ color: "#0f172a" }}>
+                      <td className="px-5 py-3.5 text-center font-mono tabular-nums text-slate-200 text-sm">
                         {course.enrollments ?? 0}
                       </td>
 
-                      {/* Status */}
-                      <td className="cm-td text-center">
-                        <span className={getStatus(course?.status)}>
-                          <span style={{
-                            width: 5, height: 5, borderRadius: "50%",
-                            background: course?.status === "PUBLISHED" ? "#10b981" : "#ca8a04",
-                            display: "inline-block"
-                          }} />
-                          {course?.status}
+                      <td className="px-5 py-3.5 text-center">
+                        <span
+                          className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${
+                            isPub
+                              ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/25"
+                              : "bg-amber-500/10 text-amber-300 border-amber-500/25"
+                          }`}
+                        >
+                          <span
+                            className={`w-1.5 h-1.5 rounded-full ${
+                              isPub ? "bg-emerald-400" : "bg-amber-400"
+                            }`}
+                          />
+                          {course?.status || "DRAFT"}
                         </span>
                       </td>
 
-                      {/* Actions */}
-                      <td className="cm-td text-right">
-                        <div className="flex justify-end gap-2">
-                          {/* <button
-                            onClick={() =>
-                              navigate(`/admin/course/${course._id}`)
-                            }
-                            className="rounded-md bg-white/5 px-3 py-1.5 text-xs text-gray-300 hover:bg-white/10"
+                      <td className="px-5 py-3.5 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            disabled={busyId === course._id}
+                            onClick={() => handleToggleStatus(course)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-slate-200 transition cursor-pointer disabled:opacity-50"
                           >
-                            Edit
-                          </button> */}
+                            {isPub ? (
+                              <>
+                                <EyeOff className="w-3.5 h-3.5 text-amber-400" />
+                                Unpublish
+                              </>
+                            ) : (
+                              <>
+                                <Eye className="w-3.5 h-3.5 text-emerald-400" />
+                                Publish
+                              </>
+                            )}
+                          </button>
 
                           <button
-                            onClick={() => deleteCourse(course?._id)}
-                            className="btn-remove"
+                            onClick={() => setDeleteTarget(course)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-400 transition cursor-pointer"
                           >
+                            <Trash2 className="w-3.5 h-3.5" />
                             Remove
                           </button>
                         </div>
@@ -286,47 +364,151 @@ console.log("the categoires  table data would be ", TopCategories);
           </div>
         )}
 
-        {/* Empty State */}
-        {!loading && CourseTableData?.length === 0 && (
-          <div className="p-10 text-center text-sm" style={{ color: "#94a3b8" }}>
-            No courses found
+        {!loading && filteredCourses.length === 0 && (
+          <div className="p-12 text-center text-sm text-slate-500">
+            No matching courses found
           </div>
         )}
       </div>
 
       {/* PAGINATION */}
-      <div className="h-16 flex items-center justify-center gap-1.5">
-        {!hasPrevPage ? (
-          <button disabled className="pg-btn">← Prev</button>
-        ) : (
-          <button className="pg-btn" onClick={() => goToPage(currentPage - 1)}>← Prev</button>
-        )}
+      <div className="flex items-center justify-center gap-1.5">
+        <button
+          disabled={!hasPrevPage}
+          onClick={() => goToPage(currentPage - 1)}
+          className="px-3 py-1.5 rounded-lg text-xs font-medium bg-[#11151f] border border-white/[0.08] text-slate-300 hover:bg-white/[0.06] disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
+        >
+          ← Prev
+        </button>
 
         {getPages().map((c, idx) =>
           c === "..." ? (
-            <span key={idx} className="px-2 text-sm" style={{ color: "#94a3b8" }}>...</span>
+            <span key={idx} className="px-2 text-xs text-slate-500">
+              ...
+            </span>
           ) : (
             <button
               key={c}
               onClick={() => goToPage(c)}
-              className={`pg-btn ${c === currentPage ? "active" : ""}`}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition cursor-pointer ${
+                c === currentPage
+                  ? "bg-indigo-600 border-indigo-500 text-white"
+                  : "bg-[#11151f] border-white/[0.08] text-slate-300 hover:bg-white/[0.06]"
+              }`}
             >
               {c}
             </button>
-          ),
+          )
         )}
 
-        {hasNextPage && (
-          <button onClick={() => goToPage(currentPage + 1)} className="pg-btn">
-            Next →
-          </button>
-        )}
+        <button
+          disabled={!hasNextPage}
+          onClick={() => goToPage(currentPage + 1)}
+          className="px-3 py-1.5 rounded-lg text-xs font-medium bg-[#11151f] border border-white/[0.08] text-slate-300 hover:bg-white/[0.06] disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
+        >
+          Next →
+        </button>
       </div>
 
-      {/* CHART */}
-      <div className="cm-card p-5 mt-2">
+      {/* TREND CHART */}
+      <div className="rounded-xl bg-[#11151f] border border-white/[0.08] p-5">
         <CourseTrendLineChart data={TopCategories?.TopCoursesData} />
       </div>
+
+      {/* DELETE CONFIRMATION MODAL */}
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="w-full max-w-sm rounded-2xl bg-[#11151f] border border-white/10 p-6 shadow-2xl">
+            <h3 className="text-base font-semibold text-white">
+              Remove Course?
+            </h3>
+            <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">
+              This will permanently delete{" "}
+              <span className="text-slate-200 font-medium">
+                {deleteTarget.courseName}
+              </span>{" "}
+              along with its sections and lectures.
+            </p>
+            <div className="flex justify-end gap-2.5 mt-6">
+              <button
+                onClick={() => setDeleteTarget(null)}
+                disabled={deleting}
+                className="px-4 py-2 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] text-xs font-medium text-slate-300 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                disabled={deleting}
+                className="px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-500 disabled:opacity-50 text-xs font-semibold text-white cursor-pointer"
+              >
+                {deleting ? "Deleting..." : "Delete Permanently"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* NEW CATEGORY MODAL */}
+      {catModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="w-full max-w-md rounded-2xl bg-[#11151f] border border-white/10 p-6 shadow-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base font-semibold text-white">
+                Create Course Category
+              </h2>
+              <button
+                onClick={() => setCatModalOpen(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.06] cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <form onSubmit={handleCreateCategory} className="space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                  Category Name
+                </label>
+                <input
+                  type="text"
+                  value={catName}
+                  onChange={(e) => setCatName(e.target.value)}
+                  placeholder="e.g., Cloud & DevOps"
+                  className="w-full rounded-lg bg-[#090b10] border border-white/10 px-3.5 py-2 text-sm text-white placeholder-slate-500 outline-none focus:border-indigo-500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                  Description
+                </label>
+                <textarea
+                  rows={3}
+                  value={catDesc}
+                  onChange={(e) => setCatDesc(e.target.value)}
+                  placeholder="Category overview..."
+                  className="w-full rounded-lg bg-[#090b10] border border-white/10 px-3.5 py-2 text-sm text-white placeholder-slate-500 outline-none focus:border-indigo-500 resize-none"
+                />
+              </div>
+              <div className="flex justify-end gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setCatModalOpen(false)}
+                  className="px-4 py-2 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] text-xs font-medium text-slate-300 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={creatingCat}
+                  className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-xs font-semibold text-white cursor-pointer"
+                >
+                  {creatingCat ? "Creating..." : "Create"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

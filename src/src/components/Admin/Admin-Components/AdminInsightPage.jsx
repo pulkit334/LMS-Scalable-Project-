@@ -1,8 +1,20 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchDataInsight } from "../../../Slices/Admin/ownerSlice";
+import { CreateAdminCategory } from "../../../services/Admin/adminapi's";
+import toast from "react-hot-toast";
+import {
+  Users,
+  BookOpen,
+  IndianRupee,
+  GraduationCap,
+  TrendingUp,
+  RefreshCw,
+  Download,
+  FolderPlus,
+  X,
+} from "lucide-react";
 
-// Chart.js
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -12,8 +24,8 @@ import {
   ArcElement,
   Tooltip,
   Legend,
+  Filler,
 } from "chart.js";
-
 import { Line, Doughnut } from "react-chartjs-2";
 
 ChartJS.register(
@@ -24,11 +36,22 @@ ChartJS.register(
   ArcElement,
   Tooltip,
   Legend,
+  Filler
 );
+
+const MONTHS = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+];
 
 const AdminInsights = () => {
   const dispatch = useDispatch();
   const { Data, loading } = useSelector((state) => state.admin);
+
+  const [catModalOpen, setCatModalOpen] = useState(false);
+  const [catName, setCatName] = useState("");
+  const [catDesc, setCatDesc] = useState("");
+  const [creatingCat, setCreatingCat] = useState(false);
 
   useEffect(() => {
     dispatch(fetchDataInsight());
@@ -36,47 +59,87 @@ const AdminInsights = () => {
 
   const insight = Data?.data;
 
-  const MONTHS = [
-    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-  ];
+  const handleRefresh = () => {
+    dispatch(fetchDataInsight());
+    toast.success("Insights refreshed");
+  };
 
-  if (loading) {
+  const handleExportSummary = () => {
+    const rows = [
+      ["Metric", "Value"],
+      ["Registered Users", insight?.TotalUsers ?? 0],
+      ["Total Courses", insight?.TotalCourses ?? 0],
+      ["Active Instructors", insight?.TotalIns ?? 0],
+      ["Total Enrollments", insight?.TotalStudents ?? 0],
+      ["Total Revenue (INR)", insight?.TotalPrice ?? 0],
+    ];
+    const csv = rows.map((r) => r.join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `admin-insights-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleCreateCategory = async (e) => {
+    e.preventDefault();
+    if (!catName.trim() || !catDesc.trim()) {
+      toast.error("Both category name and description are required");
+      return;
+    }
+    setCreatingCat(true);
+    try {
+      const res = await CreateAdminCategory({
+        name: catName.trim(),
+        description: catDesc.trim(),
+      });
+      if (res?.success) {
+        toast.success("Category created");
+        setCatName("");
+        setCatDesc("");
+        setCatModalOpen(false);
+        dispatch(fetchDataInsight());
+      } else {
+        toast.error(res?.message || "Failed to create category");
+      }
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to create category");
+    } finally {
+      setCreatingCat(false);
+    }
+  };
+
+  if (loading && !insight) {
     return (
-      <div className="flex flex-1 items-center justify-center"
-        style={{ background: "#f8fafc" }}
-      >
-        <div style={{ textAlign: "center" }}>
-          <div style={{
-            width: 32, height: 32, borderRadius: "50%",
-            border: "2px solid #e2e8f0",
-            borderTopColor: "#3b82f6",
-            animation: "spin 0.8s linear infinite",
-            margin: "0 auto 12px",
-          }} />
-          <p style={{ color: "#94a3b8", fontSize: 14 }}>Loading insights...</p>
+      <div className="flex flex-1 min-h-[70vh] items-center justify-center bg-[#090b10]">
+        <div className="text-center">
+          <div className="w-8 h-8 rounded-full border-2 border-white/10 border-t-indigo-500 animate-spin mx-auto mb-3" />
+          <p className="text-xs text-slate-400">Loading platform metrics...</p>
         </div>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
   }
 
   const yearRevenue = insight?.charts?.YearRevenue || [];
-const revenueLineData = {
-    labels: yearRevenue.map((i) => `${MONTHS[i._id.month - 1]} ${i._id.year}`),
+  const revenueLineData = {
+    labels: yearRevenue.map((i) => `${MONTHS[(i._id?.month || 1) - 1]} ${i._id?.year}`),
     datasets: [
       {
-        label: "Revenue",
+        label: "Revenue (₹)",
         data: yearRevenue.map((i) => i.total),
-        borderColor: "#3b82f6",
-        backgroundColor: "rgba(59,130,246,0.06)",
-        tension: 0.4,
+        borderColor: "#6366f1",
+        backgroundColor: "rgba(99, 102, 241, 0.12)",
+        tension: 0.35,
         fill: true,
-        pointRadius: 4,
-        pointBackgroundColor: "#3b82f6",
-        pointBorderColor: "#fff",
+        pointRadius: 3.5,
+        pointBackgroundColor: "#6366f1",
+        pointBorderColor: "#11151f",
         pointBorderWidth: 2,
-      },7
+      },
     ],
   };
 
@@ -86,34 +149,36 @@ const revenueLineData = {
     plugins: {
       legend: { display: false },
       tooltip: {
-        backgroundColor: "#1e293b",
-        borderColor: "#e2e8f0",
+        backgroundColor: "#0d1017",
+        borderColor: "rgba(255,255,255,0.12)",
         borderWidth: 1,
         titleColor: "#f8fafc",
-        bodyColor: "#94a3b8",
+        bodyColor: "#cbd5e1",
         padding: 10,
       },
     },
     scales: {
       x: {
-        ticks: { color: "#94a3b8", font: { size: 11 } },
-        grid: { color: "#f1f5f9" },
-        border: { color: "#e2e8f0" },
+        ticks: { color: "#64748b", font: { size: 11 } },
+        grid: { color: "rgba(255,255,255,0.04)" },
+        border: { color: "rgba(255,255,255,0.08)" },
       },
       y: {
-        ticks: { color: "#94a3b8", font: { size: 11 } },
-        grid: { color: "#f1f5f9" },
-        border: { color: "#e2e8f0" },
+        beginAtZero: true,
+        ticks: { color: "#64748b", font: { size: 11 } },
+        grid: { color: "rgba(255,255,255,0.04)" },
+        border: { color: "rgba(255,255,255,0.08)" },
       },
     },
   };
 
+  const catEnrollments = insight?.charts?.CategoryEnrollments || [];
   const enrollmentData = {
-    labels: insight?.charts?.CategoryEnrollments.map((data) => data?._id),
+    labels: catEnrollments.map((d) => d?._id || "Category"),
     datasets: [
       {
-        data: insight?.charts?.CategoryEnrollments.map((data) => data?.total),
-        backgroundColor: ["#3b82f6", "#22c55e", "#f59e0b"],
+        data: catEnrollments.map((d) => d?.total || 0),
+        backgroundColor: ["#6366f1", "#10b981", "#f59e0b", "#38bdf8", "#a855f7"],
         borderWidth: 0,
         hoverOffset: 4,
       },
@@ -121,150 +186,245 @@ const revenueLineData = {
   };
 
   const doughnutOptions = {
-    cutout: "70%",
+    cutout: "72%",
+    maintainAspectRatio: false,
     plugins: {
       legend: {
         position: "bottom",
         labels: {
-          color: "#64748b",
-          font: { size: 12 },
+          color: "#94a3b8",
+          font: { size: 11 },
           padding: 16,
-          boxWidth: 10,
-          boxHeight: 10,
+          boxWidth: 8,
+          boxHeight: 8,
           usePointStyle: true,
         },
       },
       tooltip: {
-        backgroundColor: "#1e293b",
-        borderColor: "#e2e8f0",
+        backgroundColor: "#0d1017",
+        borderColor: "rgba(255,255,255,0.12)",
         borderWidth: 1,
         titleColor: "#f8fafc",
-        bodyColor: "#94a3b8",
+        bodyColor: "#cbd5e1",
       },
     },
   };
 
-  const topCards = [
-    { label: "Registered Users",  value: insight?.TotalUsers,       accent: "#3b82f6", bg: "#eff6ff" },
-    { label: "Total Courses",     value: insight?.TotalCourses,     accent: "#8b5cf6", bg: "#f5f3ff" },
-    { label: "Total Revenue",     value: `₹${insight?.TotalPrice}`, accent: "#10b981", bg: "#ecfdf5" },
-    { label: "Total Enrollments", value: insight?.TotalStudents,    accent: "#f59e0b", bg: "#fffbeb" },
+  const kpiCards = [
+    {
+      label: "Total Revenue",
+      value: `₹${Number(insight?.TotalPrice || 0).toLocaleString("en-IN")}`,
+      sub: "Cumulative gross sales",
+      icon: IndianRupee,
+      tint: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
+    },
+    {
+      label: "Registered Users",
+      value: Number(insight?.TotalUsers || 0).toLocaleString("en-IN"),
+      sub: "Students, instructors & admins",
+      icon: Users,
+      tint: "text-indigo-400 bg-indigo-500/10 border-indigo-500/20",
+    },
+    {
+      label: "Total Courses",
+      value: Number(insight?.TotalCourses || 0).toLocaleString("en-IN"),
+      sub: "Published & draft catalog",
+      icon: BookOpen,
+      tint: "text-sky-400 bg-sky-500/10 border-sky-500/20",
+    },
+    {
+      label: "Total Enrollments",
+      value: Number(insight?.TotalStudents || 0).toLocaleString("en-IN"),
+      sub: "Active course seats",
+      icon: TrendingUp,
+      tint: "text-amber-400 bg-amber-500/10 border-amber-500/20",
+    },
+    {
+      label: "Active Instructors",
+      value: Number(insight?.TotalIns || 0).toLocaleString("en-IN"),
+      sub: "Verified course authors",
+      icon: GraduationCap,
+      tint: "text-violet-400 bg-violet-500/10 border-violet-500/20",
+    },
   ];
 
   return (
-    <div
-      className="flex flex-col flex-1 overflow-y-auto"
-      style={{ background: "#f8fafc", fontFamily: "'DM Sans', sans-serif", color: "#0f172a" }}
-    >
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap');
-
-        .dash-card {
-          background: #ffffff;
-          border: 1px solid #e2e8f0;
-          border-radius: 12px;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.04);
-        }
-      `}</style>
-
-      <div className="flex flex-col space-y-5 p-6 max-w-7xl mx-auto w-full">
-
-        {/* HEADER */}
-        <div className="mb-1">
-          <p className="text-xs font-semibold uppercase tracking-widest mb-1"
-            style={{ color: "#94a3b8" }}
-          >
-            Admin
+    <div className="p-6 lg:p-8 max-w-7xl mx-auto w-full space-y-6">
+      {/* HEADER */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">
+            Overview
           </p>
-          <h1 className="text-xl font-bold" style={{ color: "#0f172a", letterSpacing: "-0.01em" }}>
-            Insights
+          <h1 className="text-2xl font-semibold text-white tracking-tight mt-0.5">
+            Platform Insights
           </h1>
         </div>
 
-        {/* ================= TOP CARDS ================= */}
-        <div className="flex flex-wrap gap-4">
-          {topCards.map((item, i) => (
-            <div key={i} className="dash-card flex-1 min-w-40 p-5">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <button
+            onClick={() => setCatModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition cursor-pointer"
+          >
+            <FolderPlus className="w-3.5 h-3.5" />
+            New Category
+          </button>
+
+          <button
+            onClick={handleExportSummary}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#11151f] hover:bg-white/[0.06] border border-white/[0.08] text-slate-200 text-xs font-medium transition cursor-pointer"
+          >
+            <Download className="w-3.5 h-3.5" />
+            Export CSV
+          </button>
+
+          <button
+            onClick={handleRefresh}
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#11151f] hover:bg-white/[0.06] border border-white/[0.08] text-slate-300 text-xs font-medium transition cursor-pointer"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+            Refresh
+          </button>
+        </div>
+      </div>
+
+      {/* KPI GRID */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        {kpiCards.map((item) => {
+          const Icon = item.icon;
+          return (
+            <div
+              key={item.label}
+              className="rounded-xl bg-[#11151f] border border-white/[0.08] p-5"
+            >
               <div className="flex items-center justify-between mb-3">
-                <p className="text-xs font-medium" style={{ color: "#64748b" }}>
+                <span className="text-xs font-medium text-slate-400">
                   {item.label}
-                </p>
-                <div className="w-7 h-7 rounded-lg flex items-center justify-center"
-                  style={{ background: item.bg }}
+                </span>
+                <div
+                  className={`w-8 h-8 rounded-lg border flex items-center justify-center ${item.tint}`}
                 >
-                  <div className="w-2 h-2 rounded-full" style={{ background: item.accent }} />
+                  <Icon className="w-4 h-4" />
                 </div>
               </div>
-              <h2 className="text-2xl font-bold" style={{ color: "#0f172a" }}>
-                {item.value ?? 0}
-              </h2>
-              <div className="mt-3 h-1 rounded-full" style={{ background: item.bg }}>
-                <div className="h-full rounded-full" style={{ width: "60%", background: item.accent }} />
-              </div>
+              <p className="text-2xl font-semibold text-white tracking-tight tabular-nums">
+                {item.value}
+              </p>
+              <p className="text-[11px] text-slate-500 mt-1">{item.sub}</p>
             </div>
-          ))}
-        </div>
+          );
+        })}
+      </div>
 
-        {/* ================= MIDDLE ================= */}
-        <div className="flex gap-4">
-          <div className="dash-card flex-1 min-w-[300px] p-5">
-            <p className="text-xs font-medium mb-1" style={{ color: "#64748b" }}>
-              Active Instructors
-            </p>
-            <p className="text-3xl font-bold" style={{ color: "#0f172a" }}>
-              {insight?.TotalIns ?? 0}
-            </p>
-            <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>Engaged Teachers</p>
-            <div className="mt-4 h-1.5 rounded-full" style={{ background: "#eff6ff" }}>
-              <div className="h-full rounded-full" style={{ width: "72%", background: "#3b82f6" }} />
-            </div>
-          </div>
-
-          <div className="dash-card flex-1 min-w-[320px] p-5">
-            <p className="text-xs font-medium mb-1" style={{ color: "#64748b" }}>
-              New Enrollments
-            </p>
-            <p className="text-3xl font-bold" style={{ color: "#0f172a" }}>
-              {insight?.TotalStudents ?? 0}
-            </p>
-            <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>Last 7 Days</p>
-            <div className="mt-4 h-1.5 rounded-full" style={{ background: "#fff7ed" }}>
-              <div className="h-full rounded-full" style={{ width: "88%", background: "#f97316" }} />
-            </div>
-          </div>
-        </div>
-
-        {/* ================= BOTTOM ================= */}
-        <div className="flex flex-wrap gap-4">
-          {/* Revenue Growth */}
-          <div className="dash-card flex-2 min-w-[320px] p-5">
-            <div className="flex items-center justify-between mb-5">
-              <h3 className="text-sm font-semibold" style={{ color: "#0f172a" }}>
+      {/* CHARTS ROW */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <div className="lg:col-span-2 rounded-xl bg-[#11151f] border border-white/[0.08] p-5">
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <h3 className="text-sm font-semibold text-slate-100">
                 Revenue Growth
               </h3>
-              <span className="text-xs px-2.5 py-1 rounded-full font-medium"
-                style={{ background: "#eff6ff", color: "#3b82f6" }}
-              >
-                Monthly
-              </span>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Monthly settled payment totals across all courses
+              </p>
             </div>
-            <div className="h-64">
-              <Line data={revenueLineData} options={lineOptions} />
-            </div>
+            <span className="text-[11px] px-2.5 py-1 rounded-md bg-white/[0.04] border border-white/[0.08] text-slate-300 font-medium">
+              Monthly
+            </span>
           </div>
-
-          {/* Enrollments Overview */}
-          <div className="dash-card flex-1 min-w-70 p-5">
-            <h3 className="text-sm font-semibold mb-5" style={{ color: "#0f172a" }}>
-              Enrollments Overview
-            </h3>
-            <div className="h-57 flex items-center justify-center">
-              <Doughnut data={enrollmentData} options={doughnutOptions} />
-            </div>
+          <div className="h-64">
+            {yearRevenue.length > 0 ? (
+              <Line data={revenueLineData} options={lineOptions} />
+            ) : (
+              <div className="h-full flex items-center justify-center text-xs text-slate-500">
+                No revenue history recorded yet
+              </div>
+            )}
           </div>
         </div>
 
+        <div className="rounded-xl bg-[#11151f] border border-white/[0.08] p-5 flex flex-col">
+          <div className="mb-4">
+            <h3 className="text-sm font-semibold text-slate-100">
+              Enrollments by Category
+            </h3>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Share of student seats across catalog
+            </p>
+          </div>
+          <div className="flex-1 min-h-[240px] flex items-center justify-center">
+            {catEnrollments.length > 0 ? (
+              <Doughnut data={enrollmentData} options={doughnutOptions} />
+            ) : (
+              <p className="text-xs text-slate-500">No category enrollments yet</p>
+            )}
+          </div>
+        </div>
       </div>
+
+      {/* NEW CATEGORY MODAL */}
+      {catModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="w-full max-w-md rounded-2xl bg-[#11151f] border border-white/10 p-6 shadow-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-base font-semibold text-white">
+                Create Course Category
+              </h2>
+              <button
+                onClick={() => setCatModalOpen(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.06] cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateCategory} className="space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                  Category Name
+                </label>
+                <input
+                  type="text"
+                  value={catName}
+                  onChange={(e) => setCatName(e.target.value)}
+                  placeholder="e.g., System Design"
+                  className="w-full rounded-lg bg-[#090b10] border border-white/10 px-3.5 py-2 text-sm text-white placeholder-slate-500 outline-none focus:border-indigo-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                  Description
+                </label>
+                <textarea
+                  rows={3}
+                  value={catDesc}
+                  onChange={(e) => setCatDesc(e.target.value)}
+                  placeholder="Brief summary of courses in this category..."
+                  className="w-full rounded-lg bg-[#090b10] border border-white/10 px-3.5 py-2 text-sm text-white placeholder-slate-500 outline-none focus:border-indigo-500 resize-none"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setCatModalOpen(false)}
+                  className="px-4 py-2 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] text-xs font-medium text-slate-300 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={creatingCat}
+                  className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-xs font-semibold text-white cursor-pointer"
+                >
+                  {creatingCat ? "Creating..." : "Create Category"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

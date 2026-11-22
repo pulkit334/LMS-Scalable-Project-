@@ -1,53 +1,58 @@
-// components/TopCoursesProgress.jsx
-import { Box, LinearProgress, Typography } from "@mui/material";
-
-const COLORS = ["#3b82f6", "#34d399", "#fbbf24", "#f87171"];
+const BAR_COLORS = [
+  "bg-indigo-500",
+  "bg-emerald-500",
+  "bg-amber-400",
+  "bg-sky-400",
+];
 
 export default function TopCoursesProgress({ data = [] }) {
-  if (!data.length) return null;
-if (!max) return null;
+  if (!Array.isArray(data) || data.length === 0) {
+    return (
+      <div className="h-full flex items-center justify-center text-xs text-slate-500 py-8">
+        No category enrollment data available
+      </div>
+    );
+  }
+
+  const max = Math.max(...data.map((d) => d.totalEnrollments || 0), 1);
+
   return (
-    <Box>
-        
-      {data.map((item, index) => {
-        const percent = (item.totalEnrollments / max) * 100;
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-slate-100">
+          Top Categories by Enrollment
+        </h3>
+        <span className="text-[11px] text-slate-500">Enrollments</span>
+      </div>
 
-        return (
-          <Box key={item.categoryId} sx={{ mb: 2 }}>
-            {/* Label Row */}
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                mb: 0.5,
-              }}
-            >
-              <Typography variant="body2">
-                {item.categoryName}
-              </Typography>
-              <Typography variant="body2">
-                {item.totalEnrollments}
-              </Typography>
-            </Box>
+      <div className="space-y-3.5">
+        {data.map((item, index) => {
+          const percent = Math.min(
+            100,
+            Math.round(((item.totalEnrollments || 0) / max) * 100)
+          );
+          const colorClass = BAR_COLORS[index % BAR_COLORS.length];
 
-            {/* Progress */}
-            <LinearProgress
-              variant="determinate"
-              value={percent}
-              sx={{
-                height: 8,
-                borderRadius: 5,
-                backgroundColor: "#1f2937",
-                  transition: "width 0.8s ease-in-out",
-                "& .MuiLinearProgress-bar": {
-                  borderRadius: 5,
-                  backgroundColor: COLORS[index % COLORS.length],
-                },
-              }}
-            />
-          </Box>
-        );
-      })}
-    </Box>
+          return (
+            <div key={`${item.categoryId || item.categoryName}-${index}`}>
+              <div className="flex items-center justify-between text-xs mb-1.5">
+                <span className="text-slate-200 font-medium truncate pr-3">
+                  {item.categoryName}
+                </span>
+                <span className="text-slate-400 font-mono tabular-nums">
+                  {item.totalEnrollments || 0}
+                </span>
+              </div>
+              <div className="h-2 w-full rounded-full bg-white/[0.06] overflow-hidden">
+                <div
+                  className={`h-full rounded-full ${colorClass} transition-all duration-500`}
+                  style={{ width: `${percent}%` }}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }

@@ -1,4 +1,4 @@
-import { adminApi } from "../apiconnnector";
+import { adminApi, api } from "../apiconnnector";
 
 const Admin = {
   InsightPath: "/auth/admin/insight",
@@ -8,11 +8,13 @@ const Admin = {
   CharttrendPath: "/auth/admin/course-mangment-trend",
   TopCategories: "/admin/charts/top-categories",
   StatusPath: "/admin/instructors/:id/status",
+  CourseStatusPath: "/admin/courses/:id/status",
+  CourseDeletePath: "/admin/courses/:id",
 };
+
 export const AdminInsightApi = async () => {
   const response = await adminApi.get(Admin.InsightPath);
-return response?.data;
-  
+  return response?.data;
 };
 
 export const InstrctorApi = async (page, limit, search) => {
@@ -23,39 +25,56 @@ export const InstrctorApi = async (page, limit, search) => {
   }
 
   const response = await adminApi.get(Admin.InstructorPath, { params });
-
   return response?.data;
 };
 
-//User Path Data
 export const UserApi = async (page, limit, search) => {
   const response = await adminApi.get(Admin.UserPath, {
     params: { page, limit, search },
   });
   return response?.data;
 };
-//Course Path Data
+
 export const CourseApi = async (page, limit) => {
   const response = await adminApi.get(Admin.COursePath, {
     params: { page, limit },
   });
   return response?.data;
 };
-//Course Chart Mangment Trend
 
 export const Coursetrend = async () => {
   const response = await adminApi.get(Admin.CharttrendPath);
   return response?.data;
 };
-//Categories Wise Trending Data
+
 export const ToptrendingData = async () => {
   const response = await adminApi.get(Admin.TopCategories);
   return response?.data;
 };
-//Status Patch Requets
+
 export const StatusPath = async ({ id, status }) => {
-const response = await adminApi.patch(Admin. StatusPath.replace(":id", id), {
+  const response = await adminApi.patch(Admin.StatusPath.replace(":id", id), {
     status,
   });
+  return response.data;
+};
+
+export const ToggleAdminCourseStatus = async (courseId, status) => {
+  const response = await adminApi.patch(
+    Admin.CourseStatusPath.replace(":id", courseId),
+    { status }
+  );
+  return response.data;
+};
+
+export const DeleteAdminCourse = async (courseId) => {
+  const response = await adminApi.delete(
+    Admin.CourseDeletePath.replace(":id", courseId)
+  );
+  return response.data;
+};
+
+export const CreateAdminCategory = async ({ name, description }) => {
+  const response = await api.post("/category/create", { name, description });
   return response.data;
 };

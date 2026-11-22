@@ -551,3 +551,99 @@ exports.statusUpgrade = async (req, res) => {
   }
 };
 
+exports.toggleCourseStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, message: "Invalid course id" });
+    }
+
+    const existing = await Course.findById(id);
+    if (!existing) {
+      return res.status(404).json({ success: false, message: "Course not found" });
+    }
+
+    const nextStatus = ["PUBLISHED", "DRAFT"].includes(status)
+      ? status
+      : existing.status === "PUBLISHED"
+        ? "DRAFT"
+        : "PUBLISHED";
+
+    existing.status = nextStatus;
+    await existing.save();
+
+    try {
+      const redisClient = require("../Reddis/client");
+      await redisClient.del("Category:All", `Cache:Course:${id}`);
+    } catch (_) {}
+
+    return res.status(200).json({
+      success: true,
+      message: `Course marked as ${nextStatus}`,
+      data: { _id: existing._id, status: existing.status },
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: err.message || "Failed to update course status",
+    });
+  }
+};
+
+exports.adminDeleteCourse = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, message: "Invalid course id" });
+    }
+
+    const courseDoc = await Course.findById(id);
+    if (!courseDoc) {
+      return res.status(404).json({ success: false, message: "Course not found" });
+    }
+
+    const Section = require("../models/section");
+    const Subsection = require("../models/subsection");
+
+    for (const secId of courseDoc.courseContent || []) {
+      const sec = await Section.findById(secId);
+      if (sec?.subsection?.length) {
+        await Subsection.deleteMany({ _id: { $in: sec.subsection } });
+      }
+      await Section.findByIdAndDelete(secId);
+    }
+
+    if (courseDoc.category) {
+      await category.findByIdAndUpdate(courseDoc.category, {
+        $pull: { course: courseDoc._id },
+      });
+    }
+
+    if (courseDoc.Insturctor) {
+      await User.findByIdAndUpdate(courseDoc.Insturctor, {
+        $pull: { courses: courseDoc._id },
+      });
+    }
+
+    await Course.findByIdAndDelete(id);
+
+    try {
+      const redisClient = require("../Reddis/client");
+      await redisClient.del("Category:All", `Cache:Course:${id}`, `Cache:CourseContent:${id}`);
+    } catch (_) {}
+
+    return res.status(200).json({
+      success: true,
+      message: "Course deleted permanently",
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: err.message || "Failed to delete course",
+    });
+  }
+};
+

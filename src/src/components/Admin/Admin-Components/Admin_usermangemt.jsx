@@ -1,298 +1,423 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-/* eslint-disable react-hooks/purity */
 /* eslint-disable no-unused-vars */
 import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
-import { fetchUserInsight } from "../../../Slices/Admin/ownerSlice";
+import {
+  fetchUserInsight,
+  fetchUserState,
+} from "../../../Slices/Admin/ownerSlice";
 import Result from "../../../utils/Spinnre";
-import { Search } from "lucide-react";
+import toast from "react-hot-toast";
+import {
+  Search,
+  X,
+  Download,
+  ShieldBan,
+  ShieldCheck,
+  Eye,
+} from "lucide-react";
 
 const Admin_usermangemt = () => {
-  const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const { UserData, loading } = useSelector((state) => state.admin);
+  const { UserData, loading, actionLoadingId } = useSelector(
+    (state) => state.admin
+  );
   const [value, setvalue] = useState("");
-  const adminuser = UserData?.AllData ?? [];
+  const [role, setRole] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [selectedUser, setSelectedUser] = useState(null);
 
-  //  Pagination Logic States //
-const hasPrevPage = UserData?.pagination?.hasPrevPage || false;
+  const adminuser = UserData?.AllData ?? [];
+  const hasPrevPage = UserData?.pagination?.hasPrevPage || false;
   const hasNextPage = UserData?.pagination?.hasNextPage || false;
   const currentPage = UserData?.pagination?.page || 1;
   const totalPage = UserData?.pagination?.pages || 1;
 
-  // Current Pages
   const getPages = () => {
-    const Pages = [];
-    const chunkSize = 10;
+    const pages = [];
+    const chunkSize = 8;
     const currentChunk = Math.floor((currentPage - 1) / chunkSize);
-    const StartPage = currentChunk * chunkSize + 1;
-    const Endpage = Math.min((StartPage + currentChunk - 1, totalPage));
+    const startPage = currentChunk * chunkSize + 1;
+    const endPage = Math.min(startPage + chunkSize - 1, totalPage);
 
-    for (let i = StartPage; i <= totalPage; i++) {
-      Pages.push(i);
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
     }
-    if (Endpage < totalPage) {
-      Pages.push("...");
-      Pages.push(totalPage);
+    if (endPage < totalPage) {
+      pages.push("...");
+      pages.push(totalPage);
     }
-    return Pages;
+    return pages;
   };
 
   const goToPage = (page) => {
     if (page < 1 || page > totalPage) return;
-
     if (value.trim().length >= 2) {
-      dispatch(fetchUserInsight({ page, limit: 5, search: value.trim() }));
+      dispatch(fetchUserInsight({ page, limit: 8, search: value.trim() }));
     } else {
-      dispatch(fetchUserInsight({ page, limit: 5 }));
+      dispatch(fetchUserInsight({ page, limit: 8 }));
     }
   };
 
-  const [role, setRole] = useState("all");
-
   useEffect(() => {
     const trimmed = value.trim();
-
     if (trimmed.length === 0) {
-      dispatch(fetchUserInsight({ page: 1, limit: 5 }));
+      dispatch(fetchUserInsight({ page: 1, limit: 8 }));
       return;
     }
-
-    // Prevent  spam serach
     if (trimmed.length < 2) return;
-
-    dispatch(fetchUserInsight({ page: 1, limit: 5, search: trimmed }));
-  }, [value, role]);
+    dispatch(fetchUserInsight({ page: 1, limit: 8, search: trimmed }));
+  }, [value, dispatch]);
 
   const filteredUsers = useMemo(() => {
-    if (role === "all") return adminuser;
-    return adminuser.filter((c) => c?.accountType === role);
-  }, [role, adminuser]);
+    return adminuser.filter((u) => {
+      const roleMatch =
+        role === "all" ||
+        u?.accountType?.toLowerCase() === role.toLowerCase();
+      const userStatus = (u?.status || "Active").toLowerCase();
+      const statusMatch =
+        statusFilter === "all" || userStatus === statusFilter.toLowerCase();
+      return roleMatch && statusMatch;
+    });
+  }, [role, statusFilter, adminuser]);
 
-  const ImgApi = () => `https://picsum.photos/400/300?random=${Date.now()}`;
+  const handleToggleUserStatus = async (user) => {
+    const nextStatus = user?.status === "Blocked" ? "Active" : "Blocked";
+    try {
+      await dispatch(
+        fetchUserState({ id: user._id, status: nextStatus })
+      ).unwrap();
+      toast.success(`User marked as ${nextStatus}`);
+      dispatch(
+        fetchUserInsight({
+          page: currentPage,
+          limit: 8,
+          ...(value.trim().length >= 2 ? { search: value.trim() } : {}),
+        })
+      );
+    } catch (err) {
+      toast.error("Failed to update user status");
+    }
+  };
+
+  const handleExportUsers = () => {
+    const header = ["Name", "Email", "Role", "Status"];
+    const rows = filteredUsers.map((u) => [
+      `"${u.firstName || ""} ${u.lastName || ""}"`,
+      `"${u.email || ""}"`,
+      u.accountType || "",
+      u.status || "Active",
+    ]);
+    const csv = [header, ...rows].map((r) => r.join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `admin-users-page-${currentPage}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
 
   return (
-    <div
-      className="w-full min-h-screen p-6"
-      style={{ background: "#f8fafc", fontFamily: "'DM Sans', sans-serif" }}
-    >
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap');
+    <div className="p-6 lg:p-8 max-w-7xl mx-auto w-full space-y-6">
+      {/* HEADER */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-500">
+            Directory
+          </p>
+          <h1 className="text-2xl font-semibold text-white tracking-tight mt-0.5">
+            User Management
+          </h1>
+        </div>
 
-        .um-card {
-          background: #fff;
-          border: 1px solid #e2e8f0;
-          border-radius: 12px;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }
-
-        .um-search {
-          background: #fff;
-          border: 1px solid #e2e8f0;
-          border-radius: 10px;
-          transition: border-color 0.2s, box-shadow 0.2s;
-        }
-        .um-search:focus-within {
-          border-color: #3b82f6;
-          box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
-        }
-
-        .um-select {
-          background: #fff;
-          border: 1px solid #e2e8f0;
-          border-radius: 8px;
-          color: #0f172a;
-          font-size: 13px;
-          font-weight: 500;
-          padding: 6px 10px;
-          outline: none;
-          cursor: pointer;
-          transition: border-color 0.2s;
-          font-family: 'DM Sans', sans-serif;
-        }
-        .um-select:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
-
-        .um-th {
-          font-size: 11px; font-weight: 600;
-          text-transform: uppercase; letter-spacing: 0.06em;
-          color: #94a3b8; padding: 12px 20px;
-          background: #f8fafc; border-bottom: 1px solid #e2e8f0;
-        }
-
-        .um-tr {
-          border-bottom: 1px solid #f1f5f9;
-          transition: background 0.15s ease;
-        }
-        .um-tr:hover { background: #f8fafc; }
-        .um-tr:last-child { border-bottom: none; }
-        .um-td { padding: 14px 20px; font-size: 13px; color: #334155; }
-
-        .badge-active {
-          display: inline-flex; align-items: center; gap: 5px;
-          background: #ecfdf5; color: #10b981; border: 1px solid #a7f3d0;
-          font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 99px;
-        }
-
-        .role-badge {
-          display: inline-flex; font-size: 11px; font-weight: 600;
-          padding: 3px 10px; border-radius: 99px;
-          background: #eff6ff; color: #3b82f6; border: 1px solid #bfdbfe;
-          text-transform: capitalize;
-        }
-
-        .btn-edit {
-          font-size: 12px; font-weight: 600;
-          padding: 5px 14px; border-radius: 7px;
-          border: 1px solid #e2e8f0;
-          background: #f8fafc; color: #64748b;
-          transition: all 0.15s ease; cursor: pointer;
-        }
-        .btn-edit:hover { background: #f1f5f9; border-color: #cbd5e1; color: #0f172a; }
-
-        .pg-btn {
-          padding: 6px 12px; border-radius: 7px; font-size: 13px;
-          border: 1px solid #e2e8f0; background: #fff; color: #64748b;
-          transition: all 0.15s ease; cursor: pointer;
-        }
-        .pg-btn:hover:not(:disabled) { background: #f1f5f9; }
-        .pg-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-        .pg-btn.active { background: #3b82f6; color: #fff; border-color: #3b82f6; font-weight: 600; }
-      `}</style>
-
-      {/* Page header */}
-      <div className="mb-5">
-        <p className="text-xs font-semibold uppercase tracking-widest mb-0.5" style={{ color: "#94a3b8" }}>Admin</p>
-        <h1 className="text-xl font-bold" style={{ color: "#0f172a", letterSpacing: "-0.01em" }}>User Management</h1>
+        <button
+          onClick={handleExportUsers}
+          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#11151f] hover:bg-white/[0.06] border border-white/[0.08] text-slate-200 text-xs font-medium transition cursor-pointer w-fit"
+        >
+          <Download className="w-3.5 h-3.5" />
+          Export CSV
+        </button>
       </div>
 
       {/* TOOLBAR */}
-      <div className="flex items-center justify-between mb-4 gap-4">
-        <div className="um-search w-80 px-4 py-2.5 flex items-center gap-2">
-          <Search className="w-4 h-4 flex-shrink-0" style={{ color: "#94a3b8" }} />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="relative w-full sm:w-80">
+          <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             type="text"
             name="search"
-            placeholder="Search users..."
+            placeholder="Search by name or email..."
             onChange={(e) => setvalue(e.target.value)}
             value={value}
-            className="w-full bg-transparent outline-none text-sm"
-            style={{ color: "#0f172a" }}
+            className="w-full pl-9 pr-8 py-2 rounded-lg bg-[#11151f] border border-white/[0.08] text-sm text-white placeholder-slate-500 outline-none focus:border-indigo-500"
           />
+          {value && (
+            <button
+              onClick={() => setvalue("")}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white cursor-pointer"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
 
-        <select
-          value={role}
-          onChange={(e) => setRole(e.target.value)}
-          className="um-select"
-        >
-          <option value="all">All Roles</option>
-          <option value="instructor">Instructor</option>
-          <option value="student">Student</option>
-        </select>
+        <div className="flex items-center gap-2.5">
+          <select
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+            className="rounded-lg bg-[#11151f] border border-white/[0.08] px-3 py-2 text-xs font-medium text-slate-200 outline-none focus:border-indigo-500 cursor-pointer"
+          >
+            <option value="all">All Roles</option>
+            <option value="student">Student</option>
+            <option value="instructor">Instructor</option>
+            <option value="admin">Admin</option>
+          </select>
+
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="rounded-lg bg-[#11151f] border border-white/[0.08] px-3 py-2 text-xs font-medium text-slate-200 outline-none focus:border-indigo-500 cursor-pointer"
+          >
+            <option value="all">All Status</option>
+            <option value="active">Active</option>
+            <option value="blocked">Blocked</option>
+          </select>
+        </div>
       </div>
 
       {/* TABLE */}
-      <div className="um-card overflow-hidden">
+      <div className="rounded-xl bg-[#11151f] border border-white/[0.08] overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full table-auto border-collapse">
+          <table className="w-full border-collapse">
             <thead>
-              <tr>
-                <th className="um-th text-left">User</th>
-                <th className="um-th text-center">Role</th>
-                <th className="um-th text-center">Email</th>
-                <th className="um-th text-center">Status</th>
-                <th className="um-th text-center">Actions</th>
+              <tr className="border-b border-white/[0.08] bg-[#0d1017]">
+                <th className="text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400 px-5 py-3.5">
+                  User
+                </th>
+                <th className="text-center text-[11px] font-semibold uppercase tracking-wider text-slate-400 px-5 py-3.5">
+                  Role
+                </th>
+                <th className="text-center text-[11px] font-semibold uppercase tracking-wider text-slate-400 px-5 py-3.5">
+                  Status
+                </th>
+                <th className="text-right text-[11px] font-semibold uppercase tracking-wider text-slate-400 px-5 py-3.5">
+                  Actions
+                </th>
               </tr>
             </thead>
 
-            <tbody>
+            <tbody className="divide-y divide-white/[0.05]">
               {loading ? (
                 <tr>
-                  <td colSpan="5" className="um-td text-center" style={{ padding: "40px", color: "#94a3b8" }}>
-                    <Result loading={true} text="Loading Wait..." />
+                  <td colSpan="4" className="px-5 py-12 text-center text-slate-400">
+                    <Result loading={true} text="Loading users..." />
                   </td>
                 </tr>
               ) : filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="um-td text-center" style={{ padding: "40px", color: "#94a3b8" }}>
+                  <td colSpan="4" className="px-5 py-12 text-center text-sm text-slate-500">
                     No users found
                   </td>
                 </tr>
               ) : (
-                filteredUsers.map((inst) => (
-                  <tr key={inst._id} className="um-tr">
-                    <td className="um-td">
-                      <div className="flex items-center gap-3">
-                        <img
-                          src={inst.image?.url || ImgApi()}
-                          className="h-9 w-9 rounded-full object-cover flex-shrink-0"
-                          style={{ border: "1.5px solid #e2e8f0" }}
-                        />
-                        <div>
-                          <p className="font-semibold text-sm" style={{ color: "#0f172a" }}>
-                            {inst.firstName} {inst.lastName}
-                          </p>
-                          <p className="text-xs" style={{ color: "#94a3b8" }}>{inst.email}</p>
+                filteredUsers.map((u) => {
+                  const isBlocked = u.status === "Blocked";
+                  const avatar =
+                    u.image?.url ||
+                    `https://api.dicebear.com/5.x/initials/svg?seed=${encodeURIComponent(
+                      u.firstName || "U"
+                    )}`;
+                  return (
+                    <tr
+                      key={u._id}
+                      className="hover:bg-white/[0.025] transition-colors"
+                    >
+                      <td className="px-5 py-3.5">
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={avatar}
+                            alt={u.firstName}
+                            className="h-9 w-9 rounded-full object-cover ring-1 ring-white/15 shrink-0"
+                          />
+                          <div>
+                            <p className="font-medium text-sm text-slate-100">
+                              {u.firstName} {u.lastName}
+                            </p>
+                            <p className="text-xs text-slate-400">{u.email}</p>
+                          </div>
                         </div>
-                      </div>
-                    </td>
+                      </td>
 
-                    <td className="um-td text-center">
-                      <span className="role-badge">{inst.accountType || "—"}</span>
-                    </td>
+                      <td className="px-5 py-3.5 text-center">
+                        <span className="inline-flex text-[11px] font-medium capitalize px-2.5 py-0.5 rounded-md bg-white/[0.05] border border-white/[0.08] text-slate-300">
+                          {u.accountType || "—"}
+                        </span>
+                      </td>
 
-                    <td className="um-td text-center" style={{ color: "#64748b" }}>
-                      {inst.email}
-                    </td>
+                      <td className="px-5 py-3.5 text-center">
+                        <span
+                          className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${
+                            isBlocked
+                              ? "bg-rose-500/10 text-rose-400 border-rose-500/25"
+                              : "bg-emerald-500/10 text-emerald-400 border-emerald-500/25"
+                          }`}
+                        >
+                          <span
+                            className={`w-1.5 h-1.5 rounded-full ${
+                              isBlocked ? "bg-rose-400" : "bg-emerald-400"
+                            }`}
+                          />
+                          {u.status || "Active"}
+                        </span>
+                      </td>
 
-                    <td className="um-td text-center">
-                      <span className="badge-active">
-                        <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#10b981", display: "inline-block" }} />
-                        {inst.status || "Active"}
-                      </span>
-                    </td>
+                      <td className="px-5 py-3.5 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => setSelectedUser(u)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-slate-200 transition cursor-pointer"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            View
+                          </button>
 
-                    <td className="um-td text-center">
-                      <button className="btn-edit">Edit</button>
-                    </td>
-                  </tr>
-                ))
+                          {u.accountType?.toLowerCase() !== "admin" && (
+                            <button
+                              disabled={actionLoadingId === u._id}
+                              onClick={() => handleToggleUserStatus(u)}
+                              className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition cursor-pointer disabled:opacity-50 ${
+                                isBlocked
+                                  ? "bg-emerald-500/10 hover:bg-emerald-500/20 border-emerald-500/25 text-emerald-400"
+                                  : "bg-rose-500/10 hover:bg-rose-500/20 border-rose-500/25 text-rose-400"
+                              }`}
+                            >
+                              {isBlocked ? (
+                                <>
+                                  <ShieldCheck className="w-3.5 h-3.5" />
+                                  Unblock
+                                </>
+                              ) : (
+                                <>
+                                  <ShieldBan className="w-3.5 h-3.5" />
+                                  Block
+                                </>
+                              )}
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
         </div>
       </div>
 
-      {/* Pagination */}
-      <div className="h-16 flex items-center justify-center gap-1.5">
-        {!hasPrevPage ? (
-          <button disabled className="pg-btn">← Prev</button>
-        ) : (
-          <button className="pg-btn" onClick={() => goToPage(currentPage - 1)}>← Prev</button>
-        )}
+      {/* PAGINATION */}
+      <div className="flex items-center justify-center gap-1.5">
+        <button
+          disabled={!hasPrevPage}
+          onClick={() => goToPage(currentPage - 1)}
+          className="px-3 py-1.5 rounded-lg text-xs font-medium bg-[#11151f] border border-white/[0.08] text-slate-300 hover:bg-white/[0.06] disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
+        >
+          ← Prev
+        </button>
 
         {getPages().map((c, idx) =>
           c === "..." ? (
-            <span key={idx} className="px-2 text-sm" style={{ color: "#94a3b8" }}>...</span>
+            <span key={idx} className="px-2 text-xs text-slate-500">
+              ...
+            </span>
           ) : (
             <button
               key={c}
               onClick={() => goToPage(c)}
-              className={`pg-btn ${c === currentPage ? "active" : ""}`}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition cursor-pointer ${
+                c === currentPage
+                  ? "bg-indigo-600 border-indigo-500 text-white"
+                  : "bg-[#11151f] border-white/[0.08] text-slate-300 hover:bg-white/[0.06]"
+              }`}
             >
               {c}
             </button>
-          ),
+          )
         )}
 
-        {hasNextPage && (
-          <button onClick={() => goToPage(currentPage + 1)} className="pg-btn">
-            Next →
-          </button>
-        )}
+        <button
+          disabled={!hasNextPage}
+          onClick={() => goToPage(currentPage + 1)}
+          className="px-3 py-1.5 rounded-lg text-xs font-medium bg-[#11151f] border border-white/[0.08] text-slate-300 hover:bg-white/[0.06] disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
+        >
+          Next →
+        </button>
       </div>
+
+      {/* USER DETAILS MODAL */}
+      {selectedUser && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="w-full max-w-md rounded-2xl bg-[#11151f] border border-white/10 p-6 shadow-2xl">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-base font-semibold text-white">User Profile</h3>
+              <button
+                onClick={() => setSelectedUser(null)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.06] cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="flex items-center gap-4 mb-5 pb-5 border-b border-white/[0.08]">
+              <img
+                src={
+                  selectedUser.image?.url ||
+                  `https://api.dicebear.com/5.x/initials/svg?seed=${encodeURIComponent(
+                    selectedUser.firstName || "U"
+                  )}`
+                }
+                alt={selectedUser.firstName}
+                className="w-14 h-14 rounded-full object-cover ring-1 ring-white/15"
+              />
+              <div>
+                <p className="font-semibold text-white">
+                  {selectedUser.firstName} {selectedUser.lastName}
+                </p>
+                <p className="text-xs text-slate-400 mt-0.5">{selectedUser.email}</p>
+              </div>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div className="flex justify-between">
+                <span className="text-slate-400">Account Role</span>
+                <span className="text-slate-100 font-medium capitalize">
+                  {selectedUser.accountType}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Status</span>
+                <span className="text-slate-100 font-medium">
+                  {selectedUser.status || "Active"}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Deletion Requested</span>
+                <span className="text-slate-100 font-medium">
+                  {selectedUser.isdeleted ? "Yes" : "No"}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">User ID</span>
+                <span className="font-mono text-slate-300">{selectedUser._id}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
