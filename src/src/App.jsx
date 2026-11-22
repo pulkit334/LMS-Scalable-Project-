@@ -265,6 +265,7 @@ toast(
         >
           {/* sidebar layout */}
           <Route element={<AdminLayout />}>
+            <Route index element={<Navigate to="insight" replace />} />
             <Route path="insight" element={<AdminInsights />} />
             <Route path="instructors" element={<Instructormangment />} />
             <Route path="users" element={<Admin_usermangemt />} />
