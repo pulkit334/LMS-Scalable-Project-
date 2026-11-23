@@ -1,10 +1,8 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-
-
 const initialState = {
   sinupData: null, //  KEEP SAME NAME
-  token:  null,
+  token: null,
   loading: false,
 };
 
@@ -17,7 +15,7 @@ const authSlice = createSlice({
     },
 
     setloading(state, action) {
-      state.loading = action.payload; 
+      state.loading = action.payload;
     },
 
     //  ADD THIS (IMPORTANT)
@@ -33,7 +31,7 @@ const authSlice = createSlice({
     logout(state) {
       state.token = null;
       state.sinupData = null;
-        localStorage.removeItem("token");
+      localStorage.removeItem("token");
     },
   },
 });

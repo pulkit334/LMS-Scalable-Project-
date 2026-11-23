@@ -1,8 +1,11 @@
 import { useSelector } from "react-redux";
 import { ProfileMenu } from "./ProfileBar_modal/ProfilePopup";
 import { useEffect, useRef, useState } from "react";
+
 export const ProfileDropDown = () => {
   const user = useSelector((state) => state.profile.user);
+
+  const token = useSelector((state) => state.auth.token);
   const ready = useSelector((state) => state.profile.ready);
   const [open, setOpen] = useState(false);
   const popupRef = useRef(null);
@@ -18,6 +21,10 @@ export const ProfileDropDown = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // if no access token and the user is not Loggeed in  Don;t Show Profile Drop down
+  if (!token) return null;
+
+  // waiting for hydration / user fetch
   if (!ready) return null;
 
   return (

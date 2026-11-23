@@ -4,10 +4,9 @@ import { GetInsturctorCourse } from "../services/auth";
 // 🔹 async thunk using YOUR API
 export const fetchInstructorCourses = createAsyncThunk(
   "instructorCourses/fetch",
-  async () => {   
+  async () => {
     const res = await GetInsturctorCourse();
-    console.log("The data is this ",res)
-    return res.data; // backend data array
+return res.data; // backend data array
   }
 );
 
@@ -18,7 +17,13 @@ const instructorCoursesSlice = createSlice({
     loading: false,
     error: null,
   },
-  reducers: {},
+  reducers: {
+    removeCourse: (state, action) => {
+      state.courses = state.courses.filter(
+        (course) => course._id !== action.payload
+      );
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchInstructorCourses.pending, (state) => {
@@ -34,5 +39,5 @@ const instructorCoursesSlice = createSlice({
       });
   },
 });
-
+export const {removeCourse}= instructorCoursesSlice.actions;
 export default instructorCoursesSlice.reducer;

@@ -2,6 +2,15 @@ const course = require("../models/course");
 const Category = require("../models/category");
 const User = require("../models/User");
 const { uploadImageToCloudinary } = require("../utils/imageuploader");
+const Section = require("../models/section");
+const Subsection = require("../models/subsection");
+const RatingAndReview = require("../models/RatingAndReview");
+const { default: mongoose } = require("mongoose");
+const CourseProgress = require("../models/courseporgress");
+const {
+  courseProgress,
+  courseLengthCalculate,
+} = require("../utils/CourseProgress");
 
 exports.createCourse = async (req, res) => {
   try {
@@ -25,8 +34,7 @@ exports.createCourse = async (req, res) => {
         message: "Thumbnail image is required",
       });
     }
-
-    const thumbnail = req.files.thumbnailImage;
+const thumbnail = req.files.thumbnailImage;
 
     //validation
     if (
@@ -66,7 +74,7 @@ exports.createCourse = async (req, res) => {
     ///upload image top cloudiinry
     const thumngnailImage = await uploadImageToCloudinary(
       thumbnail,
-      process.env.FolderName
+      process.env.FolderName,
     );
 
     //create an entry for new courseco
@@ -89,20 +97,31 @@ exports.createCourse = async (req, res) => {
       {
         $push: { courses: newCourse._id },
       },
-      { new: true }
+      { new: true },
     );
 
-    //update the category  schema homework
-    console.log("the data is ", response);
-    res.status(201).json({
+    //update the category  schema
+    await Category.findByIdAndUpdate(
+      category,
+      { $push: { course: newCourse._id } },
+      { new: true },
+    );
+    // Invalidate instructor courses & categories cache so new course shows immediately
+    try {
+      const redisClient = require("../Reddis/client");
+      await redisClient.del(`Courses:Instructor:${userid}`, "Category:All");
+    } catch (_) {}
+
+    return res.status(201).json({
       success: true,
-      message: "Course Created Succesfully",
+      message: "Course Created Successfully",
       courseId: newCourse._id,
     });
   } catch (err) {
-    res.status(403).json({
+    console.error("createCourse error:", err);
+    return res.status(500).json({
       success: false,
-      message: "Error Ocurred Try Again..",
+      message: err.message || "Error occurred while creating course",
       error: err.message,
     });
   }
@@ -115,7 +134,7 @@ exports.ShowCourses = async (req, res) => {
     const instrucorid = req.user.id;
     const AllCourses = await course
       .find({ Insturctor: instrucorid })
-      .populate("Insturctor") // ⬅MUST MATCH SCHEMA FIELD NAME
+      .populate("Insturctor")
       .exec();
 
     return res.status(200).json({
@@ -131,66 +150,62 @@ exports.ShowCourses = async (req, res) => {
     });
   }
 };
-
-exports.course = async (req, res) => {
-  try {
-    const { courseId } = req.params;
-    console.log(courseId);
-    if (!courseId) {
-      return res.status(400).json({
-        success: false,
-        message: "CourseId is required",
-      });
-    }
-
-    const data = await course
-      .findById(courseId)
-      .populate({
-        path: "courseContent",
-        populate: { path: "SubSection" },
-      })
-      .populate("category")
-      .populate("ratingAndReviews");
-
-    return res.status(200).json({
-      success: true,
-      message: "Fetched...",
-      data,
-    });
-  } catch (err) {
-    res.status(500).json({
-      success: false,
-      message: "Failed to Fetch the User",
-      err: err.message,
-    });
-  }
-};
-
-//for the profile section only
 exports.getEnrolledCourses = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    const user = await User.findById(userId).populate("courses");
+    const user = await User.findById(userId).populate({
+      path: "courses",
+      populate: {
+        path: "courseContent",
+        populate: {
+          path: "subsection",
+        },
+      },
+    });
+
+    //  FETCH PROGRESS DIRECTLY (KEY FIX)
+    const progressDocs = await CourseProgress.find({ userId });
+
+    const ProgressMap = new Map();
+    progressDocs.forEach((p) => {
+      ProgressMap.set(p.courseId.toString(), p.completedVideos.length);
+    });
+
+    const UpdatedProgress = user.courses.map((course) => {
+      const totalLecture = courseLengthCalculate(course);
+      const completedLecture = ProgressMap.get(course._id.toString()) || 0;
+
+      const coursePercentage =
+        totalLecture === 0
+          ? 0
+          : Math.round((completedLecture / totalLecture) * 100);
+
+      return {
+        ...course.toObject(),
+        coursePercentage,
+      };
+    });
 
     return res.status(200).json({
       success: true,
-      courses: user.courses,
+      courses: UpdatedProgress,
     });
   } catch (error) {
+    console.error(error);
     return res.status(500).json({
       success: false,
       message: "Failed to fetch enrolled courses",
     });
   }
 };
+
 // for making the course publish  or saved as draft
 
 exports.changestatus = async (req, res) => {
   try {
     const { courseId, isPublic } = req.body;
-    console.log(courseId, isPublic);
-    const userId = req.user.id;
+const userId = req.user.id;
     if (!courseId) {
       return res.status(400).json({
         success: false,
@@ -225,8 +240,7 @@ exports.changestatus = async (req, res) => {
       message: "Successfully Published",
     });
   } catch (error) {
-    console.log(error);
-    return res.status(500).json({
+return res.status(500).json({
       success: false,
       message: "Error Pls Try Again ",
       error,
@@ -240,14 +254,23 @@ exports.getFullCourseDetails = async (req, res) => {
   try {
     const { courseId } = req.params;
     const userId = req.user.id;
+    const userRole = String(req.user?.accountType || "").trim().toLowerCase();
+
+    if (!courseId) {
+      return res.status(400).json({
+        success: false,
+        message: "Course ID is required",
+      });
+    }
 
     const courseDetails = await course
       .findById(courseId)
       .populate({
-        path: "Insturctor", //  spelling preserved
+        path: "Insturctor",
         populate: { path: "additionalDetails" },
       })
       .populate("category")
+      .populate("ratingAndReviews")
       .populate({
         path: "courseContent",
         populate: { path: "subsection" },
@@ -260,17 +283,69 @@ exports.getFullCourseDetails = async (req, res) => {
       });
     }
 
-    //  AUTH CHECK
-    if (courseDetails.Insturctor._id.toString() !== userId) {
-      return res.status(403).json({
-        success: false,
-        message: "Not authorized to edit this course",
+    // INSTRUCTOR: can only access/edit their own course
+    if (userRole === "instructor") {
+      if (courseDetails.Insturctor?._id?.toString() !== String(userId)) {
+        return res.status(403).json({
+          success: false,
+          message: "Not authorized to edit this course",
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        mode: "EDIT",
+        courseDetails,
+        completedVideos: [],
       });
     }
 
-    return res.status(200).json({
-      success: true,
-      courseDetails,
+    // STUDENT: strict enrollment check before exposing private video URLs
+    if (userRole === "student") {
+      const isEnrolled = courseDetails.studentEnrolled?.some(
+        (id) => String(id) === String(userId)
+      );
+
+      if (!isEnrolled) {
+        return res.status(403).json({
+          success: false,
+          message: "You are not enrolled in this course",
+        });
+      }
+
+      let totalDurationInSeconds = 0;
+      courseDetails.courseContent?.forEach((section) => {
+        section.subsection?.forEach((sub) => {
+          totalDurationInSeconds += Number(sub.timeduration || sub.timeDuration || 0);
+        });
+      });
+
+      const progressDoc = await CourseProgress.findOne({
+        courseId,
+        userId,
+      }).lean();
+
+      return res.status(200).json({
+        success: true,
+        mode: "VIEW",
+        courseDetails,
+        completedVideos: progressDoc?.completedVideos || [],
+        totalDuration: `${Math.ceil(totalDurationInSeconds / 60)} mins`,
+      });
+    }
+
+    if (userRole === "admin") {
+      return res.status(200).json({
+        success: true,
+        mode: "ADMIN",
+        courseDetails,
+        completedVideos: [],
+      });
+    }
+
+    return res.status(403).json({
+      success: false,
+      message: "Unauthorized role",
     });
   } catch (error) {
     console.error("GET FULL COURSE DETAILS ERROR:", error);
@@ -280,6 +355,7 @@ exports.getFullCourseDetails = async (req, res) => {
     });
   }
 };
+
 exports.updateCourse = async (req, res) => {
   try {
     const { courseId } = req.params;
@@ -326,15 +402,14 @@ exports.updateCourse = async (req, res) => {
 
       const publicId =
         courseImage.image?.publicId || `courses/${courseId}/thumbnail`;
-console.log("The public Id is ",courseImage)
-      const uploaded = await uploadImageToCloudinary(
+const uploaded = await uploadImageToCloudinary(
         req.files.thumbnailImage,
         process.env.FolderName,
         {
           public_id: publicId,
           overwrite: true,
           invalidate: true,
-        }
+        },
       );
 
       updatePayload.image = {
@@ -346,7 +421,7 @@ console.log("The public Id is ",courseImage)
     const updatedCourse = await course.findByIdAndUpdate(
       courseId,
       { $set: updatePayload },
-      { new: true, runValidators: true }
+      { new: true, runValidators: true },
     );
 
     if (!updatedCourse) {
@@ -366,6 +441,386 @@ console.log("The public Id is ",courseImage)
       success: false,
       message: "Course update failed",
       error: error.message,
+    });
+  }
+};
+
+exports.deleteCourse = async (req, res) => {
+  try {
+    // 1️ Extract IDs
+    const courseId = req.params.courseId;
+    const userId = req.user.id;
+
+    // 2️ Find course
+const Course = await course.findById(courseId);
+if (!Course) {
+      return res.status(404).json({
+        success: false,
+        message: "Course not found",
+      });
+    }
+
+    // 3️ Authorization check (VERY IMPORTANT FIX)
+    // if (Course.Insturctor.toString() !== userId) {
+    //   return res.status(403).json({
+    //     success: false,
+    //     message: "Not authorized to delete this course",
+    //   });
+    // }
+
+    // 4️ Find all sections of the course (only subSection field)
+    const sections = await Section.find(
+      { _id: { $in: Course.courseContent } },
+      { subSection: 1 },
+    ).lean();
+
+    // 5️ Collect all subsection IDs
+    const subSectionIds = sections.flatMap((sec) => sec.subSection);
+
+    // 6️ Delete all subsections
+    if (subSectionIds.length > 0) {
+      await Subsection.deleteMany({
+        _id: { $in: subSectionIds },
+      });
+    }
+
+    // 7️ Delete all sections 
+    await Section.deleteMany({
+      _id: { $in: Course.courseContent },
+    });
+
+    // 8️ Remove course from ALL enrolled users
+    await User.updateMany(
+      { courses: courseId },
+      { $pull: { courses: courseId } },
+    );
+
+    // 9️ OPTIONAL: remove course from category (safe guard)
+    if (Course.category) {
+      await Category.findByIdAndUpdate(Course.category, {
+        $pull: { courses: courseId },
+      });
+    }
+
+    //  Finally delete the course itself
+    await course.findByIdAndDelete(courseId);
+
+    // 111 Response
+    return res.status(200).json({
+      success: true,
+      message: "Course deleted successfully",
+    });
+  } catch (error) {
+    console.error("Delete course error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to delete course",
+    });
+  }
+};
+
+//Get Page Data -> Header
+exports.getCourse = async (req, res) => {
+  try {
+    const { courseId } = req.params;
+
+    if (!courseId) {
+      return res.status(400).json({
+        success: false,
+        message: "courseId is required",
+      });
+    }
+const data = await course
+      .findById(courseId)
+      .select(
+        "courseName courseDescription price thumbnail category Insturctor totalDuration status studentEnrolled whatyouwilllearn",
+      )
+      .populate("category", "name")
+      .populate("Insturctor", "image.url firstName lastName email");
+if (!data) {
+      return res.status(404).json({
+        success: false,
+        message: "Course not found",
+      });
+    }
+
+    //  THIS WAS MISSING
+    return res.status(200).json({
+      success: true,
+      data,
+    });
+  } catch (err) {
+    console.error("GET COURSE ERROR:", err);
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+//Get the Course  Content
+exports.getCourseContent = async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    const content = await course
+      .findById(courseId)
+      .select("courseContent")
+      .populate({
+        path: "courseContent",
+        populate: {
+          path: "subsection", // must match Section schema ref
+          select: "tittle timeduration description videoUrl",
+        },
+      });
+
+    return res.status(200).json({
+      success: true,
+      data: content?.courseContent || [],
+    });
+  } catch (err) {
+    console.error("COURSE CONTENT ERROR:", err);
+    return res.status(500).json({
+      success: false,
+      message: err,
+    });
+  }
+};
+
+//Get the Reviews (Pagination )
+exports.getPaymentCourseReviews = async (req, res) => {
+  try {
+    const { courseId } = req.params;
+
+    let limit = Number(req.query.limit) || 10;
+    if (limit > 40) limit = 20;
+
+    const after = req.query.after;
+
+    // -----------------------
+    // 1️Base query
+    // -----------------------
+    const query = { Course: courseId };
+    if (after) {
+      query._id = { $lt: after };
+    }
+
+    // -----------------------
+    // 2 Fetch paginated reviews
+    // -----------------------
+    const reviews = await RatingAndReview.find(query)
+      .sort({ _id: -1 })
+      .limit(limit);
+
+    const nextCursor =
+      reviews.length > 0 ? reviews[reviews.length - 1]._id : null;
+
+    // -----------------------
+    // 3 Get rating stats (AVG + COUNT)
+    // -----------------------
+    const ratingStats = await RatingAndReview.aggregate([
+      { $match: { Course: new mongoose.Types.ObjectId(courseId) } },
+      {
+        $group: {
+          _id: null,
+          avgRating: { $avg: "$rating" },
+          totalRatings: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const stats = ratingStats[0] || {
+      avgRating: 0,
+      totalRatings: 0,
+    };
+
+    // -----------------------
+    // 4 Send response
+    // -----------------------
+    return res.status(200).json({
+      success: true,
+      data: reviews,
+      nextCursor,
+      ratingStats: {
+        avgRating: Number(stats.avgRating?.toFixed(1)) || 0,
+        totalRatings: stats.totalRatings,
+      },
+    });
+  } catch (err) {
+    console.error("COURSE REVIEW ERROR:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch reviews",
+    });
+  }
+};
+
+//Progress Api
+
+exports.markLectureComplete = async (req, res) => {
+  try {
+    const userId = req.user.id; // from auth middleware
+    const { courseId, subSectionId } = req.body;
+
+    // 1️ Validation
+    if (!courseId || !subSectionId) {
+      return res.status(400).json({
+        success: false,
+        message: "courseId and subSectionId are required",
+      });
+    }
+
+    // 2️ Check subsection exists
+    const subSectionExists = await Subsection.findById(subSectionId);
+    if (!subSectionExists) {
+      return res.status(404).json({
+        success: false,
+        message: "Subsection not found",
+      });
+    }
+
+    // 3️ Find course progress
+    let courseProgress = await CourseProgress.findOne({
+      userId,
+      courseId,
+    });
+
+    // 4️ If progress does not exist → create
+    if (!courseProgress) {
+      courseProgress = await CourseProgress.create({
+        userId,
+        courseId,
+        completedVideos: [subSectionId],
+      });
+      //push the courseporess to user id
+      await User.findByIdAndUpdate(userId, {
+        $addToSet: { courseProgress: courseProgress._id },
+      });
+      return res.status(200).json({
+        success: true,
+        message: "Lecture marked as complete",
+        data: courseProgress,
+      });
+    }
+
+    // 5️ Prevent duplicate completion
+    if (courseProgress.completedVideos.includes(subSectionId)) {
+      return res.status(409).json({
+        success: false,
+        message: "Lecture already completed",
+        data: courseProgress,
+      });
+    }
+
+    // 6️ Add subsection to completedVideos
+    courseProgress.completedVideos.push(subSectionId);
+    await courseProgress.save();
+    await User.findByIdAndUpdate(userId, {
+      $addToSet: { courseProgress: courseProgress._id },
+    });
+
+    // 7️ Return response
+    return res.status(200).json({
+      success: true,
+      message: "Lecture marked as complete",
+      data: courseProgress,
+    });
+  } catch (error) {
+    console.error("markLectureComplete error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+//Vedio Reupload Api
+exports.Updatevedio = async (req,res)=>{
+  try {
+    //Vedio Url Comes , Subsection Ko Bhi update Karna hoga use Course ke id-> Section-> Subsection ke ander 
+  
+  }
+  catch(err){
+    return res.status(500).json({
+      success : false,
+      message : "Internal Server Error"
+    })
+  }
+}
+
+exports.downloadCourseCertificate = async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    const userId = req.user.id;
+
+    const [courseDoc, student, progressDoc] = await Promise.all([
+      course
+        .findById(courseId)
+        .populate("Insturctor", "firstName lastName")
+        .populate({ path: "courseContent", select: "subsection" })
+        .lean(),
+      User.findById(userId).select("firstName lastName").lean(),
+      CourseProgress.findOne({ courseId, userId }).lean(),
+    ]);
+
+    if (!courseDoc) {
+      return res.status(404).json({ success: false, message: "Course not found" });
+    }
+
+    const isEnrolled = courseDoc.studentEnrolled?.some(
+      (id) => String(id) === String(userId)
+    );
+    if (!isEnrolled) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not enrolled in this course",
+      });
+    }
+
+    const totalLectures = (courseDoc.courseContent || []).reduce(
+      (sum, sec) => sum + (sec.subsection?.length || 0),
+      0
+    );
+    const completedCount = progressDoc?.completedVideos?.length || 0;
+
+    if (totalLectures === 0 || completedCount < totalLectures) {
+      return res.status(403).json({
+        success: false,
+        message: `Complete all lectures (${completedCount}/${totalLectures}) to unlock your certificate`,
+      });
+    }
+
+    const generateCertificate = require("../utils/GenerateCertificate");
+    const studentName =
+      `${student?.firstName || ""} ${student?.lastName || ""}`.trim() || "Student";
+    const instructorName =
+      `${courseDoc.Insturctor?.firstName || ""} ${courseDoc.Insturctor?.lastName || ""}`.trim() ||
+      "Instructor";
+    const certId = `NX-${String(courseId).slice(-5).toUpperCase()}-${String(userId).slice(-5).toUpperCase()}`;
+
+    const pdfBuffer = await generateCertificate({
+      studentName,
+      courseName: courseDoc.courseName,
+      instructorName,
+      completionDate: progressDoc?.updatedAt || new Date(),
+      certificateId: certId,
+    });
+
+    const safeSlug = String(courseDoc.courseName || "course")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "");
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="certificate-${safeSlug || "course"}.pdf"`
+    );
+    return res.send(pdfBuffer);
+  } catch (err) {
+    console.error("downloadCourseCertificate error:", err);
+    return res.status(500).json({
+      success: false,
+      message: err.message || "Failed to generate certificate",
     });
   }
 };

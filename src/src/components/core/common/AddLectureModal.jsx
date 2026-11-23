@@ -17,16 +17,20 @@ const AddLectureModal = ({ isOpen, onClose, sectionId, lecture = null }) => {
 
   const [videoPreview, setVideoPreview] = useState(false);
   const [timeDuration, setTimeDuration] = useState(0);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+  const [newVideoFile, setNewVideoFile] = useState(null); // Track new video file
 
   /* -------------------- RHF -------------------- */
   const {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm();
 
-  /* -------------------- PREFILL (EDIT) -------------------- */
+  /* -------------------- Phele se Bari hui hai  -------------------- */
   useEffect(() => {
     if (lecture) {
       reset({
@@ -35,6 +39,7 @@ const AddLectureModal = ({ isOpen, onClose, sectionId, lecture = null }) => {
       });
       setTimeDuration(lecture.timeduration || 0);
       setVideoPreview(lecture.videoUrl || false);
+      setNewVideoFile(null); // Reset new video file
     }
   }, [lecture, reset]);
 
@@ -52,11 +57,12 @@ const AddLectureModal = ({ isOpen, onClose, sectionId, lecture = null }) => {
     const duration = await getVideoDuration(file);
     setTimeDuration(duration);
     setVideoPreview(URL.createObjectURL(file));
-  };
+    setNewVideoFile(file); //  Store the new file
+};
 
   /* -------------------- SAFE CLOSE -------------------- */
   const handleModalClose = () => {
-    onClose(null); // ✅ IMPORTANT
+    onClose(null);
   };
 
   /* -------------------- SAVE -------------------- */
@@ -68,41 +74,72 @@ const AddLectureModal = ({ isOpen, onClose, sectionId, lecture = null }) => {
       formData.append("sectionId", sectionId);
       formData.append("timeDuration", timeDuration);
 
-      Object.entries(data).forEach(([key, value]) => {
-        if (key === "videoFile" && value?.length) {
-          formData.append("videoFile", value[0]);
-        } else if (key !== "videoFile") {
-          formData.append(key, value);
-        }
-      });
+      //  Check if there's a new video file (from state, not form data)
+      const hasNewVideo = newVideoFile !== null;
 
-      toastId = isEdit
-        ? toast.loading("Updating")
-        : toast.loading("Creating Subsection");
+      if (hasNewVideo) {
+        formData.append("videoFile", newVideoFile);
+}
+
+      // Add other form fields
+      formData.append("tittle", data.tittle);
+      formData.append("description", data.description);
+
+      // Show appropriate loading message
+      if (hasNewVideo) {
+        toastId = toast.loading(isEdit ? "Uploading new video..." : "Uploading video...");
+        setIsUploading(true);
+        setUploadProgress(0);
+      } else {
+        toastId = toast.loading(isEdit ? "Updating lecture..." : "Creating lecture...");
+      }
 
       const response = isEdit
-        ? await UpdateSubsection(subSectionId, formData)
-        : await createSubsection(formData);
+        ? await UpdateSubsection(subSectionId, formData, {
+            onUploadProgress: (progressEvent) => {
+              if (hasNewVideo) {
+                const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                setUploadProgress(percent);
+                toast.loading(`Uploading... ${percent}%`, { id: toastId });
+              }
+            }
+          })
+        : await createSubsection(formData, {
+            onUploadProgress: (progressEvent) => {
+              const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+              setUploadProgress(percent);
+              toast.loading(`Uploading... ${percent}%`, { id: toastId });
+            }
+          });
 
-      onClose({
-        isEdit,
-        sectionId,
-        updatedSection: response?.data?.UpdatedData || null,
-        lecture: response?.data?.subsection || null,
-      });
+      setIsUploading(false);
+if (response?.data?.success) {
+        toast.success(isEdit ? "Lecture updated!" : "Lecture created!", { id: toastId });
+        
+        onClose({
+          isEdit,
+          sectionId,
+          updatedSection: response?.data?.UpdatedData,
+          lecture: response?.data?.subsection,
+        });
 
-      toast.success("Updated successfully", { id: toastId });
-      reset();
-      setVideoPreview(false);
+        reset();
+        setVideoPreview(false);
+        setUploadProgress(0);
+        setNewVideoFile(null);
+      }
     } catch (err) {
-      toast.error("Failed Try Again", { id: toastId });
+      console.error("❌ Save error:", err);
+      setIsUploading(false);
+      setUploadProgress(0);
+      toast.error("Failed. Try again.", { id: toastId });
     }
   };
 
   return (
     <div
       className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center"
-      onClick={handleModalClose} // ✅ FIX
+      onClick={handleModalClose}
     >
       <div
         className="
@@ -122,7 +159,7 @@ const AddLectureModal = ({ isOpen, onClose, sectionId, lecture = null }) => {
           <h2 className="text-lg font-semibold text-white">
             {isEdit ? "Edit Lecture" : "Adding Lecture"}
           </h2>
-          <button onClick={handleModalClose}> {/* ✅ FIX */}
+          <button onClick={handleModalClose}>
             <X className="text-slate-400 hover:text-white" />
           </button>
         </div>
@@ -137,33 +174,67 @@ const AddLectureModal = ({ isOpen, onClose, sectionId, lecture = null }) => {
                 {!isEdit && <span className="text-yellow-400">*</span>}
               </label>
 
-              <label className="flex flex-col items-center justify-center border border-dashed border-slate-600 rounded-lg p-6 cursor-pointer bg-[#020617]">
-                {videoPreview ? (
+              {videoPreview ? (
+                // WHEN VIDEO EXISTS
+                <div className="space-y-3">
                   <video
                     src={videoPreview}
                     controls
-                    className="w-full max-h-65 rounded-md bg-black"
+                    className="w-full max-h-65 rounded-md bg-black border border-slate-600"
                   />
-                ) : (
-                  <>
-                    <Upload className="text-yellow-400 mb-2" />
-                    <p className="text-sm text-slate-300">
-                      Drag & drop or{" "}
-                      <span className="text-yellow-400">Browse</span>
-                    </p>
-                  </>
-                )}
+                  
+                  {/* CHANGE VIDEO BUTTON */}
+                  <label className="flex items-center justify-center gap-2 border border-yellow-400 text-yellow-400 rounded-md px-4 py-2 cursor-pointer hover:bg-yellow-400/10 transition">
+                    <Upload size={18} />
+                    <span>Change Video</span>
+                    <input
+                      type="file"
+                      accept="video/*"
+                      hidden
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          handleVideoPreview(file);
+                        }
+                      }}
+                    />
+                  </label>
+                </div>
+              ) : (
+                // WHEN NO VIDEO
+                <label className="flex flex-col items-center justify-center border border-dashed border-slate-600 rounded-lg p-6 cursor-pointer bg-[#020617]">
+                  <Upload className="text-yellow-400 mb-2" />
+                  <p className="text-sm text-slate-300">
+                    Drag & drop or{" "}
+                    <span className="text-yellow-400">Browse</span>
+                  </p>
+                  
+                  <input
+                    type="file"
+                    accept="video/*"
+                    hidden
+                    {...register("videoFile", {
+                      required: !isEdit && "Lecture video is required",
+                      onChange: (e) => handleVideoPreview(e.target.files[0]),
+                    })}
+                  />
+                </label>
+              )}
 
-                <input
-                  type="file"
-                  accept="video/*"
-                  hidden
-                  {...register("videoFile", {
-                    required: !isEdit && "Lecture video is required",
-                    onChange: (e) => handleVideoPreview(e.target.files[0]),
-                  })}
-                />
-              </label>
+              {/* PROGRESS BAR */}
+              {isUploading && (
+                <div className="mt-4">
+                  <div className="w-full h-2 bg-slate-700 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-yellow-400 transition-all duration-300"
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
+                  <p className="text-sm text-yellow-400 mt-2 text-center">
+                    Uploading... {uploadProgress}%
+                  </p>
+                </div>
+              )}
 
               {errors.videoFile && (
                 <p className="text-red-400 text-xs mt-2">

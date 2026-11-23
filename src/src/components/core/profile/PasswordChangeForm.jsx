@@ -3,13 +3,14 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { changePassword } from "../../../services/auth"; // adjust path
 import Input from "./Input";
+import { KeyRound } from "lucide-react";
 
 const PasswordChangeForm = () => {
   const {
     register,
     handleSubmit,
     reset,
-    formState: { errors, isDirty }
+    formState: { errors, isDirty },
   } = useForm({
     defaultValues: {
       oldPassword: "",
@@ -27,7 +28,7 @@ const PasswordChangeForm = () => {
       });
 
       toast.success("Password updated successfully", { id: toastId });
-      reset(); 
+      reset();
     } catch (error) {
       toast.error(
         error?.response?.data?.message || "Failed to update password",
@@ -39,11 +40,28 @@ const PasswordChangeForm = () => {
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="rounded-xl bg-[#161D29] p-6"
+      className="rounded-2xl p-6"
+      style={{
+        background: "linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%)",
+        border: "1px solid rgba(255,255,255,0.07)",
+        boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
+      }}
     >
-      <h2 className="mb-6 font-semibold">Password</h2>
+      <div className="mb-6 flex items-center gap-3">
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+          style={{ background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.2)" }}
+        >
+          <KeyRound size={15} style={{ color: "#fbbf24" }} />
+        </div>
+        <div>
+          <h2 className="font-bold text-base" style={{ fontFamily: "'Syne', sans-serif", color: "#f0f4ff", letterSpacing: "-0.01em" }}>
+            Password
+          </h2>
+          <p className="text-xs" style={{ color: "rgba(255,255,255,0.3)" }}>Update your password</p>
+        </div>
+      </div>
 
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-2 gap-5">
         <Input
           label="Current Password *"
           error={errors.oldPassword}
@@ -69,7 +87,12 @@ const PasswordChangeForm = () => {
         <button
           type="button"
           onClick={() => reset()}
-          className="rounded-md bg-gray-700 px-4 py-2"
+          className="px-4 py-2 rounded-lg text-sm font-medium"
+          style={{
+            background: "rgba(255,255,255,0.05)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            color: "rgba(255,255,255,0.5)",
+          }}
         >
           Cancel
         </button>
@@ -77,9 +100,17 @@ const PasswordChangeForm = () => {
         <button
           type="submit"
           disabled={!isDirty}
-          className="rounded-md bg-yellow-400 px-4 py-2 text-black disabled:opacity-50"
+          className="px-6 py-2 rounded-lg text-sm font-bold"
+          style={{
+            background: "linear-gradient(135deg, #fbbf24, #f59e0b)",
+            color: "#000",
+            boxShadow: "0 4px 16px rgba(251,191,36,0.2)",
+            opacity: isDirty ? 1 : 0.4,
+            cursor: isDirty ? "pointer" : "not-allowed",
+            transition: "all 0.2s",
+          }}
         >
-          Update
+          Update Password
         </button>
       </div>
     </form>
@@ -87,4 +118,3 @@ const PasswordChangeForm = () => {
 };
 
 export default PasswordChangeForm;
-

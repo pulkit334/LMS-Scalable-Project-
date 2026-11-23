@@ -245,9 +245,7 @@ const CourseBuilder = () => {
   const dispatch = useDispatch();
 
   const { sections, courseId } = useSelector((state) => state.course);
-  console.log("The Course id is 0", courseId);
-
-  // GUARD (ONLY ADDITION — NO COMMENT CHANGES)
+// GUARD (ONLY ADDITION — NO COMMENT CHANGES)
   if (!courseId) {
     return (
       <section className="min-h-screen bg-[#0b1220] text-white flex items-center justify-center">

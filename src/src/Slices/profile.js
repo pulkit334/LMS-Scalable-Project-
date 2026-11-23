@@ -2,11 +2,9 @@ import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
   user: null,
-
   // auth / profile
   loading: false,
   ready: false,
-
   // categories
   categories: [],
   status: "idle",
@@ -48,12 +46,17 @@ const profileSlice = createSlice({
     invalidateCategories(state) {
       state.status = "idle";
     },
+    clearUser(state) {
+      state.user = null;
+      state.ready = false;
+    },
   },
 });
 
 export const {
   setUser,
   setloading,
+  clearUser,
   setCategories,
   setCategoryLoading,
   setCategoryError,

@@ -1,5 +1,5 @@
-// redux/slices/courseSlice.js
-import { createSlice } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { CategoryResponse } from "../services/auth";
 
 const initialState = {
   step: 1,
@@ -7,9 +7,24 @@ const initialState = {
   sections: [],
   viewLecture: null,
   isPublic: false,
-   course: null,        // ADD
+  course: null, // ADD
   isEdit: false,
+  isPaymentLoading: false,
+  categorydata: [],
+  loading: false,
+  error: null,
 };
+export const CoursecategoryData = createAsyncThunk(
+  "Admin/fetchCourseCategory",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await CategoryResponse();
+return res?.AllCategory;
+    } catch (err) {
+      return rejectWithValue(err);
+    }
+  },
+);
 
 const courseSlice = createSlice({
   name: "course",
@@ -18,7 +33,11 @@ const courseSlice = createSlice({
     setStep: (state, action) => {
       state.step = action.payload;
     },
-     setCourse: (state, action) => {
+    setPaymentLoading: (state, action) => {
+      state.isPaymentLoading = action.payload;
+    },
+
+    setCourse: (state, action) => {
       state.course = action.payload;
       state.sections = action.payload?.courseContent || [];
     },
@@ -40,6 +59,20 @@ const courseSlice = createSlice({
     },
     resetCourse: () => initialState,
   },
+  extraReducers: (builder) => {
+    builder
+      .addCase(CoursecategoryData.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(CoursecategoryData.fulfilled, (state, action) => {
+        state.loading = false;
+        state.categorydata = action.payload;
+      })
+      .addCase(CoursecategoryData.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
+  },
 });
 
 export const {
@@ -50,7 +83,8 @@ export const {
   setViewLecture,
   setIsPublic,
   setCourse,
-  setEditCourse
+  setEditCourse,
+  setPaymentLoading,
 } = courseSlice.actions;
 
 export default courseSlice.reducer;

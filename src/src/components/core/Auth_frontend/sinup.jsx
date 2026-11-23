@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { sendotp } from "../../../services/auth";
 import { useDispatch } from "react-redux";
 import { setSinupData } from "../../../Slices/authslice";
+import GoogleAuthButton from "../../core/Auth_frontend/google/googleauth";
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -95,23 +96,9 @@ const Signup = () => {
                 Instructor
               </button>
             </div>
-            <div className=" text-white  rounded-full top-[-9vh] w-fit relative left-[60%]">
-              {" "}
-              <button
-                onClick={() => {
-                  window.location.href =
-                    "http://localhost:5000/api/v1/auth/google";
-                }}
-                className="flex items-center justify-center gap-2 w-full border py-2 rounded"
-              >
-                <img
-                  src="https://developers.google.com/identity/images/g-logo.png"
-                  alt="google"
-                  className="h-5"
-                />
-                Continue with Google
-              </button>
-            </div>
+         
+           <GoogleAuthButton accountType = {formData.accountType}/>
+         
             {/* FORM */}
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">

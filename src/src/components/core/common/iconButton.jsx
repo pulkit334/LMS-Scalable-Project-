@@ -1,5 +1,4 @@
-import { type } from "os";
-import React, { Children } from "react";
+
 
 const iconButton = ({
   text,
@@ -16,7 +15,6 @@ const iconButton = ({
       disabled={disabled}
       onClick={onClick}
       svg={svg}
-      type={type}
       className={`${coustomeclasses}`}
       outlinefalse={outlinefalse}
       Type={Type}

@@ -2,46 +2,38 @@ const express = require("express");
 const router = express.Router();
 const { auth, isinstructor, isstudent, admin } = require("../middlewares/auth");
 const jwt = require("jsonwebtoken");
-const passport = require("passport");
+// const passport = require("passport");
+const { cacheMiddleware } = require("../middlewares/Caching");
 //************** for Authentication **************//
 const {
   sendOtp,
   sinup,
   login,
   changePassword,
+  googleLogin,
 } = require("../controllers/Auth");
 
 const { resetpasswordtoken, resetPassword } = require("../controllers/reset");
 
-router.get(
-  "/auth/google",
-  passport.authenticate("google", {
-    scope: ["profile", "email"],
-  })
-);
-// Google callback
-router.get(
-  "/auth/google/callback",
-  passport.authenticate("google", { session: false }),
-  (req, res) => {
-    const token = jwt.sign(
-      { id: req.user._id, email: req.user.email },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
+//==============Refresh Token =====================//
+const { refresh } = require("../controllers/Refreshcontroller");
 
-    res.redirect(`http://localhost:5173/google-auth?token=${token}`);
-  }
-);
+router.post("/refresh", refresh);
+
 //***************for courses****************//
 const {
   createCourse,
-  ShowCourses,
-  course, // get course details
+  ShowCourses, // get course details
   getEnrolledCourses,
   changestatus,
   getFullCourseDetails,
-  updateCourse
+  updateCourse,
+  deleteCourse,
+  getCourse,
+  getPaymentCourseReviews,
+  getCourseContent,
+  markLectureComplete,
+  downloadCourseCertificate,
 } = require("../controllers/Course");
 
 //************for Courses -> section*************//
@@ -60,7 +52,11 @@ const {
 } = require("../controllers/subsection");
 
 //************ Category Api's********************/
-const { Category, AllCategory } = require("../controllers/category");
+const {
+  Category,
+  AllCategory,
+  CategoryPageDetails,
+} = require("../controllers/category");
 
 //************ Profile Api's *********************/
 const {
@@ -70,6 +66,7 @@ const {
   UpdateProfilePhoto,
   deleteAccount,
   verifyAccountRecovery,
+  InstructorDashboard,
 } = require("../controllers/Profile");
 //***********************Rating and Reviews ***********//
 const {
@@ -77,13 +74,22 @@ const {
   getAverageRating,
   getCourseReviews,
   getAllRatingReviews,
+  sliderReview,
+  updateRating,
 } = require("../controllers/rating_review");
 
 //****************Form Contact Helper *********** */
 const { submitContactForm } = require("../controllers/contactform");
 
 //*************** Basic payment Gateways Attached ***************
-const { capturePayment, verifySignature } = require("../controllers/payment");
+const {
+  CapturePayment,
+  enrolledStudent,
+  VerifyPayment,
+  sendPaymentSuccessEmail,
+  Paymenthistory,
+} = require("../controllers/payment");
+const { saveCartItems, getcartitems } = require("../controllers/cart");
 
 // ================= PUBLIC AUTH ROUTES =================
 router.post("/auth/send-otp", sendOtp);
@@ -98,28 +104,78 @@ router.post("/auth/change-password", auth, changePassword);
 // ================= COURSE ROUTES =================
 
 // Public
-router.get("/courses", auth, isinstructor, ShowCourses);
-//Protected
-router.get("/enrolled-courses", auth, getEnrolledCourses);
-router.post("/publish-courses", auth, changestatus);
-// Protected
-router.patch("/course/update/:courseId",auth,isinstructor,updateCourse)
-router.get("/course/:courseId", auth, isstudent, course);
 router.get(
-  "/getFullCourseDetails/:courseId", auth, isinstructor, 
-  getFullCourseDetails
+  "/courses",
+  auth,
+  isinstructor,
+  cacheMiddleware((req) => `Courses:Instructor:${req.user.id}`, 60),
+  ShowCourses,
+);
+//Protected 
+router.get(
+  "/enrolled-courses",
+  auth,
+  cacheMiddleware((req) => `Enrolled-Course:${req.user.id}`, 60),
+  getEnrolledCourses,
+);
+
+router.post("/publish-courses", auth, isinstructor, changestatus);
+// Protected
+router.patch("/course/update/:courseId", auth, isinstructor, updateCourse);
+
+//Payment Course Loader
+router.get("/course/:courseId", auth, cacheMiddleware((req) => `Cache:Course:${req.params.courseId}`, 300), getCourse);
+router.get("/course/:courseId/content", auth, cacheMiddleware((req) => `Cache:CourseContent:${req.params.courseId}`, 300), getCourseContent);
+router.get("/course/:courseId/reviews", auth, cacheMiddleware((req) => `Cache:CourseReviews:${req.params.courseId}`, 300), getPaymentCourseReviews);
+router.get(
+  "/user/purchased-history",
+  auth,
+  isstudent,
+  cacheMiddleware((req) => `Cache:purchased-History:${req.user.id}`, 100),
+  Paymenthistory,
+);
+
+router.get(
+  "/getFullCourseDetails/:courseId",
+  auth,
+  cacheMiddleware((req) => `Cache:CourseDetails:${req.user.id}:${req.params.courseId}`, 60),
+  getFullCourseDetails,
+);
+// routes/course.js
+// add validation in it
+
+router.delete("/course/:courseId", auth, isinstructor, deleteCourse);
+
+//COurse progress
+router.post(
+  "/course/updateCourseProgress",
+  auth,
+  isstudent,
+  markLectureComplete,
+);
+router.get(
+  "/course/:courseId/certificate",
+  auth,
+  isstudent,
+  downloadCourseCertificate,
 );
 
 // ================= SECTION ROUTES =================
 
 // Protected
 router.post("/course/create", auth, isinstructor, createCourse);
-router.put("/section/update", isinstructor, updateSection);
-router.delete("/section/delete/:sectionId", auth, deleteSection, deleteSection);
+router.put("/section/update", auth, isinstructor, updateSection);
+router.delete("/section/delete/:sectionId", auth, isinstructor, deleteSection);
 
 // GET SECTION
-router.get("/section/:sectionId", auth, section);
-router.post("/section/create", auth, createSection);
+router.get(
+  "/section/:sectionId",
+  auth,
+  cacheMiddleware((req) => `Cache:section:${req.params.sectionId}`),
+  isstudent,
+  section,
+);
+router.post("/section/create", auth, isinstructor, createSection);
 
 // ================= SUBSECTION ROUTES =================
 
@@ -127,7 +183,13 @@ router.post("/section/create", auth, createSection);
 router.post("/subsection/create", auth, isinstructor, createSubsection);
 
 // GET SUBSECTION
-router.get("/subsection/:subSectionId", auth, isinstructor, subsection);
+router.get(
+  "/subsection/:subSectionId",
+  auth,
+  isinstructor,
+  cacheMiddleware((req) => `Cache:section:${req.params.subsectionId}`),
+  subsection,
+);
 //modifying Subsection
 router.patch("/subsection/:subSectionId", auth, isinstructor, UpdateSubsection);
 // ================= CATEGORY ROUTES =================
@@ -136,7 +198,16 @@ router.patch("/subsection/:subSectionId", auth, isinstructor, UpdateSubsection);
 router.post("/category/create", auth, Category);
 
 // Public (all categories)
-router.get("/category/all", auth, AllCategory);
+router.get(
+  "/category/all",
+  cacheMiddleware((req) => "Category:All", 360),
+  AllCategory,
+);
+router.post(
+  "/course/getCategoryPageDetails",
+  cacheMiddleware((req) => `Cache:CategoryDetails`, 300),
+  CategoryPageDetails,
+);
 
 // ================= PROFILE ROUTES =================
 router.patch("/profile/update", auth, UpdateProfile);
@@ -145,20 +216,40 @@ router.get("/profile/me", auth, getAllUserDetiles);
 router.post("/profile/recovery", UndoAccount);
 router.patch("/profile/image-update", auth, UpdateProfilePhoto);
 router.get("/profile/recover-account/:token", verifyAccountRecovery);
-
+router.get("/instructor/course", auth, isinstructor, InstructorDashboard);
 //=====================Payment Route=======================
 
-router.post("/capturePayment", auth, capturePayment);
+router.post("/payment/capturePayment", auth, isstudent, CapturePayment);
 
-router.post("/verifySignature", auth, verifySignature);
+router.post("/payment/verifySignature", auth, isstudent, VerifyPayment);
 
+router.post("/send-payment-email", auth, isstudent, sendPaymentSuccessEmail);
 //=====================Rating Route ==================
 router.post("/courses/:courseId/review", auth, createRating);
-router.get("/courses/:courseId/avg-rating", auth, getAverageRating);
-router.get("/courses/:courseId/reviews", getAllRatingReviews);
-router.get("/courses/:courseId/coursereview", getCourseReviews);
+router.get(
+  "/courses/:courseId/avg-rating",
+  auth,
+  // cacheMiddleware(
+  //   (req) => `Cache:AvgRating:/courses${req.params.courseId}/avg-rating`,
+  // ),
+  getAverageRating,
+);
+router.patch("/update-review/:reviewId", auth, updateRating);
 
+router.get("/courses/reviews", sliderReview);
+router.get("/my-lecture/:courseId/coursereview", getCourseReviews);
+router.get("/payment-review/:courseId/review",cacheMiddleware((req)=>`Cache:CourseId`,500), getCourseReviews);
 //================Helper Function ======////
 router.post("/aboutus/submit-form", submitContactForm);
 
+//============Rating Api's==================//
+router.post("/courses/:courseId/ratings", auth, isstudent, createRating);
+
+//cart routes
+router.post("/user/add-to-cart", auth, isstudent, saveCartItems);
+router.get("/user/get-cart", auth, isstudent, getcartitems);
+router.get("/test-notification",auth,isstudent);
+
+//google auth 
+router.get("/auth/google",googleLogin)
 module.exports = router;

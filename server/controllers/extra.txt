@@ -73,8 +73,7 @@ exports.capturePayment = async (req, res) => {
     //intitate the payment using razer pay
     //response
     const paymentResponse = await instance.orders.course(options);
-    console.log(paymentResponse);
-    return res.status(200).json({
+return res.status(200).json({
       success: true,
       courseName: course.courseName,
       courseDescription: course.courseDescription,
@@ -84,8 +83,7 @@ exports.capturePayment = async (req, res) => {
       amount: paymentResponse.amount,
     });
   } catch (error) {
-    console.log(error);
-    res.status(402).json({
+res.status(402).json({
       success: false,
       message: "Could Not intitate order",
     });
@@ -117,9 +115,7 @@ exports.verifySignature = async (req, res) => {
     signature.length === digest.length &&
     crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(digest))
   ) {
-    console.log("Payment is Authorized");
-
-    const { course_id, userid } = req.body.payload.payment.entity.notes;
+const { course_id, userid } = req.body.payload.payment.entity.notes;
     try {
       //fullfill the aciton
       //find th course and enroll the student in it
@@ -152,8 +148,7 @@ exports.verifySignature = async (req, res) => {
         "Congratulation From Pulkit",
         "Congratulatio;s,You are onboared into new CodeHelp Course"
       );
-      console.log(emailResonse);
-      return res.status(200).json({
+return res.status(200).json({
         success: true,
         message: "Signature Verified and Course added ",
       });

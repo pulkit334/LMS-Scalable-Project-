@@ -17,7 +17,7 @@ const ProfileInfoForm = () => {
     register,
     handleSubmit,
     reset,
-    formState: { errors, isDirty, dirtyFields,isSubmitSuccessful },
+    formState: { errors, isDirty, dirtyFields, isSubmitSuccessful },
   } = useForm({
     defaultValues: {
       firstName: "",
@@ -47,7 +47,7 @@ const ProfileInfoForm = () => {
     const toastId = toast.loading("Updating profile...");
 
     try {
-      //  Send ONLY changed fields 
+      //  Send ONLY changed fields
       const payload = {};
       Object.keys(dirtyFields).forEach((key) => {
         payload[key] = data[key];
@@ -72,11 +72,21 @@ const ProfileInfoForm = () => {
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="rounded-xl bg-[#161D29] p-6"
+      className="rounded-2xl p-6"
+      style={{
+        background: "linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%)",
+        border: "1px solid rgba(255,255,255,0.07)",
+        boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
+      }}
     >
-      <h2 className="mb-6 font-semibold">Profile Information</h2>
+      <div className="mb-6">
+        <h2 className="font-bold text-base" style={{ fontFamily: "'Syne', sans-serif", color: "#f0f4ff", letterSpacing: "-0.01em" }}>
+          Profile Information
+        </h2>
+        <p className="text-xs mt-0.5" style={{ color: "rgba(255,255,255,0.3)" }}>Update your personal details</p>
+      </div>
 
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-2 gap-5">
         <Input
           label="First Name *"
           error={errors.firstName}
@@ -119,19 +129,36 @@ const ProfileInfoForm = () => {
       </div>
 
       <div className="mt-6 flex justify-end gap-3">
-        <button type="button" className="rounded-md bg-gray-700 px-4 py-2">
+        <button
+          type="button"
+          className="px-4 py-2 rounded-lg text-sm font-medium"
+          style={{
+            background: "rgba(255,255,255,0.05)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            color: "rgba(255,255,255,0.5)",
+          }}
+        >
           Cancel
         </button>
 
         <button
           type="submit"
           disabled={!isDirty}
-          className="rounded-md bg-yellow-400 px-4 py-2 text-black disabled:opacity-50"
+          className="px-6 py-2 rounded-lg text-sm font-bold"
+          style={{
+            background: "linear-gradient(135deg, #fbbf24, #f59e0b)",
+            color: "#000",
+            boxShadow: "0 4px 16px rgba(251,191,36,0.2)",
+            opacity: isDirty ? 1 : 0.4,
+            cursor: isDirty ? "pointer" : "not-allowed",
+            transition: "all 0.2s",
+          }}
         >
-          Save
+          Save Changes
         </button>
-      </div>  
+      </div>
     </form>
   );
 };
+
 export default ProfileInfoForm;

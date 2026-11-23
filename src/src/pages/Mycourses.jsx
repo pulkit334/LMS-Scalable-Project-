@@ -4,18 +4,16 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchInstructorCourses } from "../Slices/instructorCoursesSlice";
 
 const MyCoursesPage = () => {
-    console.log("🚨 MyCoursesPage FILE LOADED");
+
 
   const dispatch = useDispatch();
   const { courses } = useSelector(
     (state) => state.instructorCourses
   );
-  console.log("The my course sdata os ",courses)
 
   useEffect(() => {
     dispatch(fetchInstructorCourses());
   }, [dispatch]);
-console.log("The data is",courses)
   return (
     <MyCourses
       courses={courses}

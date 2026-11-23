@@ -1,17 +1,30 @@
 import ProfilePictureCard from "../components/core/profile/ProfilePictureCard";
 import ProfileInfoForm from "../components/core/profile/ProfileInfoForm";
-import PasswordChange from "../components/core/profile/PasswordChangeForm";
-import  DeleteAccount  from "../components/core/profile/DeleteAccount";
-const EditProfile = () => {
+import PasswordChangeForm from "../components/core/profile/PasswordChangeForm";
+import DeleteAccount from "../components/core/profile/DeleteAccount";
+
+const Settings = () => {
   return (
-    <div className="mx-auto max-w-4xl space-y-8 text-white">
-      <h1 className="text-2xl font-semibold">Edit Profile</h1>
-      <ProfilePictureCard />
-      <ProfileInfoForm />
-      <PasswordChange />
-      <DeleteAccount />
+    <div className="min-h-screen w-full px-2 py-4 sm:px-4 lg:px-8">
+      {/* Page Header */}
+      <div className="mx-auto max-w-3xl mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-slate-100 tracking-tight">
+          Account Settings
+        </h1>
+        <p className="mt-1 text-sm text-slate-400">
+          Manage your profile photo, personal details, password, and account preferences
+        </p>
+      </div>
+
+      {/* Cards Stack */}
+      <div className="mx-auto max-w-3xl space-y-6">
+        <ProfilePictureCard />
+        <ProfileInfoForm />
+        <PasswordChangeForm />
+        <DeleteAccount />
+      </div>
     </div>
   );
 };
 
-export default EditProfile;
+export default Settings;

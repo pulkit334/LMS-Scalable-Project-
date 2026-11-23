@@ -12,19 +12,39 @@ const subSchema = new mongoose.Schema(
     description: {
       type: String,
     },
-    videoUrl: {              
+    videoUrl: {
       type: String,
-      required: true,       
+      required: true,
     },
     // optional fields you may need later
     createdAt: {
       type: Date,
       default: Date.now,
     },
+    status: {
+      type: String,
+      enum: [
+        "UPLOADED",
+        "TRANSCRIBING",
+        "GENERATING_QUESTIONS",
+        "READY",
+        "FAILED",
+      ],
+    },
+    notesStatus: {
+      type: String,
+      enum: ["pending", "done", "failed", null],
+      default: null,
+    },
+    notesUrl: { type: String, default: null },
+    cloudinaryId: {
+      type: String,
+    },
   },
+
   {
     timestamps: true,
-  }
+  },
 );
 
 module.exports = mongoose.model("subSection", subSchema);

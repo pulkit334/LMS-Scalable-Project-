@@ -1,53 +1,27 @@
-const nodemailer = require("nodemailer")
-// require("dotenv").config()
-// const mailsender = async (email,title,body)=>{
-//     try {
-// let transporter = nodemaler.createTransport({
-//     host: process.env.MAIL_HOST,
-//     auth :{
-//         user:process.env.MAIL_USER,
-//         pass: process.env.MAIL_PASS
-//     }
-// })
-// let info = await  transporter.sendMail({
-//     from : 'StudyNotion || Pulkit',
-//     to : `${email}`,
-//     subject : `${title}`,
-//     html : `${body}`
-// })
-// return info
-//     }
-//     catch(err){
-//         console.log(err)
-//     }
-// }
-
-// module.exports = mailsenderconst nodemailer = require("nodemailer");
+const nodemailer = require("nodemailer");
 require("dotenv").config();
 
 const mailsender = async (email, title, body) => {
   try {
     let transporter = nodemailer.createTransport({
-      host: process.env.MAIL_HOST,
-      port: 465,
-      secure: true,
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false, //  must be false for 587
       auth: {
         user: process.env.MAIL_USER,
-        pass: process.env.MAIL_PASS,  
+        pass: process.env.MAIL_PASS, //  App Password
       },
     });
 
-    let info = await transporter.sendMail({
+    const info = await transporter.sendMail({
       from: `"StudyNotion" <${process.env.MAIL_USER}>`,
       to: email,
       subject: title,
       html: body,
     });
-
-    console.log("Email Sent:", info.messageId);
-    return info;
+return info;
   } catch (err) {
-    console.log("Mail Error:", err);
+throw err;
   }
 };
 

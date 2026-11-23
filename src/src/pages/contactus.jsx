@@ -3,16 +3,14 @@ import { MessageCircle, MapPin, Phone } from "lucide-react";
 import ContactFormSection from "../components/core/AboutPage/ContactFormSection";
 
 const Contactus = () => {
-
-
   return (
-    <div className="min-h-screen w-full bg-linear-to-b from-[#020617] to-[#000814] flex items-center justify-center px-6">
-      
+    <div className="min-h-screen w-full bg-linear-to-b from-[#020617] to-[#000814] flex items-center justify-center px-6 py-10">
+
       {/* MAIN WRAPPER */}
-      <div className="flex w-full max-w-6xl items-start mt-20 gap-12">
+      <div className="flex flex-col lg:flex-row w-full max-w-6xl items-start mt-20 gap-12">
 
         {/* LEFT CARD */}
-        <div className="w-105 rounded-2xl bg-[#0b1220] p-10 text-gray-300 shadow-xl">
+        <div className="w-full lg:w-105 rounded-2xl bg-[#0b1220] p-10 text-gray-300 shadow-xl">
           <div className="space-y-10">
 
             {/* Chat */}
@@ -20,12 +18,8 @@ const Contactus = () => {
               <MessageCircle className="h-6 w-6 text-yellow-400" />
               <div>
                 <h4 className="font-semibold text-white">Chat on us</h4>
-                <p className="text-sm text-gray-400">
-                  Our friendly team is here to help.
-                </p>
-                <p className="text-sm text-gray-400">
-                  info@studynotion.com
-                </p>
+                <p className="text-sm text-gray-400">Our friendly team is here to help.</p>
+                <p className="text-sm text-gray-400">info@studynotion.com</p>
               </div>
             </div>
 
@@ -35,7 +29,7 @@ const Contactus = () => {
               <div>
                 <h4 className="font-semibold text-white">Visit us</h4>
                 <p className="text-sm text-gray-400 leading-relaxed">
-                  Akshya Nagar 1st Block 1st Cross,  
+                  Akshya Nagar 1st Block 1st Cross,
                   Ramamurthy Nagar, Bangalore-560016
                 </p>
               </div>
@@ -46,12 +40,8 @@ const Contactus = () => {
               <Phone className="h-6 w-6 text-yellow-400" />
               <div>
                 <h4 className="font-semibold text-white">Call us</h4>
-                <p className="text-sm text-gray-400">
-                  Mon - Fri From 8am to 5pm
-                </p>
-                <p className="text-sm text-gray-400">
-                  +123 456 7869
-                </p>
+                <p className="text-sm text-gray-400">Mon - Fri From 8am to 5pm</p>
+                <p className="text-sm text-gray-400">+123 456 7869</p>
               </div>
             </div>
 
@@ -59,7 +49,7 @@ const Contactus = () => {
         </div>
 
         {/* RIGHT FORM CARD */}
-        <div className="flex-1 rounded-2xl border border-gray-700 bg-[#020617] p-10">
+        <div className="flex-1 w-full rounded-2xl border border-gray-700 bg-[#020617] p-6 sm:p-10">
           <ContactFormSection />
         </div>
 

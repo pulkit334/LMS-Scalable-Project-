@@ -5,43 +5,12 @@ const User = require("../models/User");
 const TWO_HOURS = 2 * 60 * 60 * 1000;
 const mailsender = require("../utils/mailpotp");
 
-// const deletion = async () => {
-//   try {
-//     const time = new Date(Date.now() - TWO_HOURS);
-
-//     const users = await User.find({
-//       isdeleted: true,
-//       deleteRequestedAt: { $lte: time },
-//     });
-
-//     for (const user of users) {
-//       await course.updateMany(
-//         { _id: { $in: user.courses } },
-//         { $pull: { studentEnrolled: user._id } }
-//       );
-
-//       await Profile.findByIdAndDelete(user.additionalDetails);
-
-//       await User.findByIdAndDelete(user._id);
-
-//       await mailsender(
-//         user.email,
-//         "Account Deleted - StudyNotion",
-//         "Your Is Deleted Successfully"
-//       );
-//     }
-//   } catch (err) {
-//     throw new Error("Failed to Delet The user ");
-//   }
-// };
-
-// run every 5 minutes (industry standard)
 
 const deletion = async () => {
   try {
     const thresholdTime = new Date(Date.now() - TWO_HOURS);
 
-    // 1️ Fetch only required fields (lean = faster, less memory)
+   
     const users = await User.find(
       {
         isdeleted: true,
@@ -61,28 +30,26 @@ const deletion = async () => {
     const userIds = users.map((u) => u._id);
     const profileIds = users.map((u) => u.additionalDetails).filter(Boolean);
 
-    // 3️Remove users from enrolled courses (single bulk op)
+    // 3️Remove users from enrolled courses 
     await course.updateMany(
       { studentEnrolled: { $in: userIds } },
       { $pull: { studentEnrolled: { $in: userIds } } }
     );
-    // 4️ Parallel deletions (FAST)
+  
     await Promise.all([
       Profile.deleteMany({ _id: { $in: profileIds } }),
       User.deleteMany({ _id: { $in: userIds } }),
     ]);
 
-    // 5️ Fire-and-forget emails (non-blocking)
+
     users.forEach((user) => {
       mailsender(
         user.email,
-        "Account Deleted - StudyNotion",
+        "Account Deleted - Notion-X",
         "Your account has been permanently deleted."
-      ).catch(() => {}); // avoid cron crash
+      ).catch(() => {}); // avoiding the cron Crash 
     });
-
-    console.log(` Deleted ${users.length} users successfully`);
-  } catch (err) {
+} catch (err) {
     console.error(" Cron deletion error:", err);
   }
 };

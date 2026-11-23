@@ -1,0 +1,12 @@
+node_modules
+.gitignore
+.git
+*.log
+./k
+./live-monitor.js
+./test-limit.js
+./github
+.crone
+./crone
+.gitignore
+*.log

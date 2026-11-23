@@ -1,147 +1,93 @@
-// /* eslint-disable react-hooks/set-state-in-effect */
-// import React, { useEffect, useState } from "react";
-// import { UserEnrolledCourses } from "../../../services/operations/Profileapi";
-// import ProgressBar from "@ramonak/react-progress-bar";
-// import { MoreVertical } from "lucide-react";
-
-// const EnrolledCourses = () => {
-//   const [enrolledCourses, setEnrolledCourses] = useState(null);
-
-//   const getEnrolledCourse = async () => {
-//     try {
-//       const response = await UserEnrolledCourses();
-//       setEnrolledCourses(response);
-//     } catch (error) {
-//       console.log("Error fetching enrolled courses", error);
-//       setEnrolledCourses([]);
-//     }
-//   };
-
-//   useEffect(() => {
-//     getEnrolledCourse();
-//   }, []);
-
-//   if (enrolledCourses === null) {
-//     return <div className="text-white">Loading...</div>;
-//   }
-
-//   if (enrolledCourses.length === 0) {
-//     return <p className="text-white">You have not enrolled in any courses</p>;
-//   }
-
-//   return (
-//     <div className="rounded-xl bg-[#0F172A] p-6 text-white">
-//       {/* HEADER */}
-//       <div className="grid grid-cols-3 border-b border-slate-700 pb-3 text-sm text-slate-300">
-//         <p>Course Name</p>
-//         <p>Duration</p>
-//         <p>Progress</p>
-//       </div>
-
-//       {/* COURSES */}
-//       <div className="mt-4 space-y-4">
-//         {enrolledCourses.map((course) => (
-//           <div
-//             key={course._id}
-//             className="grid grid-cols-3 items-center gap-4 border-b border-slate-800 pb-4"
-//           >
-//             {/* COURSE INFO */}
-//             <div className="flex items-center gap-4">
-//               <img
-//                 src={course.thumbnail}
-//                 alt={course.courseName}
-//                 className="h-12 w-20 rounded-md object-cover"
-//               />
-//               <div>
-//                 <p className="font-medium">{course.courseName}</p>
-//                 <p className="text-sm text-slate-400 line-clamp-1">
-//                   {course.courseDescription}
-//                 </p>
-//               </div>
-//             </div>
-
-//             {/* DURATION */}
-//             <p className="text-slate-300">{course.totalDuration}</p>
-
-//             {/* PROGRESS */}
-//             <div className="flex items-center gap-4">
-//               <div className="flex-1">
-//                 {course.progressPercentage === 100 ? (
-//                   <p className="mb-1 text-sm text-green-400">Completed</p>
-//                 ) : (
-//                   <p className="mb-1 text-sm text-slate-300">
-//                     Progress {course.progressPercentage || 0}%
-//                   </p>
-//                 )}
-
-//                 <ProgressBar
-//                   completed={course.progressPercentage || 0}
-//                   height="6px"
-//                   isLabelVisible={false}
-//                   bgColor={
-//                     course.progressPercentage === 100 ? "#22c55e" : "#38bdf8"
-//                   }
-//                   baseBgColor="#1e293b"
-//                 />
-//               </div>
-
-//               {/* MENU ICON */}
-//               <button className="rounded-md p-2 hover:bg-slate-800">
-//                 <MoreVertical size={18} />
-//               </button>
-//             </div>
-//           </div>
-//         ))}
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default EnrolledCourses;
-/* eslint-disable react-hooks/set-state-in-effect */
 import React, { useEffect, useState } from "react";
-import { UserEnrolledCourses } from "../../../services/operations/Profileapi";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchEnrolledCourses } from "../../../Slices/EnroilledCourseSlice";
 import ProgressBar from "@ramonak/react-progress-bar";
-import { MoreVertical, Check, Trash2 } from "lucide-react";
+import { MoreVertical, Check, Trash2, Award } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useLiveStatus } from "../../Custom/useLiveStatus";
+import { JoinLiveClass, RecheckLive} from "../../../services/Live/Live-Services";
+import { DownloadCourseCertificate } from "../../../services/auth";
+import toast from "react-hot-toast";
 
 const EnrolledCourses = () => {
-  const [enrolledCourses, setEnrolledCourses] = useState(null);
+  const dispatch = useDispatch();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const { enrolledCourses, loading, error } = useSelector(
+    (state) => state.enrollment
+  );
+
   const [activeTab, setActiveTab] = useState("all");
   const [openMenu, setOpenMenu] = useState(null);
+  const [joining, setJoining] = useState(null)
+  const [downloadingCertId, setDownloadingCertId] = useState(null);
 
-  const getEnrolledCourse = async () => {
+  const handleDownloadCertificate = async (e, courseId, courseName) => {
+    e.stopPropagation();
+    setDownloadingCertId(courseId);
+    const toastId = toast.loading("Generating certificate PDF...");
     try {
-      const response = await UserEnrolledCourses();
-      setEnrolledCourses(response);
-    } catch (error) {
-      console.log("Error fetching enrolled courses", error);
-      setEnrolledCourses([]);
+      const blob = await DownloadCourseCertificate(courseId);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `certificate-${String(courseName || "course").toLowerCase().replace(/[^a-z0-9]+/g, "-")}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success("Certificate downloaded!", { id: toastId });
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Complete 100% of course to unlock certificate", { id: toastId });
+    } finally {
+      setDownloadingCertId(null);
     }
   };
 
   useEffect(() => {
-    getEnrolledCourse();
-  }, []);
+    dispatch(fetchEnrolledCourses());
+  }, [location.pathname, dispatch]);
 
-  if (enrolledCourses === null) {
+  // get all course ids
+  const courseIds = enrolledCourses?.map(c => c._id) || []
+  const liveMap = useLiveStatus(courseIds)
+
+  const handleJoin = async (e, classId) => {
+    e.stopPropagation()
+    setJoining(classId)
+    try {
+      const data = await JoinLiveClass(classId)
+      navigate(`/live/${classId}/watch`, {
+        state: { token: data.token, host: data.host }
+      })
+    } catch (err) {
+      toast.error(err.message || 'Failed to join')
+    } finally {
+      setJoining(null)
+    }
+  }
+
+  if (loading || enrolledCourses === null) {
     return <div className="text-white">Loading...</div>;
+  }
+
+  if (error) {
+    return <p className="text-red-400">{error}</p>;
   }
 
   if (enrolledCourses.length === 0) {
     return <p className="text-white">You have not enrolled in any courses</p>;
   }
 
-  // 🔹 FILTER BASED ON TAB
   const filteredCourses = enrolledCourses.filter((course) => {
-    if (activeTab === "completed") return course.progressPercentage === 100;
-    if (activeTab === "pending") return course.progressPercentage < 100;
+    if (activeTab === "completed") return course.coursePercentage === 100;
+    if (activeTab === "pending") return course.coursePercentage < 100;
     return true;
-
   });
 
   return (
     <div className="rounded-xl bg-[#0F172A] p-6 text-white">
-      {/* TITLE */}
       <h2 className="mb-4 text-2xl font-semibold">Enrolled Courses</h2>
 
       {/* TABS */}
@@ -171,32 +117,56 @@ const EnrolledCourses = () => {
       {/* COURSES */}
       <div className="rounded-b-lg border border-slate-800">
         {filteredCourses.map((course) => (
-          
           <div
             key={course._id}
-            className="grid grid-cols-3 items-center gap-4 border-b border-slate-800 px-4 py-4 last:border-b-0"
+            onClick={() => {
+              const firstSec = course.courseContent?.[0];
+              const secId = typeof firstSec === "string" ? firstSec : firstSec?._id;
+              const firstSub = firstSec?.subsection?.[0];
+              const subId = typeof firstSub === "string" ? firstSub : firstSub?._id;
+              if (secId && subId) {
+                navigate(`/view-course/${course._id}/section/${secId}/sub-section/${subId}`);
+              } else if (secId) {
+                navigate(`/view-course/${course._id}/section/${secId}`);
+              } else {
+                navigate(`/view-course/${course._id}`);
+              }
+            }}
+            className="grid grid-cols-3 items-center gap-4 border-b border-slate-800/80 px-4 py-4 last:border-b-0 hover:bg-white/[0.03] transition-colors cursor-pointer"
           >
             {/* COURSE INFO */}
             <div className="flex items-center gap-4">
-           {course.thumbnail.endsWith(".mp4") ? (
-  <video
-    src={course.thumbnail}
-    className="h-12 w-20 rounded-md object-cover"
-    muted
-    preload="metadata"
-  />
-) : (
-  <img
-    src={course.thumbnail}
-    alt={course.courseName}
-    className="h-12 w-20 rounded-md object-cover"
-  />
-)}
+              {course.thumbnail?.endsWith(".mp4") ? (
+                <video
+                  src={course.thumbnail}
+                  className="h-12 w-20 rounded-md object-cover"
+                  muted
+                  preload="metadata"
+                />
+              ) : (
+                <img
+                  src={course.thumbnail}
+                  alt={course.courseName}
+                  className="h-12 w-20 rounded-md object-cover"
+                />
+              )}
               <div>
                 <p className="font-medium">{course.courseName}</p>
                 <p className="text-sm text-slate-400 line-clamp-1">
                   {course.courseDescription}
                 </p>
+
+                {/* LIVE BADGE */}
+                {liveMap[course._id] && (
+                  <button
+                    onClick={(e) => handleJoin(e, liveMap[course._id].classId)}
+                    disabled={joining === liveMap[course._id].classId}
+                    className="mt-1.5 flex items-center gap-1.5 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-xs font-bold px-3 py-1 rounded-full transition"
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
+                    {joining === liveMap[course._id].classId ? 'Joining...' : '🔴 Live'}
+                  </button>
+                )}
               </div>
             </div>
 
@@ -206,34 +176,43 @@ const EnrolledCourses = () => {
             {/* PROGRESS */}
             <div className="relative flex items-center gap-4">
               <div className="flex-1">
-                {course.progressPercentage === 100 ? (
+                {course?.coursePercentage === 100 ? (
                   <p className="mb-1 text-sm text-green-400">Completed</p>
                 ) : (
                   <p className="mb-1 text-sm text-slate-300">
-                    Progress {course.progressPercentage || 0}%
+                    Progress {course?.coursePercentage || 0}%
                   </p>
                 )}
-
                 <ProgressBar
-                  completed={course.progressPercentage || 0}
+                  completed={course?.coursePercentage || 0}
                   height="6px"
                   isLabelVisible={false}
                   bgColor={
-                    course.progressPercentage === 100
-                      ? "#22c55e"
-                      : "#38bdf8"
+                    course?.coursePercentage === 100 ? "#22c55e" : "#38bdf8"
                   }
                   baseBgColor="#1e293b"
                 />
               </div>
 
+              {/* CERTIFICATE BUTTON WHEN 100% */}
+              {course?.coursePercentage === 100 && (
+                <button
+                  onClick={(e) => handleDownloadCertificate(e, course._id, course.courseName)}
+                  disabled={downloadingCertId === course._id}
+                  title="Download Course Completion Certificate"
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-400/15 border border-amber-400/35 text-amber-300 hover:bg-amber-400 hover:text-slate-950 text-xs font-semibold transition cursor-pointer shrink-0"
+                >
+                  <Award className="w-3.5 h-3.5" />
+                  {downloadingCertId === course._id ? "..." : "Certificate"}
+                </button>
+              )}
+
               {/* MENU BUTTON */}
               <button
-                onClick={() =>
-                  setOpenMenu(
-                    openMenu === course._id ? null : course._id
-                  )
-                }
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setOpenMenu(openMenu === course._id ? null : course._id);
+                }}
                 className="rounded-md p-2 hover:bg-slate-800"
               >
                 <MoreVertical size={18} />

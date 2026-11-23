@@ -7,8 +7,7 @@ export const restoreUser = async (dispatch) => {
     const res = await getMyProfile();
     const user = res?.userdetails;
     if (!user) {
-      console.log("No user found in restore response", res?.userdetails);
-      return;
+return;
     }
 
     dispatch(setUser(user));

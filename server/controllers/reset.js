@@ -35,7 +35,7 @@ exports.resetpasswordtoken = async (req, res) => {
       { new: true }
     );
     //   create url
-    const url = `http://localhost:5173/update-password/${token}`;
+    const url = `https://www.notion-x.store/update-password/${token}`;
 
     //send mail
     await mailsender(

@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { api } from "./apiconnnector";
 import { toast } from "react-hot-toast";
 import { setloading, clearSinupData, setToken } from "../Slices/authslice";
@@ -12,16 +13,21 @@ export const AUTH = {
   checkCurrentPassword: "/auth/check-password",
   FORGOT_PASSWORD: "/auth/reset-password-token",
   RESET_PASSWORD: "/auth/reset-password",
-  Password_changer: "/au th/change-password",
+  Password_changer: "/auth/change-password",
   Delete_Account: "/profile/delete",
   Profile_Recovery: "/profile/recovery",
   EmailVerification: "/recover-account",
+  RefreshVerification: "/refresh",
+  google_auth_login: "/auth/google",
 };
 
 export const Course = {
   CreateCourse: "/course/create",
   categories: "/category/all",
   GetFUllCourseDetails: "/getFullCourseDetails/:courseId",
+  DeleteCourse: "/course/:courseId",
+  GetBuyCourse: "/course/:courseId",
+  CourseLectureProgressMarker: "/course/updateCourseProgress",
 };
 export const Course_Section = {
   createsection: "/section/create",
@@ -73,7 +79,6 @@ export const sendotp = async (email) => {
   const toastId = toast.loading("Sending Mail");
 
   const response = await api.post(AUTH.SEND_OTP, email);
-  console.log("OTP Hit");
   if (response) {
     toast.success("successfully Sent the Otp", toastId);
   }
@@ -107,7 +112,7 @@ export const SinupUser = (data, navigate) => {
 export const submitEnquiry = async (data) => {
   try {
     const response = await api.post(Enqiry.Enquiry, data);
-    console.log("here is your SUbmited Data", response);
+    
     toast.success("Message sent successfully");
     return response.data;
   } catch (error) {
@@ -139,7 +144,6 @@ export const deleteAccount = async () => {
 //Setting Image upladar
 export const ImageUploader = async (data) => {
   try {
-    console.log("hey ther ehere is data ");
     const response = await api.patch(PROFILE.ImageUploader, data);
     return response.data;
   } catch (error) {
@@ -170,7 +174,6 @@ export const changePassword = async (data) => {
 export const UndoAccount = async (email) => {
   try {
     const response = await api.post(AUTH.Profile_Recovery, { email });
-    console.log(response);
     localStorage.setItem(response, JSON.stringify(response));
     return response?.data;
   } catch (error) {
@@ -194,25 +197,26 @@ export const GetCategorires = async () => {
 
 export const createCourseSection = async (data) => {
   const response = await api.post(Course_Section.createsection, data);
-  console.log("The Time duration is", response);
+
   return response?.data;
 };
 export const deleteSection = async (sectionId) => {
   return api.delete(
-    Course_Section.deleteSection.replace(":sectionId", sectionId)
+    Course_Section.deleteSection.replace(":sectionId", sectionId),
   );
 };
-
-export const createSubsection = async (formData) => {
-  console.log("The Creation of Subsetion would be", formData);
-  const response = await api.post(Subsection.CreateSubsection, formData);
-  console.log("The Creation of Subsetion would be", response);
+export const createSubsection = async (formData, config = {}) => {
+  const response = await api.post(
+    Subsection.CreateSubsection,
+    formData,
+    config,
+  );
   return response;
 };
 
 export const GetInsturctorCourse = async () => {
   const response = await api.get(Course_Section.GetInrtuctorCourse);
-  console.log("The course is ", response);
+
   return response?.data;
 };
 
@@ -223,34 +227,88 @@ export const CoursePublication = async (courseId, isPublic) => {
     courseId,
     isPublic,
   });
-  console.log("The data is COurse publciaiton ", response);
+
   return response.data;
 };
 
-export const UpdateSubsection = async (subSectionId, formData) => {
-  console.log("Sending:", subSectionId, formData);
-
+export const UpdateSubsection = async (subSectionId, formData, config = {}) => {
   const response = await api.patch(
     Subsection.UpdateSubsection.replace(":subSectionId", subSectionId),
-    formData
+    formData,
+    config,
   );
-  console.log("Hi the data is ", response);
+
   return response;
 };
 
 export const getFullCourseDetails = async (courseId) => {
-  console.log("The GetFull Course API data is", courseId);
+ 
   const res = await api.get(
-    Course.GetFUllCourseDetails.replace(":courseId", courseId)
+    Course.GetFUllCourseDetails.replace(":courseId", courseId),
   );
-  console.log("The Fullcourse edit data is", res);
 
   return res.data;
 };
 
-export const UpdateUser = async (courseId,formData) => {
-
-  const res = await api.patch(Course_Section.UpdateCourse.replace(":courseId",courseId), formData);
-  console.log("The Data is", res);
+export const UpdateUser = async (courseId, formData) => {
+  const res = await api.patch(
+    Course_Section.UpdateCourse.replace(":courseId", courseId),
+    formData,
+  );
+ 
   return res?.data;
+};
+
+export const CourseDelete = async (courseId) => {
+
+
+  const response = await api.delete(
+    Course.DeleteCourse.replace(":courseId", courseId),
+  );
+
+
+  return response?.data;
+};
+
+export const CompleteLectureMarker = async (courseId, subSectionId, token) => {
+  const response = await api.post(
+    Course.CourseLectureProgressMarker,
+    {
+      courseId,
+      subSectionId,
+    },
+    token,
+  );
+  return response?.data;
+};
+
+export const RefreshVerification = async (data) => {
+  const response = await api.post(AUTH.RefreshVerification);
+  // const token = response.data?.token || [];
+  // localStorage.setItem("token", token);
+  return response?.data;
+};
+export const CategoryResponse = async (data) => {
+  const response = await api.get(categories.GET_ALL);
+  return response?.data;
+};
+
+//for google 
+export const googleauth = async (code,accountType) => {
+  try {
+    const response = await api.get(`${AUTH.google_auth_login}?code=${code}&accountType=${accountType}`);
+    return response.data;
+
+  } catch (err) {
+    console.error("Google Auth Error : ", err);
+    
+    throw err;
+  }
+};
+
+export const DownloadCourseCertificate = async (courseId) => {
+  const response = await api.get(`/course/${courseId}/certificate`, {
+    responseType: "blob",
+  });
+  return response.data;
 };

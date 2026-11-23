@@ -19,5 +19,10 @@ const ratingAndReviewschema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  
 });
+ratingAndReviewschema.index({ Course: 1 });
+
+
+ratingAndReviewschema.index({ user: 1, Course: 1 }, { unique: true });
 module.exports = mongoose.model("ratingAndReview", ratingAndReviewschema);

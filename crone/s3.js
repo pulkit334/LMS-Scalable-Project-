@@ -6,9 +6,7 @@ const archive = require("./archive.json");
 
 const housekeeping = () => {
   try {
-    console.log("Running archive invoice task:", new Date());
-
-    archive.forEach((item, index) => {
+archive.forEach((item, index) => {
       const presentDate = Date.now();
       const recordDate = new Date(item.date).getTime();
 
@@ -25,14 +23,10 @@ const housekeeping = () => {
             "utf-8"
         )
       }
-
-      console.log(`Invoice ${index + 1} is ${daysDiff} days old`);
-    });
+});
   } catch (err) {
     console.error("Error:", err);
   }
-
-  console.log("Task done ");
 };
 
 // Runs every minute

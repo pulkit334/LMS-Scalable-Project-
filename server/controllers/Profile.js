@@ -1,6 +1,6 @@
 const profile = require("../models/profile");
 const User = require("../models/User");
-const cron = require("node-cron");
+const Course = require("../models/course")
 const recoveryEmailTemplate = require("../utils/emailTemplates");
 const mailsender = require("../utils/mailpotp");
 const { uploadImageToCloudinary } = require("../utils/imageuploader");
@@ -8,8 +8,7 @@ const Cloudinary = require("cloudinary").v2;
 const crypto = require("crypto");
 exports.UpdateProfile = async (req, res) => {
   try {
-    console.log("hey ther updated successfully");
-    const userId = req.user.id;
+const userId = req.user.id;
 
     const allowedFields = [
       "dateofBirth",
@@ -156,11 +155,10 @@ exports.UndoAccount = async (req, res) => {
       message: "Recovery email sent. Please check your inbox.",
     });
   } catch (err) {
-    console.log("the erroro hitted", err);
-    return res.sta;
+return res.sta;
   }
 };
-// if i want to delete account then what logic should i used in it //
+
 exports.getAllUserDetiles = async (req, res) => {
   try {
     //get the id
@@ -190,7 +188,6 @@ exports.getAllUserDetiles = async (req, res) => {
   }
 };
 
-//update proifle photo
 // update profile photo
 exports.UpdateProfilePhoto = async (req, res) => {
   try {
@@ -217,8 +214,7 @@ exports.UpdateProfilePhoto = async (req, res) => {
     if (!user.image) {
       user.image = {};
     }
-    console.log("updating the file  New one ", uploadedImage);
-    // now safe to set
+// now safe to set
     user.set("image", {
       url: uploadedImage.secure_url,
       publicId: uploadedImage.public_id,
@@ -285,3 +281,33 @@ exports.verifyAccountRecovery = async (req, res) => {
     });
   }
 };
+//DAta 
+exports.InstructorDashboard = async (req,res)=>{
+  try {
+const CourseDeatails = await Course.find({Insturctor : req.user.id});
+const courseData  = CourseDeatails.map((course)=>{
+  const totalStudentEnrolled = course.studentEnrolled.length || []
+  const totalAmount = totalStudentEnrolled * course.price
+  //create a abject with adddtional details
+  const courseDataWithStats = {
+    _id : course._id,
+    courseName : course.courseName,
+    courseDescription : course.courseDescription,
+    totalStudentEnrolled,
+    totalAmount
+  }
+  return courseDataWithStats
+})
+return res.status(200).json({
+  success : true,
+  courses : courseData
+})
+  }
+  catch(err){
+    console.log(err)
+    res.status(500).json({
+      success : false,
+      message : "Internal Server Error"
+    })
+  }
+}

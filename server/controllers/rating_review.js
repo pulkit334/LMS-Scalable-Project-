@@ -1,37 +1,44 @@
 const { default: mongoose } = require("mongoose");
 const RatingAndReviews = require("../models/RatingAndReview");
 const Course = require("../models/course");
+const RatingAndReview = require("../models/RatingAndReview");
+const User = require("../models/User");
+const client = require("../Reddis/client");
 //creatae rating
 exports.createRating = async (req, res) => {
   try {
     //get user id
+
     const userid = req.user.id;
-    console.log(userid);
     const { rating, review } = req.body;
     const { courseId } = req.params;
-
+    client.del;
     //verify the user id if not in course or Not
     const courseDetails = await Course.findOne({
       _id: courseId,
       studentEnrolled: { $elemMatch: { $eq: userid } },
     });
+
     if (!courseDetails) {
       return res.status(404).json({
-        success: true,
+        success: false,
         message: "Student is Not Enrolled in Course",
       });
     }
+
     //only allow once for review
     const AleradyReviwed = await RatingAndReviews.findOne({
       user: userid,
       Course: courseId,
     });
+
     if (AleradyReviwed) {
       return res.status(403).json({
         success: false,
-        message: "Course is Alerday Reviwed by The user",
+        message: "Course is Alerady Reviewed By the User",
       });
     }
+
     //create teh rating reveiw
     const ratingDb = await RatingAndReviews.create({
       rating: rating,
@@ -39,6 +46,7 @@ exports.createRating = async (req, res) => {
       Course: courseId,
       user: userid,
     });
+
     //update the course id with course
     // const update detiled//
     await Course.findByIdAndUpdate(
@@ -48,26 +56,25 @@ exports.createRating = async (req, res) => {
           ratingAndReviews: ratingDb._id,
         },
       },
-      { new: true }
+      { new: true },
     );
+    await client.del("rating:All:slider");
     //return the response
-    return res.status(200).json({
+    return res.status(201).json({
       success: true,
       message: "Rating Done....",
     });
   } catch (error) {
-    return res.status(403).json({
-      success: true,
+    return res.status(500).json({
+      success: false,
       message: error.message,
     });
   }
 };
 
-//avg rating]
+//avg rating
 exports.getAverageRating = async (req, res) => {
   try {
-    //get course id
-    // const course_id = req.body.courseid;
     const { courseId } = req.params;
     //calculate avergae rating
     const result = await RatingAndReviews.aggregate([
@@ -107,10 +114,11 @@ exports.getAverageRating = async (req, res) => {
 exports.getAllRatingReviews = async (req, res) => {
   try {
     //find call then return
+
     const AllData = await RatingAndReviews.find({})
       .populate({
         path: "user",
-        select: "firstName lastName raing image email",
+        select: "firstName lastName rating review image email",
       })
       .populate("Course")
       .sort({ rating: -1 })
@@ -122,6 +130,7 @@ exports.getAllRatingReviews = async (req, res) => {
         message: "No Reviews Found",
       });
     }
+
     return res.status(200).json({
       success: true,
       message: "All Reviews Fetched successfully",
@@ -134,31 +143,168 @@ exports.getAllRatingReviews = async (req, res) => {
     });
   }
 };
-
 // Get Course Related Reveiw
-exports.getCourseReviews = async (req,res) => {
-  //first get the course id parmas
-  try {
-    const { courseId} = req.params;
-    const dataValidation = await Course.findOne({  courseId})
-      .populate("ratingAndReview")
-      .exec();
 
-    if (!dataValidation) {
+// exports.getCourseReviews = async (req, res) => {
+//   try {
+
+//     const { courseId } = req.params;
+//     console.log(courseId);
+//     const course = await Course.findById(courseId)
+//       .select("studentEnrolled")
+//       .lean();
+
+//     if (!course) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Course not found",
+//       });
+//     }
+
+//     const reviews = await RatingAndReview.find({
+//       Course: courseId,
+//       user: { $in: course.studentEnrolled },
+//     })
+//       .populate("user", "firstName lastName image")
+//       .limit(3)
+//       .sort({ createdAt: -1 });
+
+//     console.log("the Review is", reviews);
+//     if (!reviews || reviews.length === 0) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "No reviews found for this course",
+//       });
+//     }
+//     console.log("the data is ", reviews);
+//     return res.status(200).json({
+//       success: true,
+//       datarating: course,
+//       data: reviews,
+//     });
+//   } catch (error) {
+//     console.log("the Error is", error);
+//     return res.status(500).json({
+//       success: false,
+//       message: error.message,
+//     });
+//   }
+// };
+exports.getCourseReviews = async (req, res) => {
+  try {
+    const { courseId } = req.params;
+
+    // 1️et enrolled students
+    const course = await Course.findById(courseId)
+      .select("studentEnrolled")
+      .lean();
+
+    if (!course) {
       return res.status(404).json({
         success: false,
-        message: "No Reviews Found",
+        message: "Course not found",
       });
     }
-    //nikal so and validate it
+
+    // 2️Get ONLY reviews by enrolled students
+    const reviews = await RatingAndReview.find({
+      Course: courseId,
+      user: { $in: course.studentEnrolled }, //
+    })
+      .populate("user", "firstName lastName image")
+      .sort({ createdAt: -1 })
+      .limit(3);
+console.log(
+  reviews[0]?.user
+);
+
+    if (!reviews.length) {
+      return res.status(202).json({
+        success: false,
+        message: "No reviews found for this course",
+      });
+    }
+// console.log("the Rating and Reviews Courses Are",review)
     return res.status(200).json({
       success: true,
-      data: dataValidation,
+      data: reviews,
     });
   } catch (error) {
-    return res.status(403).json({
-      success: true,
+    console.error("Review error:", error);
+    return res.status(500).json({
+      success: false,
       message: error.message,
+    });
+  }
+};
+
+exports.sliderReview = async (req, res) => {
+  try {
+    const cacheKey = "rating:All:slider";
+    const data = await client.get(cacheKey);
+    if (data) {
+      return res.json({
+        success: true,
+        messsage: "Cached Data",
+        data: JSON.parse(data),
+      });
+    }
+    const limit = 10;
+    const response = await RatingAndReview.find({})
+      .populate("Course", "thumbnail courseName")
+      .populate("user", "firstName lastName")
+      .sort({ rating: -1, createdAt: -1 })
+      .limit(limit)
+      .exec();
+    await client.setex(cacheKey, 60, JSON.stringify(response));
+    return res.status(200).json({
+      success: true,
+      message: "General homepage reviews fetched",
+      data: response,
+    });
+  } catch (error) {
+    console.log("the server side Cotroller Error is", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed Try Again",
+    });
+  }
+};
+exports.updateRating = async (req, res) => {
+  try {
+    //course Id;
+    //user Id
+    const { reviewId } = req.params;
+    const user = req.user.id;
+    const { rating, review } = req.body;
+    const ValidData = await RatingAndReviews.findById(reviewId);
+    if (!ValidData) {
+      return res.status(404).json({
+        success: false,
+        message: "Resource Not Found",
+      });
+    }
+    //validation of the user
+    if (ValidData.user.toString() !== user) {
+      return res.json(403).json({
+        success: false,
+        message: "Unothorizted Access",
+      });
+    }
+
+    if (rating !== undefined) ValidData.rating = rating;
+    if (review !== undefined) ValidData.review = review;
+
+    await ValidData.save();
+    return res.status(200).json({
+      success: true,
+      message: "Updated successfully",
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed Try Again",
     });
   }
 };

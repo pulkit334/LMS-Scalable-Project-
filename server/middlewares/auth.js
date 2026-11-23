@@ -1,97 +1,100 @@
 const jwt = require("jsonwebtoken");
-require("dotenv").config();
 const User = require("../models/User");
+require("dotenv").config();
 
-// exports.auth = async (req, res, next) => {
-//   try {
-//     //extract token
-//     const token = req.cookies.token;
-
-//     //if token is missing
-//     if (!token) {
-//       return res.status(401).json({
-//         success: false,
-//         message: "Access denied check auth",
-//       });
-//     }
-//     //vefiy the token
-//     try {
-//       const decode = jwt.verify(token, process.env.JWT_SECRET);
-//       console.log("DECODE RESULT:", decode);
-
-//       req.user = decode;
-//     } catch (err) {
-//       return res.status(401).json({
-//         success: false,
-//         message: "failed to Login auth",
-//       });
-//     }
-//     next();
-//   } catch (err) {
-//     return res.status(401).json({
-//       success: false,
-//       message: "Something Hell Happend in token",
-//     });
-//   }
-// };
 exports.auth = async (req, res, next) => {
   try {
-    const token = req.cookies.token;
-    if (!token && req.headers.authorization) {
-      token = req.headers.authorization.split(" ")[1];
+    let token = null;
+
+    if (req.headers.authorization && req.headers.authorization.startsWith("Bearer ")) {
+      const headerToken = req.headers.authorization.split(" ")[1]?.trim();
+      if (headerToken && headerToken !== "null" && headerToken !== "undefined") {
+        token = headerToken;
+      }
+    }
+
+    if (!token && req.cookies?.token) {
+      token = req.cookies.token;
     }
 
     if (!token) {
       return res.status(401).json({
         success: false,
         message: "Token missing",
+        code: "ACCESS_TOKEN_MISSING",
       });
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    req.user = decoded; // VERY IMPORTANT
-
+    req.user = decoded;
     next();
   } catch (err) {
     return res.status(401).json({
       success: false,
       message: "Invalid or expired token",
+      code: "ACCESS_TOKEN_EXPIRED",
       error: err.message,
     });
   }
 };
 
-//isstudent
+async function resolveNormalizedRole(req) {
+  const tokenRole = String(req.user?.accountType || "").trim().toLowerCase();
+  if (tokenRole) return tokenRole;
+
+  if (req.user?.id) {
+    const dbUser = await User.findById(req.user.id).select("accountType").lean();
+    if (dbUser?.accountType) {
+      req.user.accountType = dbUser.accountType;
+      return String(dbUser.accountType).trim().toLowerCase();
+    }
+  }
+  return "";
+}
+
+// isstudent
 exports.isstudent = async (req, res, next) => {
   try {
-    if (req.user.accountType != "student") {
-      return res.status(401).json({
+    let role = await resolveNormalizedRole(req);
+    if (role !== "student" && req.user?.id) {
+      const dbUser = await User.findById(req.user.id).select("accountType").lean();
+      if (dbUser?.accountType) {
+        req.user.accountType = dbUser.accountType;
+        role = String(dbUser.accountType).trim().toLowerCase();
+      }
+    }
+    if (role !== "student") {
+      return res.status(403).json({
         success: false,
-        message: "This is Protected Route only for student",
+        message: "This is a protected route only for students",
       });
     }
     next();
   } catch (err) {
     return res.status(500).json({
       success: false,
-      message: "User role Cannot Be Verified",
+      message: "User role cannot be verified",
     });
   }
 };
 
-//isinstrutor
+// isinstructor
 exports.isinstructor = async (req, res, next) => {
   try {
-    console.log("middleware user:", req.user);
-
-    if (req.user.accountType !== "instructor") {
+    let role = await resolveNormalizedRole(req);
+    if (role !== "instructor" && req.user?.id) {
+      const dbUser = await User.findById(req.user.id).select("accountType").lean();
+      if (dbUser?.accountType) {
+        req.user.accountType = dbUser.accountType;
+        role = String(dbUser.accountType).trim().toLowerCase();
+      }
+    }
+    if (role !== "instructor") {
       return res.status(403).json({
         success: false,
         message: "Only instructors are allowed to access this route",
       });
     }
-
     next();
   } catch (err) {
     return res.status(500).json({
@@ -102,21 +105,28 @@ exports.isinstructor = async (req, res, next) => {
   }
 };
 
-//isadmin
-
+// isadmin
 exports.admin = async (req, res, next) => {
   try {
-    if (req.user.accountType != "admin") {
-      return res.status(401).json({
+    let role = await resolveNormalizedRole(req);
+    if (role !== "admin" && req.user?.id) {
+      const dbUser = await User.findById(req.user.id).select("accountType").lean();
+      if (dbUser?.accountType) {
+        req.user.accountType = dbUser.accountType;
+        role = String(dbUser.accountType).trim().toLowerCase();
+      }
+    }
+    if (role !== "admin") {
+      return res.status(403).json({
         success: false,
-        message: "This is Protected Route only for isadmin",
+        message: "This is a protected route only for admins",
       });
     }
     next();
   } catch (err) {
     return res.status(500).json({
       success: false,
-      message: "User role Cannot Be Verified",
+      message: "User role cannot be verified",
     });
   }
 };

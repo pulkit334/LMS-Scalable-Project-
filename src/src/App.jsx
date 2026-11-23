@@ -1,10 +1,8 @@
-// export default App;
 import React, { useEffect } from "react";
-import { Route, Routes } from "react-router-dom";
+import { Route, Routes, Navigate } from "react-router-dom"; //
 import Home from "./pages/Home";
 import { Login } from "./components/core/Auth_frontend/Login";
 import MainLayout from "./pages/MainLayout";
-import P1 from "./components/core/Auth_frontend/Profile/p1";
 import { useDispatch, useSelector } from "react-redux";
 import Signup from "./components/core/Auth_frontend/sinup";
 import { restoreUser } from "./utils/restore";
@@ -22,7 +20,6 @@ import EditProfile from "./pages/setting";
 import EnrolledCourses from "./components/core/Dashboard/EnroilledCourses";
 import Cart from "./components/core/Dashboard/Cart";
 import { ACCOUNT_TYPE } from "./utils/constants";
-import StudentOnly from "./Warning/one";
 import AccountDeactivated from "./pages/AccountDeactivated";
 import Authrecovery from "./pages/Auth-recovery";
 import EmailVerification from "./pages/EmailVerification";
@@ -32,11 +29,36 @@ import Course from "./pages/course";
 import { hydrateAuth } from "./appInit";
 import OpenRoute from "./utils/openRoutes";
 import EditCourse from "./components/core/Dashboard/editcourse";
+import Catalog from "./pages/catalog";
+import Coursebuy from "./components/core/Student/courseBuy";
+import ViewDetails from "./components/core/ViewCourse/VedioDEtails";
+import ViewCourses from "./pages/ViewCourses";
+import Instructor from "./components/core/Dashboard/InstructorDashboard/Instructor";
+import Purchasehistory from "./components/core/Student/PaymentHistory/purchasehistory";
+import Admin from "./pages/Adminpage/Admin";
+import AdminLayout from "./components/Admin/AdminInsights";
+import AdminRoute from "./components/Auth/AdminRoute";
+import StudentGuard from "./components/Auth/studentonly";
+import AdminInsights from "./components/Admin/Admin-Components/AdminInsightPage";
+import Instructormangment from "./components/Admin/Admin-Components/Instructormangment";
+import Admin_usermangemt from "./components/Admin/Admin-Components/Admin_usermangemt";
+import Course_mangment from "./components/Admin/Admin-Components/Course_mangment";
+import UserNotification from "./components/core/Notification/userNotification";
+import { requestFCMToken, onMessageListner } from "./utils/firebaseutlis";
+import { toast } from "react-toastify";
+import { NotificationAuth } from "./services/Notificaiton/Notificaitonservice";
+import TeacherLive from "./components/LiveClass/LiveTeacher";
+import  Warning from "./utils/Warning"
+import { GoogleOAuthProvider } from "@react-oauth/google";
+import StudentLive from "./components/LiveClass/StudentLive";
+import SecurityCheck from "./utils/SecurityCheck";
 function App() {
   const dispatch = useDispatch();
   const token = useSelector((state) => state.auth.token);
   const user = useSelector((state) => state.profile.user);
   const status = useSelector((state) => state.profile.status);
+  const role = user?.accountType?.trim()?.toLowerCase();
+
   useEffect(() => {
     if (token && !user) {
       restoreUser(dispatch);
@@ -47,47 +69,107 @@ function App() {
     if (status === "idle") {
       dispatch(fetchCategories());
     }
-  });
+  }, [dispatch, status]);
+
   useEffect(() => {
     hydrateAuth(dispatch);
   }, [dispatch]);
-  return (
+
+  //Notification usefffect
+  useEffect(() => {
+    onMessageListner((payload) => {
+toast(
+        <div>
+          <strong>{payload?.notification?.title}</strong>
+          <p>{payload?.notification?.body}</p>
+        </div>,
+      );
+    });
+  }, []);
+
+  useEffect(() => {
+    const setupFCM = async () => {
+      try {
+        if (!token || !user) return;
+
+        const fcmToken = await requestFCMToken();
+        if (!fcmToken) return;
+
+   
+
+        await NotificationAuth(fcmToken);
+      } catch (err) {
+        console.error("FCM setup failed:", err);
+      }
+    };
+
+    setupFCM();
+  }, [token, user]);
+
+ return (
+    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
     <div className="w-screen min-h-screen flex flex-col font-inter">
       <Routes>
-        {/* Public layout */}
+        {/* PUBLIC LAYOUT */}
         <Route element={<MainLayout />}>
-          <Route path="/" element={<Home />} />
-          <Route path="/signup" element={<Signup />} />
+          {/* ADMIN REDIRECT HANDLED HERE */}
           <Route
-            path="/login"
+            path="/"
+            element={
+              role === ACCOUNT_TYPE.ADMIN ? (
+                <Navigate to="/admin/insight" replace />
+              ) : (
+                <Home />
+              )
+            }
+          />
+
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/catalog" element={<Catalog />} />
+          <Route path="/catalog/:catalogName" element={<Catalog />} />
+          <Route
+            path="/user/view-notifications"
+            element={<UserNotification />}
+          />
+          <Route
+            path="/Login"
             element={
               <OpenRoute>
-                {" "}
                 <Login />
               </OpenRoute>
             }
           />
+
           <Route path="/verify-otp" element={<VerifyOtp />} />
           <Route path="/account-deactivated" element={<AccountDeactivated />} />
           <Route
             path="/support/reactivate-account"
             element={<Authrecovery />}
           />
+          
+<Route
+  path="/courses/:Course"
+  element={
+    <SecurityCheck>
+      <Coursebuy />
+    </SecurityCheck>
+  }
+/>
+          
           <Route
             path="/recover-account/:token"
             element={<EmailVerification />}
           />
-          {/* <Route path="/dashboard/my-profile" element={<MyProfile/>} /> */}
           <Route path="/contact" element={<Contactus />} />
           <Route path="/google-auth" element={<GoogleAuth />} />
           <Route path="/about" element={<About />} />
-          <Route path="*" element={<Error />} />
 
-          {/* Auth */}
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/update-password/:token" element={<UpdatePassword />} />
 
-          {/*  PROTECTED DASHBOARD (FIXED) */}
+          <Route path="*" element={<Error />} />
+
+          {/* DASHBOARD */}
           <Route
             path="/dashboard"
             element={
@@ -96,33 +178,109 @@ function App() {
               </PrivateRoute>
             }
           >
+            <Route index element={<MyProfile />} />
             <Route path="my-profile" element={<MyProfile />} />
-
             <Route path="settings" element={<EditProfile />} />
-            {user?.accountType !== ACCOUNT_TYPE.STUDENT && (
-              <Route path="cart" element={<StudentOnly />} />
-            )}
+            <Route path="edit-course/:courseId" element={<EditCourse />} />
+
+            {/* STUDENT ONLY */}
             <Route
-              path="edit-course/:courseId"
-              element={<EditCourse />}
+              path="cart"
+              element={
+                <StudentGuard>
+                  <Cart />
+                </StudentGuard>
+              }
             />
-            {user?.accountType !== ACCOUNT_TYPE.STUDENT && (
-              <>
-                {" "}
-                <Route path="my-courses" element={<Mycourses />} />
-                <Route path="add-course" element={<Course />} />
-              </>
-            )}
-            {user?.accountType === ACCOUNT_TYPE.STUDENT && (
-              <>
-                <Route path="enrolled-courses" element={<EnrolledCourses />} />
-                <Route path="cart" element={<Cart />} />
-              </>
-            )}
+
+            <Route
+              path="enrolled-courses"
+              element={
+                <StudentGuard>
+                  <EnrolledCourses />
+                </StudentGuard>
+              }
+            />
+
+            <Route
+              path="purchase-history"
+              element={
+                <StudentGuard>
+                  <Purchasehistory />
+                </StudentGuard>
+              }
+            />
+
+            {/* INSTRUCTOR / ADMIN */}
+            <Route path="instructor" element={<Instructor />} />
+            <Route path="my-courses" element={<Mycourses />} />
+            <Route path="add-course" element={<Course />} />
+          </Route>
+
+          {/* VIEW COURSE */}
+          <Route
+            element={
+              <PrivateRoute>
+                <ViewCourses />
+              </PrivateRoute>
+            }
+          >
+            <Route
+              path="view-course/:courseId"
+              element={
+                <StudentGuard>
+                  <ViewDetails />
+                </StudentGuard>
+              }
+            />
+
+            <Route
+              path="view-course/:courseId/section/:sectionId"
+              element={
+                <StudentGuard>
+                  <ViewDetails />
+                </StudentGuard>
+              }
+            />
+
+            <Route
+              path="view-course/:courseId/section/:sectionId/sub-section/:subSectionId"
+              element={
+                <StudentGuard>
+                  <ViewDetails />
+                </StudentGuard>
+              }
+            />
           </Route>
         </Route>
+
+        {/* ADMIN */}
+        <Route
+          path="/admin"
+          element={
+            <AdminRoute>
+              <Admin />
+            </AdminRoute>
+          }
+        >
+          {/* sidebar layout */}
+          <Route element={<AdminLayout />}>
+            <Route index element={<Navigate to="insight" replace />} />
+            <Route path="insight" element={<AdminInsights />} />
+            <Route path="instructors" element={<Instructormangment />} />
+            <Route path="users" element={<Admin_usermangemt />} />
+            <Route path="courses" element={<Course_mangment />} />
+          </Route>
+        </Route>
+     
+
+       {/* Live  Class APi */}
+
+       <Route path="/live/:classId/start" element = { role === ACCOUNT_TYPE.INSTRUCTOR ?    <TeacherLive/> : <Warning/>}/>
+      <Route path="/live/:classId/watch" element={<StudentLive />} />
       </Routes>
     </div>
+    </GoogleOAuthProvider>
   );
 }
 

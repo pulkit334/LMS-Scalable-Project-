@@ -1,6 +1,5 @@
 import dotenv from "dotenv";
 dotenv.config();
-
 import express from "express";
 import cors from "cors";
 import morgan from "morgan";
@@ -8,52 +7,96 @@ import helmet from "helmet";
 import cookieParser from "cookie-parser";
 import { xss } from "express-xss-sanitizer";
 import fileUpload from "express-fileupload";
-import passport from "passport";
-
+import { initSocket } from "./config/socket.js";
+import { createServer } from "http";
 // ---- LOCAL IMPORTS ----
 import "./schedular/cronejob.js";
+import "./schedular/cart-schedular-service.js";
+import "./service/questionGen-worker.js";        // ---- WORKERS ----
+import "./service/transcription-worker.js";
+import "./service/Notificaiton-worker.js";
+import "./service/Notes-Gn-Worker.js";
 import authRoutes from "./routes/authroutes.js";
 import connect from "./config/db.js";
-import "./config/passport.js";
+import adminRoutes from "./routes/AdminRoutes.js";
+import firebaseRoute from "./routes/NotificationRoute.js";
+import WebHookRoute from "./routes/WebhookRoutes.js";
+import { checkAbandonedCarts } from "./schedular/cart-schedular-service.js";
+import AIRoutes from "./routes/ai-routes.js";
+import LiveRoutes from "./routes/Live-class-Routes.js";
+
+import {
+  authLimiter,
+  firebaseLimiter,
+  adminLimiter,
+  webhookLimiter,
+  aiLimiter,
+  liveLimiter,
+} from "./middlewares/limiter.js";
 
 // ---- APP INIT ----
 const app = express();
 
 // ---------- BODY PARSERS ----------
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: "100mb" }));
+app.use(express.urlencoded({ limit: "100mb", extended: true }));
 
 // ---------- PASSPORT ----------
-app.use(passport.initialize());
+// app.use(passport.initialize());
 
 // ---------- SECURITY ----------
 app.use(helmet());
 app.use(xss());
+// app.use(requestIp.mw())
 
 // ---------- COOKIES ----------
 app.use(cookieParser());
 
 // ---------- CORS ----------
+// ---------- CORS ----------
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: [
+      process.env.FRONTEND_URL,
+      "https://lms-scalable-project-rxbu.onrender.com",
+      "https://lms-scalable-project.vercel.app",
+      "https://notion-x.store",
+      "https://www.notion-x.store",
+      "http://localhost:5173",
+      "http://localhost:5174",
+      "http://127.0.0.1:5173",
+      "http://127.0.0.1:5174",
+    ].filter(Boolean),
     credentials: true,
-  })
-);
-
-// ---------- FILE UPLOAD ----------
+  }),
+);// ---------- FILE UPLOAD ----------
 app.use(
   fileUpload({
     useTempFiles: true,
     tempFileDir: "/tmp",
-  })
+  }),
 );
 
 // ---------- LOGGER ----------
 app.use(morgan("dev"));
 
+
 // ---------- ROUTES ----------
-app.use("/api/v1", authRoutes);
+app.use("/api/v1", authLimiter,     authRoutes);
+app.use("/api/v1", firebaseLimiter, firebaseRoute);
+app.use("/api/v2", adminLimiter,    adminRoutes);
+app.use("/api/v3", webhookLimiter,  WebHookRoute);
+app.use("/api/v4", aiLimiter,       AIRoutes);
+app.use("/api/v5", liveLimiter,     LiveRoutes);
+
+app.get("/test-limit", (req, res) => res.json({ ok: true })); //  test route
+app.get("/test-cron", async (req, res) => {
+await checkAbandonedCarts();
+  res.send("Che ck server console for logs");
+});
+app.get("/", async (req, res) => {
+res.send("Check server console for logs");
+});
 
 // ---------- ERROR HANDLER ----------
 app.use((err, req, res, next) => {
@@ -66,11 +109,16 @@ app.use((err, req, res, next) => {
 
 // ---------- SERVER ----------
 const PORT = process.env.PORT || 5000;
+const httpServer = createServer(app);
+initSocket(httpServer);
+httpServer.listen(PORT, async () => {
+  (connect(), console.log(` Server running on port ${PORT}`));
 
-app.listen(PORT, async () => {
-   connect();
-  console.log(` Server running on port ${PORT}`);
+if (!process.env.REDIS_URL) {
+  throw new Error("REDIS_URL is missing from environment variables");
+}
 });
+
 // import cluster from "cluster";
 // import os from "os";
 // import dotenv from "dotenv";
